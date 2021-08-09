@@ -11,6 +11,10 @@ buildscript {
     }
 }
 
+plugins {
+    id 'com.diffplug.spotless' version '5.11.0'
+}
+
 allprojects {
     repositories {
         google()
@@ -18,6 +22,24 @@ allprojects {
     }
 }
 
-task clean(type: Delete) {
-    delete rootProject.buildDir
+subprojects {
+    apply plugin: 'com.diffplug.spotless'
+    spotless {
+        kotlin {
+            target "**/*.kt"
+            ktlint("0.38.1")
+        }
+    }
+
+    tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
+        kotlinOptions {
+            // Treat all Kotlin warnings as errors
+            allWarningsAsErrors = true
+            // Set JVM target to 1.8
+            jvmTarget = "1.8"
+            apiVersion = "1.4"
+            languageVersion = "1.4"
+            freeCompilerArgs += ["-Xskip-prerelease-check"]
+        }
+    }
 }
