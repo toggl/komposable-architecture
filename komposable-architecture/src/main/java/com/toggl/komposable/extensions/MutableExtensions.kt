@@ -21,7 +21,6 @@ infix fun <T, Action> T.returnEffect(effect: Effect<Action>) = effectOf(effect)
  */
 infix fun <T, Action> T.returnEffect(effects: List<Effect<Action>>) = effects
 
-
 /**
  * Used to create a fluent api for mutating and returning an effect
  */

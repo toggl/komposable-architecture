@@ -39,7 +39,7 @@ fun <LocalState, GlobalState, LocalAction, GlobalAction> Reducer<GlobalState, Gl
  * @see optionalPullback
  */
 fun <LocalState, GlobalState, LocalAction, GlobalAction>
-    Reducer<LocalState, LocalAction>.pullback(
+Reducer<LocalState, LocalAction>.pullback(
     mapToLocalState: (GlobalState) -> LocalState,
     mapToLocalAction: (GlobalAction) -> LocalAction?,
     mapToGlobalState: (GlobalState, LocalState) -> GlobalState,
@@ -55,7 +55,7 @@ fun <LocalState, GlobalState, LocalAction, GlobalAction>
  * @see pullback
  */
 fun <LocalState, GlobalState, LocalAction, GlobalAction>
-    Reducer<LocalState, LocalAction>.optionalPullback(
+Reducer<LocalState, LocalAction>.optionalPullback(
     mapToLocalState: (GlobalState) -> LocalState?,
     mapToLocalAction: (GlobalAction) -> LocalAction?,
     mapToGlobalState: (GlobalState, LocalState?) -> GlobalState,

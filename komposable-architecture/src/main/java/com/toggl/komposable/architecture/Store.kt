@@ -35,7 +35,6 @@ interface Store<State, Action : Any> {
         mapToGlobalAction: (ViewAction) -> Action?
     ): Store<ViewState, ViewAction>
 
-
     /**
      * Transforms this store in a more specific store that can only emit
      * a subset of its actions and access a subset of its state.
