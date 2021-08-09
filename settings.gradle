@@ -1,2 +1,3 @@
 rootProject.name = "Komposable Architecture"
 include ':komposable-architecture'
+include ':todo-sample'
