@@ -1,18 +1,21 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
+import com.toggl.komposable.buildsrc.Libs
+import com.toggl.komposable.buildsrc.Versions
+
 buildscript {
-    ext.kotlin_version = "1.5.21"
     repositories {
         google()
         jcenter()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:7.0.0'
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.5.21"
+        classpath Libs.androidGradlePlugin
+        classpath Libs.Kotlin.gradlePlugin
     }
 }
 
 plugins {
-    id 'com.diffplug.spotless' version '5.11.0'
+    id 'com.diffplug.spotless' version '5.14.2'
+    id "com.github.ben-manes.versions" version '0.39.0'
 }
 
 allprojects {
@@ -27,7 +30,7 @@ subprojects {
     spotless {
         kotlin {
             target "**/*.kt"
-            ktlint("0.38.1")
+            ktlint(Versions.ktlint)
         }
     }
 
