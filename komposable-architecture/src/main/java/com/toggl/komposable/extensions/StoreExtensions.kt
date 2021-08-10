@@ -6,8 +6,8 @@ import com.toggl.komposable.architecture.Subscription
 import com.toggl.komposable.exceptions.ExceptionHandler
 import com.toggl.komposable.exceptions.RethrowingExceptionHandler
 import com.toggl.komposable.internal.MutableStateFlowStore
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.GlobalScope
+import com.toggl.komposable.scope.DispatcherProvider
+import com.toggl.komposable.scope.StoreScopeProvider
 import kotlinx.coroutines.flow.emptyFlow
 
 /**
@@ -26,14 +26,16 @@ fun <State, Action : Any> createStore(
     initialState: State,
     reducer: Reducer<State, Action>,
     subscription: Subscription<State, Action> = Subscription { emptyFlow() },
-    storeScope: CoroutineScope = GlobalScope,
-    exceptionHandler: ExceptionHandler = RethrowingExceptionHandler()
+    exceptionHandler: ExceptionHandler = RethrowingExceptionHandler(),
+    storeScopeProvider: StoreScopeProvider,
+    dispatcherProvider: DispatcherProvider
 ) = MutableStateFlowStore.create(
     initialState = initialState,
     reducer = reducer,
     subscription = subscription,
-    storeScope = storeScope,
-    exceptionHandler = exceptionHandler
+    exceptionHandler = exceptionHandler,
+    storeScopeProvider = storeScopeProvider,
+    dispatcherProvider = dispatcherProvider
 )
 
 /**
