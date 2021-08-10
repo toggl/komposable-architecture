@@ -38,7 +38,7 @@ interface Store<State, Action : Any> {
     /**
      * Transforms this store in a more specific store that can only emit
      * a subset of its actions and access a subset of its state.
-     * The difference between this and the view method is that optionalView allows for
+     * The difference between this and the [view] method is that optionalView allows for
      * the state to be nullable, which prevents state propagation
      * @param mapToLocalState Function to transform the global state into the local state
      * @param mapToGlobalAction Function to transform the local action into a global action for
