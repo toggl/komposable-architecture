@@ -15,8 +15,9 @@ import kotlinx.coroutines.flow.emptyFlow
  * @param initialState      First state of
  * @param reducer           The global reducer, which should be a combination of all child reducers
  * @param subscription      A subscription for reacting to state changes and emit actions
- * @param storeScope        The scope in which the store will run. Defaults to GlobalScope
  * @param exceptionHandler  A handler for the exceptions thrown. Defaults to Rethrowing
+ * @param storeScopeProvider        Provider of the scope in which the store will run. Defaults to GlobalScope
+ * @param dispatcherProvider        Provider of CoroutineDispatchers to be used inside of the store
  * @return A default store implementation backed by MutableStateFlow
  * @see com.toggl.komposable.exceptions.RethrowingExceptionHandler
  * @see kotlinx.coroutines.flow.MutableStateFlow
