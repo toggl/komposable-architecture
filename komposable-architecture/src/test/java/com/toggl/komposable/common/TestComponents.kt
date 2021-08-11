@@ -42,11 +42,11 @@ sealed class TestAction {
 }
 
 class TestEffect : Effect<TestAction> {
-    override suspend fun execute(): TestAction? = TestAction.DoNothingFromEffectAction
+    override suspend fun execute(): TestAction = TestAction.DoNothingFromEffectAction
 }
 
 class TestExceptionEffect : Effect<TestAction> {
-    override suspend fun execute(): TestAction? = throw TestException
+    override suspend fun execute(): TestAction = throw TestException
 }
 
 class TestSubscription : Subscription<TestState, TestAction> {
