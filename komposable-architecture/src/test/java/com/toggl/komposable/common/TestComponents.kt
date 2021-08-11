@@ -11,13 +11,15 @@ import com.toggl.komposable.internal.MutableStateFlowStore
 import com.toggl.komposable.scope.DispatcherProvider
 import com.toggl.komposable.scope.StoreScopeProvider
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.filterNotNull
 import java.lang.Exception
 
 fun CoroutineTest.createTestStore(
     initialState: TestState = TestState(),
-    reducer: TestReducer = TestReducer(),
-    subscription: TestSubscription = TestSubscription(),
+    reducer: Reducer<TestState, TestAction> = TestReducer(),
+    subscription: Subscription<TestState, TestAction> = TestSubscription(),
     defaultExceptionHandler: ExceptionHandler = TestStoreExceptionHandler(),
     dispatcherProvider: DispatcherProvider = this.dispatcherProvider,
     storeScopeProvider: StoreScopeProvider = StoreScopeProvider { this.testCoroutineScope }
@@ -34,6 +36,7 @@ data class TestState(val testProperty: String = "")
 
 sealed class TestAction {
     data class ChangeTestProperty(val testProperty: String) : TestAction()
+    data class AddToTestProperty(val testPropertySuffix: String) : TestAction()
     object DoNothingAction : TestAction()
     object StartEffectAction : TestAction()
     object StartExceptionThrowingEffectAction : TestAction()
@@ -50,8 +53,9 @@ class TestExceptionEffect : Effect<TestAction> {
 }
 
 class TestSubscription : Subscription<TestState, TestAction> {
+    val stateFlow = MutableStateFlow<TestAction?>(null)
     override fun subscribe(state: Flow<TestState>): Flow<TestAction> =
-        emptyFlow()
+        stateFlow.asStateFlow().filterNotNull()
 }
 
 class TestStoreExceptionHandler : ExceptionHandler {
@@ -65,6 +69,10 @@ class TestReducer : Reducer<TestState, TestAction> {
         when (action) {
             is TestAction.ChangeTestProperty -> {
                 state.mutate { copy(testProperty = action.testProperty) }
+                noEffect()
+            }
+            is TestAction.AddToTestProperty -> {
+                state.mutate { copy(testProperty = testProperty + action.testPropertySuffix) }
                 noEffect()
             }
             TestAction.DoNothingAction -> noEffect()

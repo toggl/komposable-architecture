@@ -11,7 +11,7 @@ import org.junit.jupiter.api.BeforeEach
 
 abstract class CoroutineTest {
     private val testDispatcher = TestCoroutineDispatcher()
-    val dispatcherProvider = DispatcherProvider(testDispatcher, testDispatcher, Dispatchers.Main)
+    val dispatcherProvider = DispatcherProvider(testDispatcher, testDispatcher, testDispatcher)
     val testCoroutineScope = TestCoroutineScope(testDispatcher)
 
     @BeforeEach
