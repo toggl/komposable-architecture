@@ -11,6 +11,7 @@ fun interface Reducer<State, Action> {
      * method, so absolutely no side effects or long-running operations should happen here.
      * The reduce method should instead rely on returning effects which can then signal
      * their completion via actions which will be scheduled for processing.
+     * @return List of effects that should be executed immediately after reduce method finishes its job
      */
     fun reduce(state: Mutable<State>, action: Action): List<Effect<Action>>
 }
