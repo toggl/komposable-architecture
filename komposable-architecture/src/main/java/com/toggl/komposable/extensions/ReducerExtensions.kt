@@ -10,6 +10,7 @@ import com.toggl.komposable.internal.PullbackReducer
  * This is usually used in combination with [pullback] to create the main reducer which is
  * then used to create a store
  * @see createStore
+ * @see pullback
  */
 fun <State, Action> combine(vararg reducers: Reducer<State, Action>): Reducer<State, Action> =
     CompositeReducer(reducers.toList())
@@ -35,6 +36,7 @@ fun <LocalState, GlobalState, LocalAction, GlobalAction> Reducer<GlobalState, Gl
  * reducers into a single parent reducer. If the child reducer relies on optional state, use
  * [optionalPullback] instead
  * @see combine
+ * @see optionalPullback
  */
 fun <LocalState, GlobalState, LocalAction, GlobalAction>
 Reducer<LocalState, LocalAction>.pullback(
@@ -50,6 +52,7 @@ Reducer<LocalState, LocalAction>.pullback(
  * reducers into a single parent reducer. If the child reducer does not rely on optional state,
  * use [pullback] instead
  * @see combine
+ * @see pullback
  */
 fun <LocalState, GlobalState, LocalAction, GlobalAction>
 Reducer<LocalState, LocalAction>.optionalPullback(
