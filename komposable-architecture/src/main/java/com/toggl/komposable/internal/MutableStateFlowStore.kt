@@ -7,7 +7,8 @@ import com.toggl.komposable.architecture.Store
 import com.toggl.komposable.architecture.Subscription
 import com.toggl.komposable.exceptions.ExceptionHandler
 import com.toggl.komposable.extensions.noEffect
-import kotlinx.coroutines.CoroutineScope
+import com.toggl.komposable.scope.DispatcherProvider
+import com.toggl.komposable.scope.StoreScopeProvider
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -50,14 +51,16 @@ internal class MutableStateFlowStore<State, Action : Any> private constructor(
             initialState: State,
             reducer: Reducer<State, Action>,
             subscription: Subscription<State, Action>,
-            storeScope: CoroutineScope,
-            exceptionHandler: ExceptionHandler
+            exceptionHandler: ExceptionHandler,
+            storeScopeProvider: StoreScopeProvider,
+            dispatcherProvider: DispatcherProvider
         ): Store<State, Action> {
+            val storeScope = storeScopeProvider.getStoreScope()
             val state = MutableStateFlow(initialState)
 
             lateinit var dispatch: (List<Action>) -> Unit
             dispatch = { actions ->
-                storeScope.launch {
+                storeScope.launch(context = dispatcherProvider.main) {
                     var tempState = state.value
                     val mutableValue = Mutable({ tempState }) { tempState = it }
 

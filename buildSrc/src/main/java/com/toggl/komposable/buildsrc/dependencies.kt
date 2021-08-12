@@ -16,6 +16,7 @@ object Libs {
 
         const val junit4 = "junit:junit:4.13"
         const val robolectric = "org.robolectric:robolectric:4.5.1"
+        const val turbine = "app.cash.turbine:turbine:0.6.0"
         const val junit5Plugin = "de.mannodermaus.gradle.plugins:android-junit5:1.7.1.1"
         const val kotestMatchers = "io.kotest:kotest-assertions-core-jvm:${kotestVersion}"
         const val kotestProperties = "io.kotest:kotest-property-jvm:${kotestVersion}"

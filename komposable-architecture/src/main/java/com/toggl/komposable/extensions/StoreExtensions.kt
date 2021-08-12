@@ -6,8 +6,8 @@ import com.toggl.komposable.architecture.Subscription
 import com.toggl.komposable.exceptions.ExceptionHandler
 import com.toggl.komposable.exceptions.RethrowingExceptionHandler
 import com.toggl.komposable.internal.MutableStateFlowStore
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.GlobalScope
+import com.toggl.komposable.scope.DispatcherProvider
+import com.toggl.komposable.scope.StoreScopeProvider
 import kotlinx.coroutines.flow.emptyFlow
 
 /**
@@ -15,8 +15,9 @@ import kotlinx.coroutines.flow.emptyFlow
  * @param initialState      First state of
  * @param reducer           The global reducer, which should be a combination of all child reducers
  * @param subscription      A subscription for reacting to state changes and emit actions
- * @param storeScope        The scope in which the store will run. Defaults to GlobalScope
  * @param exceptionHandler  A handler for the exceptions thrown. Defaults to Rethrowing
+ * @param storeScopeProvider        Provider of the scope in which the store will run
+ * @param dispatcherProvider        Provider of CoroutineDispatchers to be used inside of the store
  * @return A default store implementation backed by MutableStateFlow
  * @see com.toggl.komposable.exceptions.RethrowingExceptionHandler
  * @see kotlinx.coroutines.flow.MutableStateFlow
@@ -26,14 +27,16 @@ fun <State, Action : Any> createStore(
     initialState: State,
     reducer: Reducer<State, Action>,
     subscription: Subscription<State, Action> = Subscription { emptyFlow() },
-    storeScope: CoroutineScope = GlobalScope,
-    exceptionHandler: ExceptionHandler = RethrowingExceptionHandler()
+    exceptionHandler: ExceptionHandler = RethrowingExceptionHandler(),
+    storeScopeProvider: StoreScopeProvider,
+    dispatcherProvider: DispatcherProvider
 ) = MutableStateFlowStore.create(
     initialState = initialState,
     reducer = reducer,
     subscription = subscription,
-    storeScope = storeScope,
-    exceptionHandler = exceptionHandler
+    exceptionHandler = exceptionHandler,
+    storeScopeProvider = storeScopeProvider,
+    dispatcherProvider = dispatcherProvider
 )
 
 /**
