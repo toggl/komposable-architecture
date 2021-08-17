@@ -48,7 +48,7 @@ workflows:
     steps:
     - android-unit-test@1.0:
         inputs:
-        - arguments: ' -x ":komposable-architecture:test"'
+        - arguments: '":komposable-architecture:test"'
         - is_debug: 'true'
         - variant: debug
     - github-status@2:
