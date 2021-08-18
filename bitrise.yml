@@ -1,0 +1,90 @@
+---
+format_version: '11'
+default_step_lib_source: https://github.com/bitrise-io/bitrise-steplib.git
+project_type: android
+workflows:
+  health:
+    steps:
+    - build-router-start@0:
+        inputs:
+        - access_token: "$HEALTH_CHECKS_ACCESS_TOKEN"
+        - verbose: 'yes'
+        - workflows: |-
+            health-tests
+            health-compile
+            health-linter
+    - github-status@2:
+        inputs:
+        - status_identifier: Bitrise Health Checks
+        - auth_token: "$GITHUB_STATUS_KEY"
+  health-compile:
+    before_run:
+    - setup
+    steps:
+    - android-build@0:
+        inputs:
+        - variant: debug
+    - github-status@2:
+        inputs:
+        - status_identifier: Compiler Check
+        - auth_token: "$GITHUB_STATUS_KEY"
+  health-linter:
+    before_run:
+    - setup
+    steps:
+    - gradle-runner@2:
+        inputs:
+        - gradlew_path: "$PROJECT_LOCATION/gradlew"
+        - gradle_task: spotlessKotlinCheck
+    - github-status@2:
+        inputs:
+        - status_identifier: Linter Check
+        - auth_token: "$GITHUB_STATUS_KEY"
+  health-tests:
+    before_run:
+    - setup
+    after_run:
+    - teardown
+    steps:
+    - android-unit-test@1.0:
+        inputs:
+        - arguments: '":komposable-architecture:test"'
+        - is_debug: 'true'
+        - variant: debug
+    - github-status@2:
+        inputs:
+        - status_identifier: Unit Tests
+        - auth_token: "$GITHUB_STATUS_KEY"
+  setup:
+    steps:
+    - script@1:
+        inputs:
+        - content: "sudo update-alternatives --set javac /usr/lib/jvm/java-11-openjdk-amd64/bin/javac\nsudo
+            update-alternatives --set java /usr/lib/jvm/java-11-openjdk-amd64/bin/java\n
+            \  \nexport JAVA_HOME='/usr/lib/jvm/java-11-openjdk-amd64'\nenvman add
+            --key JAVA_HOME --value '/usr/lib/jvm/java-11-openjdk-amd64'"
+    - activate-ssh-key@4: {}
+    - git-clone@6: {}
+    - install-missing-android-tools@2:
+        inputs:
+        - gradlew_path: "$PROJECT_LOCATION/gradlew"
+  teardown:
+    steps:
+    - deploy-to-bitrise-io@1: {}
+app:
+  envs:
+  - opts:
+      is_expand: false
+    PROJECT_LOCATION: "."
+  - opts:
+      is_expand: false
+    MODULE: todo-sample
+  - opts:
+      is_expand: false
+    VARIANT: debug
+trigger_map:
+- push_branch: main
+  workflow: health
+- pull_request_source_branch: "*"
+  pull_request_target_branch: main
+  workflow: health

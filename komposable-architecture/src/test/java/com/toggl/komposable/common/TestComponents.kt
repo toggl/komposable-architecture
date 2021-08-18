@@ -11,7 +11,6 @@ import com.toggl.komposable.extensions.noEffect
 import com.toggl.komposable.internal.MutableStateFlowStore
 import com.toggl.komposable.scope.DispatcherProvider
 import com.toggl.komposable.scope.StoreScopeProvider
-import io.mockk.impl.annotations.SpyK
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
