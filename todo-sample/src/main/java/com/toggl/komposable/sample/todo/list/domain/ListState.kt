@@ -1,3 +1,5 @@
 package com.toggl.komposable.sample.todo.list.domain
 
-class ListState
+import com.toggl.komposable.sample.todo.data.Todo
+
+data class ListState(val todoList: List<Todo>)

@@ -120,5 +120,28 @@ object Libs {
             const val fragment = "androidx.navigation:navigation-fragment-ktx:$version"
             const val ui = "androidx.navigation:navigation-ui-ktx:$version"
         }
+
+        object Hilt {
+            private const val version = "1.0.0"
+            const val compiler = "androidx.hilt:hilt-compiler:$version"
+            const val work = "androidx.hilt:hilt-work:$version"
+        }
+
+        object Room {
+            private const val version = "2.2.5"
+            const val common = "androidx.room:room-common:$version"
+            const val runtime = "androidx.room:room-runtime:$version"
+            const val compiler = "androidx.room:room-compiler:$version"
+            const val ktx = "androidx.room:room-ktx:$version"
+            const val testing = "androidx.room:room-testing:$version"
+        }
+    }
+
+    object Hilt {
+        private const val version = "2.37"
+
+        const val gradlePlugin = "com.google.dagger:hilt-android-gradle-plugin:$version"
+        const val hilt = "com.google.dagger:hilt-android:$version"
+        const val compiler = "com.google.dagger:hilt-android-compiler:$version"
     }
 }
