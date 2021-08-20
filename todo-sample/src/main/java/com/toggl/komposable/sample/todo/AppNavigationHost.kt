@@ -20,7 +20,10 @@ fun AppNavigationHost(backStack: List<AppDestination>) {
         }
     }
 
-    NavHost(navController = navController, startDestination = AppDestination.List.route) {
+    NavHost(
+        navController = navController,
+        startDestination = AppDestination.List.route
+    ) {
         composable(AppDestination.List.route) { ListPage() }
         composable(AppDestination.Edit.route) { EditPage() }
     }

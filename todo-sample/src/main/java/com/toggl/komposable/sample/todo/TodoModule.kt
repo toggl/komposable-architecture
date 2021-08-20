@@ -1,23 +1,29 @@
 package com.toggl.komposable.sample.todo
 
 import android.app.Application
+import android.content.Context
+import androidx.room.Room
 import com.toggl.komposable.architecture.Reducer
 import com.toggl.komposable.architecture.Store
 import com.toggl.komposable.extensions.combine
 import com.toggl.komposable.extensions.createStore
 import com.toggl.komposable.extensions.pullback
+import com.toggl.komposable.sample.todo.data.AppDatabase
+import com.toggl.komposable.sample.todo.data.TodoDao
 import com.toggl.komposable.sample.todo.edit.EditAction
 import com.toggl.komposable.sample.todo.edit.EditReducer
 import com.toggl.komposable.sample.todo.edit.EditState
 import com.toggl.komposable.sample.todo.list.ListAction
 import com.toggl.komposable.sample.todo.list.ListReducer
 import com.toggl.komposable.sample.todo.list.ListState
+import com.toggl.komposable.sample.todo.list.ListSubscription
 import com.toggl.komposable.scope.DispatcherProvider
 import com.toggl.komposable.scope.StoreScopeProvider
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.components.ActivityRetainedComponent
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.Dispatchers
 import javax.inject.Singleton
@@ -41,9 +47,9 @@ class TodoModule {
                 mapToGlobalAction = { listAction -> AppAction.List(listAction) }
             ),
             editReducer.pullback(
-                mapToLocalState = { appState -> EditState(appState.editableTodo) },
+                mapToLocalState = { appState -> EditState(appState.editableTodo, appState.backStack) },
                 mapToLocalAction = AppAction::unwrap,
-                mapToGlobalState = { appState, listState -> appState.copy(editableTodo = listState.editableTodo) },
+                mapToGlobalState = { appState, editState -> appState.copy(editableTodo = editState.editableTodo, backStack = editState.backStack) },
                 mapToGlobalAction = { listAction -> AppAction.Edit(listAction) }
             )
         )
@@ -52,12 +58,14 @@ class TodoModule {
     @Singleton
     fun appStore(
         reducer: Reducer<AppState, AppAction>,
+        listSubscription: ListSubscription,
         dispatcherProvider: DispatcherProvider,
         application: Application
     ): Store<AppState, AppAction> {
         return createStore(
             initialState = AppState(),
             reducer = reducer,
+            subscription = listSubscription,
             dispatcherProvider = dispatcherProvider,
             storeScopeProvider = application as StoreScopeProvider
         )
@@ -71,6 +79,20 @@ class TodoModule {
             computation = Dispatchers.Default,
             main = Dispatchers.Main
         )
+
+    @Provides
+    @Singleton
+    fun database(@ApplicationContext applicationContext: Context): AppDatabase =
+        Room.databaseBuilder(
+            applicationContext,
+            AppDatabase::class.java,
+            "todo-app-database"
+        ).build()
+
+    @Provides
+    @Singleton
+    fun todoDao(database: AppDatabase): TodoDao =
+        database.todoDao()
 }
 
 @Module
@@ -87,7 +109,7 @@ object AppViewModelModule {
     @Provides
     fun editStore(store: Store<AppState, AppAction>): Store<EditState, EditAction> =
         store.view(
-            mapToLocalState = { appState -> EditState(appState.editableTodo) },
+            mapToLocalState = { appState -> EditState(appState.editableTodo, appState.backStack) },
             mapToGlobalAction = { editAction -> AppAction.Edit(editAction) }
         )
 }

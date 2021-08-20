@@ -1,9 +1,13 @@
 package com.toggl.komposable.sample.todo.list
 
 import com.toggl.komposable.sample.todo.BackStack
-import com.toggl.komposable.sample.todo.TodoItem
+import com.toggl.komposable.sample.todo.BackStackAwareState
+import com.toggl.komposable.sample.todo.data.TodoItem
 
 data class ListState(
     val todoList: List<TodoItem>,
-    val backStack: BackStack,
-)
+    override val backStack: BackStack,
+) : BackStackAwareState<ListState> {
+    override fun changeBackStack(route: BackStack): ListState =
+        copy(backStack = route)
+}

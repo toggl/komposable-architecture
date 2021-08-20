@@ -3,10 +3,12 @@ package com.toggl.komposable.sample.todo
 import com.toggl.komposable.architecture.Effect
 import com.toggl.komposable.architecture.Mutable
 import com.toggl.komposable.extensions.mutateWithoutEffects
+import com.toggl.komposable.sample.todo.data.EditableTodoItem
+import com.toggl.komposable.sample.todo.data.TodoItem
 
 data class AppState(
     val todoList: List<TodoItem> = emptyList(),
-    val editableTodo: EditableTodoItem = EditableTodoItem("", ""),
+    val editableTodo: EditableTodoItem = EditableTodoItem(title = "", description = ""),
     override val backStack: BackStack = listOf(AppDestination.List)
 ) : BackStackAwareState<AppState> {
     override fun changeBackStack(route: BackStack): AppState =

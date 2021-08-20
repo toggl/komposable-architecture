@@ -5,4 +5,5 @@ sealed class EditAction {
     data class DescriptionChanged(val description: String) : EditAction()
     object CloseTapped : EditAction()
     object SaveTapped : EditAction()
+    object Saved : EditAction()
 }

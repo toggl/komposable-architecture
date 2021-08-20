@@ -3,7 +3,6 @@ package com.toggl.komposable
 import com.toggl.komposable.common.StoreCoroutineTest
 import com.toggl.komposable.common.TestAction
 import com.toggl.komposable.common.TestEffect
-import com.toggl.komposable.extensions.dispatch
 import io.mockk.Ordering
 import io.mockk.coVerify
 import io.mockk.spyk

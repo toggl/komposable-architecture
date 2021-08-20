@@ -5,14 +5,19 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.BottomAppBar
 import androidx.compose.material.FabPosition
+import androidx.compose.material.Icon
+import androidx.compose.material.OutlinedButton
 import androidx.compose.material.Scaffold
+import androidx.compose.material.Text
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Check
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
-import com.toggl.komposable.extensions.dispatch
+import com.toggl.komposable.sample.todo.edit.EditAction
 import com.toggl.komposable.sample.todo.list.AddTodoFab
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.map
@@ -32,23 +37,28 @@ fun TodoScaffold() {
         else appStore.dispatch(AppAction.BackPressed)
     }
 
+    val currentDestination = backStack.last()
+
     Scaffold(
-        floatingActionButton = { if (backStack.last() == AppDestination.List) AddTodoFab() },
+        floatingActionButton = { if (currentDestination == AppDestination.List) AddTodoFab() },
         floatingActionButtonPosition = FabPosition.Center,
         isFloatingActionButtonDocked = true,
-        bottomBar = { TodoBottomAppBar() }
+        bottomBar = {
+            BottomAppBar(cutoutShape = RoundedCornerShape(100)) {
+                if (currentDestination == AppDestination.Edit) {
+                    OutlinedButton(
+                        onClick = { appStore.dispatch(AppAction.Edit(EditAction.SaveTapped)) }
+                    ) {
+                        Icon(Icons.Rounded.Check, contentDescription = null)
+                        Text(text = "Save")
+                    }
+                }
+            }
+        }
     ) {
         AppNavigationHost(
             backStack = backStack
         )
-    }
-}
-
-@Composable
-private fun TodoBottomAppBar() {
-    BottomAppBar(
-        cutoutShape = RoundedCornerShape(100)
-    ) {
     }
 }
 
