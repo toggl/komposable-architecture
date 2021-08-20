@@ -15,12 +15,12 @@ kapt {
 }
 
 android {
-    compileSdk 30
+    compileSdk 31
 
     defaultConfig {
         applicationId "com.toggl.komposable.sample.todo"
         minSdk 26
-        targetSdk 30
+        targetSdk 31
         versionCode 1
         versionName "1.0"
 
@@ -58,6 +58,8 @@ dependencies {
     implementation Libs.AndroidX.appcompat
     implementation Libs.AndroidX.Activity.activityCompose
     implementation Libs.AndroidX.Activity.activityKtx
+    implementation Libs.AndroidX.Lifecycle.viewModelCompose
+    implementation Libs.AndroidX.Navigation.compose
     implementation Libs.AndroidX.Compose.runtime
     implementation Libs.AndroidX.Compose.compiler
     implementation Libs.AndroidX.Compose.animation
@@ -70,9 +72,12 @@ dependencies {
     implementation Libs.AndroidX.Compose.Foundation.layout
     implementation Libs.Google.material
     implementation Libs.AndroidX.Hilt.work
+    implementation Libs.AndroidX.Hilt.navigation
+    implementation Libs.AndroidX.Hilt.lifecycleViewModel
     implementation Libs.AndroidX.Lifecycle.runtime
-    kapt Libs.AndroidX.Hilt.compiler
     implementation Libs.Hilt.hilt
+    implementation 'androidx.lifecycle:lifecycle-common-java8:2.3.1'
+    kapt Libs.AndroidX.Hilt.compiler
     kapt Libs.Hilt.compiler
 
     debugImplementation Libs.leakCanary

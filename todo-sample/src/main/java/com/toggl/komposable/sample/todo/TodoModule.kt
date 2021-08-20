@@ -1,4 +1,4 @@
-package com.toggl.komposable.sample.todo.di
+package com.toggl.komposable.sample.todo
 
 import android.app.Application
 import com.toggl.komposable.architecture.Reducer
@@ -6,15 +6,12 @@ import com.toggl.komposable.architecture.Store
 import com.toggl.komposable.extensions.combine
 import com.toggl.komposable.extensions.createStore
 import com.toggl.komposable.extensions.pullback
-import com.toggl.komposable.sample.todo.domain.AppAction
-import com.toggl.komposable.sample.todo.domain.AppState
-import com.toggl.komposable.sample.todo.domain.unwrap
-import com.toggl.komposable.sample.todo.edit.domain.EditAction
-import com.toggl.komposable.sample.todo.edit.domain.EditReducer
-import com.toggl.komposable.sample.todo.edit.domain.EditState
-import com.toggl.komposable.sample.todo.list.domain.ListAction
-import com.toggl.komposable.sample.todo.list.domain.ListReducer
-import com.toggl.komposable.sample.todo.list.domain.ListState
+import com.toggl.komposable.sample.todo.edit.EditAction
+import com.toggl.komposable.sample.todo.edit.EditReducer
+import com.toggl.komposable.sample.todo.edit.EditState
+import com.toggl.komposable.sample.todo.list.ListAction
+import com.toggl.komposable.sample.todo.list.ListReducer
+import com.toggl.komposable.sample.todo.list.ListState
 import com.toggl.komposable.scope.DispatcherProvider
 import com.toggl.komposable.scope.StoreScopeProvider
 import dagger.Module
@@ -31,14 +28,16 @@ class TodoModule {
 
     @Provides
     fun appReducer(
+        navigationReducer: NavigationReducer,
         listReducer: ListReducer,
         editReducer: EditReducer
     ): Reducer<AppState, AppAction> =
         combine(
+            navigationReducer,
             listReducer.pullback(
-                mapToLocalState = { appState -> ListState(appState.todoList) },
+                mapToLocalState = { appState -> ListState(appState.todoList, appState.backStack) },
                 mapToLocalAction = AppAction::unwrap,
-                mapToGlobalState = { appState, listState -> appState.copy(todoList = listState.todoList) },
+                mapToGlobalState = { appState, listState -> appState.copy(todoList = listState.todoList, backStack = listState.backStack) },
                 mapToGlobalAction = { listAction -> AppAction.List(listAction) }
             ),
             editReducer.pullback(
@@ -81,7 +80,7 @@ object AppViewModelModule {
     @Provides
     fun listStore(store: Store<AppState, AppAction>): Store<ListState, ListAction> =
         store.view(
-            mapToLocalState = { appState -> ListState(appState.todoList) },
+            mapToLocalState = { appState -> ListState(appState.todoList, appState.backStack) },
             mapToGlobalAction = { listAction -> AppAction.List(listAction) }
         )
 

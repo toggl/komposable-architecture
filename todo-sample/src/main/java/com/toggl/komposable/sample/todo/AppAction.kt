@@ -1,11 +1,12 @@
-package com.toggl.komposable.sample.todo.domain
+package com.toggl.komposable.sample.todo
 
-import com.toggl.komposable.sample.todo.edit.domain.EditAction
-import com.toggl.komposable.sample.todo.list.domain.ListAction
+import com.toggl.komposable.sample.todo.edit.EditAction
+import com.toggl.komposable.sample.todo.list.ListAction
 
 sealed class AppAction {
     class List(override val action: ListAction) : AppAction(), ActionWrapper<ListAction>
     class Edit(override val action: EditAction) : AppAction(), ActionWrapper<EditAction>
+    object BackPressed : AppAction()
 }
 
 interface ActionWrapper<WrappedAction> {
