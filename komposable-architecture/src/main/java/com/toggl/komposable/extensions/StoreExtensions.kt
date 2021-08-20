@@ -1,7 +1,6 @@
 package com.toggl.komposable.extensions
 
 import com.toggl.komposable.architecture.Reducer
-import com.toggl.komposable.architecture.Store
 import com.toggl.komposable.architecture.Subscription
 import com.toggl.komposable.exceptions.ExceptionHandler
 import com.toggl.komposable.exceptions.RethrowingExceptionHandler
@@ -38,10 +37,3 @@ fun <State, Action : Any> createStore(
     storeScopeProvider = storeScopeProvider,
     dispatcherProvider = dispatcherProvider
 )
-
-/**
- * Convenience method to send a single action to be processed by the internal reducer
- * @see Store.dispatch
- */
-fun <State, Action : Any> Store<State, Action>.dispatch(action: Action) =
-    dispatch(listOf(action))
