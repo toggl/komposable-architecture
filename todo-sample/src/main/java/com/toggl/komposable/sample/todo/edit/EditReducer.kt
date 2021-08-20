@@ -8,7 +8,7 @@ import com.toggl.komposable.extensions.mutateWithoutEffects
 import com.toggl.komposable.sample.todo.data.EditableTodoItem
 import com.toggl.komposable.sample.todo.data.TodoDao
 import com.toggl.komposable.sample.todo.data.TodoItem
-import com.toggl.komposable.sample.todo.popBackStackWithoutEffects
+import com.toggl.komposable.sample.todo.popBackStack
 import com.toggl.komposable.scope.DispatcherProvider
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
@@ -24,7 +24,9 @@ class EditReducer @Inject constructor(
             is EditAction.TitleChanged -> state.mutateWithoutEffects { copy(editableTodo = editableTodo.copy(title = action.title)) }
             EditAction.SaveTapped -> effectOf(saveTodoEffectFactory.create(state().editableTodo))
             EditAction.Saved,
-            EditAction.CloseTapped -> state.popBackStackWithoutEffects()
+            EditAction.CloseTapped -> state.mutateWithoutEffects {
+                copy(editableTodo = EditableTodoItem()).popBackStack()
+            }
         }
 }
 
