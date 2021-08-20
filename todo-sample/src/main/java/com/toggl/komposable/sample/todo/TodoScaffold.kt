@@ -27,6 +27,11 @@ fun TodoScaffold() {
 
     val activity = LocalContext.current as AppCompatActivity
 
+    activity.handleBackPressesEmitting {
+        if (backStack.size < 2) activity.finish()
+        else appStore.dispatch(AppAction.BackPressed)
+    }
+
     Scaffold(
         floatingActionButton = { if (backStack.last() == AppDestination.List) AddTodoFab() },
         floatingActionButtonPosition = FabPosition.Center,
@@ -34,11 +39,7 @@ fun TodoScaffold() {
         bottomBar = { TodoBottomAppBar() }
     ) {
         AppNavigationHost(
-            backStack = backStack,
-            onBackPressed = { isFromRoot ->
-                if (isFromRoot) activity.finish()
-                else appStore.dispatch(AppAction.BackPressed)
-            }
+            backStack = backStack
         )
     }
 }
