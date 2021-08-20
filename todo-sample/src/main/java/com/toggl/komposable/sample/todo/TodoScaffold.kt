@@ -71,5 +71,3 @@ fun AppCompatActivity.handleBackPressesEmitting(callback: () -> Unit) {
         }
     )
 }
-
-data class BackStackUpdate(val change: Int, val backStack: BackStack)
