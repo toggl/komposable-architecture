@@ -45,7 +45,7 @@ fun TodoScaffold() {
         isFloatingActionButtonDocked = true,
         bottomBar = {
             BottomAppBar(cutoutShape = RoundedCornerShape(100)) {
-                if (currentDestination == AppDestination.Edit) {
+                if (currentDestination == AppDestination.Add) {
                     OutlinedButton(
                         onClick = { appStore.dispatch(AppAction.Edit(EditAction.SaveTapped)) }
                     ) {

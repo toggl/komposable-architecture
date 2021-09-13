@@ -14,7 +14,6 @@ class ListReducer @Inject constructor() : Reducer<ListState, ListAction> {
     override fun reduce(state: Mutable<ListState>, action: ListAction): List<Effect<ListAction>> =
         when (action) {
             is ListAction.ListUpdated -> state.mutateWithoutEffects { copy(todoList = action.todoList) }
-            ListAction.AddTodoTapped -> state.mutateWithoutEffects { copy(backStack = backStack.push(AppDestination.Edit)) }
-            is ListAction.TodoTapped -> TODO()
+            ListAction.AddTodoTapped -> state.mutateWithoutEffects { copy(backStack = backStack.push(AppDestination.Add)) }
         }
 }

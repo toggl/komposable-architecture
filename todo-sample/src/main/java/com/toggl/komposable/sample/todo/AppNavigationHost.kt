@@ -25,6 +25,6 @@ fun AppNavigationHost(backStack: List<AppDestination>) {
         startDestination = AppDestination.List.route
     ) {
         composable(AppDestination.List.route) { ListPage() }
-        composable(AppDestination.Edit.route) { EditPage() }
+        composable(AppDestination.Add.route) { EditPage() }
     }
 }
