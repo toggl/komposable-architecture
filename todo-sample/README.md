@@ -8,9 +8,8 @@ A very simple TODO app demonstrating the use of Komposable Architecture featurin
 
 We aim to demonstrate how Komposable Architecture fits in a real environment. Thus we are using real DI(Hilt) and an actual database(Room) instead of mocked alternatives. The UI is created using Jetpack Compose, and Stores are managed by Jetpack viewModels. 
 
-![Empty list](screenshots/empty.png)
+<img src="screenshots/empty.png" width=320 />
 
-![Add todo](screenshots/edit.png)
+<img src="screenshots/edit.png" width=320 />
 
-![Todo list](screenshots/list.png)
-
+<img src="screenshots/list.png" width=320 />
