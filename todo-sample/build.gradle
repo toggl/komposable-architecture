@@ -5,6 +5,7 @@ plugins {
     id 'kotlin-android'
     id 'kotlin-kapt'
     id 'dagger.hilt.android.plugin'
+    id 'de.mannodermaus.android-junit5'
 }
 
 def composeVersion = "1.0.1"
@@ -37,8 +38,15 @@ android {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
+
     kotlinOptions {
-        jvmTarget = '1.8'
+        jvmTarget = JavaVersion.VERSION_1_8.toString()
+        freeCompilerArgs += [
+                "-Xopt-in=androidx.compose.foundation.ExperimentalFoundationApi",
+                "-Xopt-in=kotlinx.coroutines.ExperimentalCoroutinesApi",
+                "-Xopt-in=kotlinx.coroutines.FlowPreview",
+                "-Xopt-in=androidx.compose.animation.ExperimentalAnimationApi"
+        ]
     }
 
     buildFeatures {
@@ -85,4 +93,12 @@ dependencies {
     kapt Libs.Hilt.compiler
 
     debugImplementation Libs.leakCanary
+
+    testImplementation Libs.Test.Jupiter.api
+    testRuntimeOnly Libs.Test.Jupiter.engine
+    testImplementation Libs.Test.Jupiter.params
+    testImplementation Libs.slf4j
+    testImplementation Libs.Kotlin.Test.kotlinTest
+    testImplementation Libs.Kotlin.Test.kotlinTestJunit
+    testImplementation Libs.Coroutines.Test.kotlinCoroutineTest
 }
