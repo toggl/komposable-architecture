@@ -31,13 +31,3 @@ interface BackStackAwareState<T> {
 
 fun <State : BackStackAwareState<State>, Action> Mutable<State>.popBackStackWithoutEffects(): List<Effect<Action>> =
     mutateWithoutEffects { popBackStack() }
-
-fun <State : BackStackAwareState<State>> Mutable<State>.popBackStack(): Mutable<State> {
-    mutate { popBackStack() }
-    return this
-}
-
-fun <State : BackStackAwareState<State>, Action> Mutable<State>.navigateWithoutEffects(route: List<AppDestination>): List<Effect<Action>> =
-    mutateWithoutEffects {
-        changeBackStack(route)
-    }

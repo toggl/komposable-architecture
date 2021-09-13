@@ -8,7 +8,6 @@ import com.toggl.komposable.extensions.mutateWithoutEffects
 import com.toggl.komposable.sample.todo.data.EditableTodoItem
 import com.toggl.komposable.sample.todo.data.TodoDao
 import com.toggl.komposable.sample.todo.data.TodoItem
-import com.toggl.komposable.sample.todo.popBackStack
 import com.toggl.komposable.scope.DispatcherProvider
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
