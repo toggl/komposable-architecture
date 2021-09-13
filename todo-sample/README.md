@@ -7,3 +7,10 @@ A very simple TODO app demonstrating the use of Komposable Architecture featurin
 - Reducer tests - [TestListReducer](src/test/java/com/toggl/komposable/sample/todo/TestListReducer.kt)
 
 We aim to demonstrate how Komposable Architecture fits in a real environment. Thus we are using real DI(Hilt) and an actual database(Room) instead of mocked alternatives. The UI is created using Jetpack Compose, and Stores are managed by Jetpack viewModels. 
+
+![Empty list](screenshots/empty.png)
+
+![Add todo](screenshots/edit.png)
+
+![Todo list](screenshots/list.png)
+
