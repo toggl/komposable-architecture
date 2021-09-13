@@ -61,15 +61,14 @@ class TodoModule {
         listSubscription: ListSubscription,
         dispatcherProvider: DispatcherProvider,
         application: Application
-    ): Store<AppState, AppAction> {
-        return createStore(
+    ): Store<AppState, AppAction> =
+        createStore(
             initialState = AppState(),
             reducer = reducer,
             subscription = listSubscription,
             dispatcherProvider = dispatcherProvider,
             storeScopeProvider = application as StoreScopeProvider
         )
-    }
 
     @Provides
     @Singleton
