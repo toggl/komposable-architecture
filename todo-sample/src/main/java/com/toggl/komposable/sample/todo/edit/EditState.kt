@@ -8,6 +8,6 @@ data class EditState(
     val editableTodo: EditableTodoItem = EditableTodoItem(title = "", description = ""),
     override val backStack: BackStack
 ) : BackStackAwareState<EditState> {
-    override fun changeBackStack(route: BackStack): EditState =
-        copy(backStack = route)
+    override fun changeBackStack(backStack: BackStack): EditState =
+        copy(backStack = backStack)
 }

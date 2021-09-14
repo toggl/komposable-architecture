@@ -11,8 +11,8 @@ data class AppState(
     val editableTodo: EditableTodoItem = EditableTodoItem(title = "", description = ""),
     override val backStack: BackStack = listOf(AppDestination.List)
 ) : BackStackAwareState<AppState> {
-    override fun changeBackStack(route: BackStack): AppState =
-        copy(backStack = route)
+    override fun changeBackStack(backStack: BackStack): AppState =
+        copy(backStack = backStack)
 }
 
 typealias BackStack = List<AppDestination>
@@ -26,7 +26,7 @@ fun BackStack.pop() =
 interface BackStackAwareState<T> {
     val backStack: BackStack
     fun popBackStack(): T = changeBackStack(backStack.pop())
-    fun changeBackStack(route: BackStack): T
+    fun changeBackStack(backStack: BackStack): T
 }
 
 fun <State : BackStackAwareState<State>, Action> Mutable<State>.popBackStackWithoutEffects(): List<Effect<Action>> =
