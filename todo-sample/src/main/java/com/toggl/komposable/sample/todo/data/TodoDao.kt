@@ -13,11 +13,11 @@ interface TodoDao {
     fun getAll(): Flow<List<TodoItem>>
 
     @Update
-    fun update(user: TodoItem)
+    fun update(todoItem: TodoItem)
 
     @Insert
-    fun insert(user: TodoItem)
+    fun insert(todoItem: TodoItem)
 
     @Delete
-    fun delete(user: TodoItem)
+    fun delete(todoItem: TodoItem)
 }
