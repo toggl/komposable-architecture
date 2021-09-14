@@ -8,6 +8,6 @@ data class ListState(
     val todoList: List<TodoItem>,
     override val backStack: BackStack,
 ) : BackStackAwareState<ListState> {
-    override fun changeBackStack(route: BackStack): ListState =
-        copy(backStack = route)
+    override fun changeBackStack(backStack: BackStack): ListState =
+        copy(backStack = robackStackute)
 }
