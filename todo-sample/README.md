@@ -13,3 +13,7 @@ We aim to demonstrate how Komposable Architecture fits in a real environment. Th
 <img src="screenshots/edit.png" width=320 />
 
 <img src="screenshots/list.png" width=320 />
+
+## Android Studio IDE requirements
+
+You require the latest stable [Android Studio Arctic Fox](https://developer.android.com/studio/#downloads) release to be able to build the app. This is because the project is written in [Jetpack Compose](https://developer.android.com/jetpack/compose).
