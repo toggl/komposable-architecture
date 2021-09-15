@@ -7,6 +7,8 @@ package com.toggl.komposable.architecture
  */
 class Mutable<T>(private val getValue: () -> T, private val setValue: (T) -> Unit) {
 
+    operator fun invoke() = getValue()
+
     /**
      * Mutates the underlying value of this Mutable
      * @param transformFn   Function that transforms the state and returns a new one

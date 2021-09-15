@@ -10,6 +10,8 @@ buildscript {
     dependencies {
         classpath Libs.androidGradlePlugin
         classpath Libs.Kotlin.gradlePlugin
+        classpath Libs.Hilt.gradlePlugin
+        classpath Libs.Test.junit5Plugin
     }
 }
 

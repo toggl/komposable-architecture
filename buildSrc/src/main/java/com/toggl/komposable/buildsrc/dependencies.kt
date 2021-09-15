@@ -5,7 +5,7 @@ object Versions {
 }
 
 object Libs {
-    const val androidGradlePlugin = "com.android.tools.build:gradle:7.0.0"
+    const val androidGradlePlugin = "com.android.tools.build:gradle:7.0.2"
     const val gradleVersionsPlugin = "com.github.ben-manes:gradle-versions-plugin:0.36.0"
     const val leakCanary = "com.squareup.leakcanary:leakcanary-android:2.7"
     // fixes warning thrown by SLF4J
@@ -77,6 +77,7 @@ object Libs {
             const val compiler = "androidx.compose.compiler:compiler:$version"
             const val animation = "androidx.compose.animation:animation:$version"
 
+
             object UI {
                 const val core = "androidx.compose.ui:ui:$version"
                 const val tooling = "androidx.compose.ui:ui-tooling:$version"
@@ -109,6 +110,7 @@ object Libs {
         object Lifecycle {
             private const val version = "2.4.0-alpha01"
             const val viewModel = "androidx.lifecycle:lifecycle-viewmodel-ktx:$version"
+            const val viewModelCompose = "androidx.lifecycle:lifecycle-viewmodel-compose:1.0.0-alpha07"
             const val ktx = "androidx.lifecycle:lifecycle-livedata-ktx:$version"
             const val commonJava8 = "androidx.lifecycle:lifecycle-common-java8:$version"
             const val compiler = "androidx.lifecycle:lifecycle-compiler:$version"
@@ -116,9 +118,33 @@ object Libs {
         }
 
         object Navigation {
-            private const val version = "2.3.5"
-            const val fragment = "androidx.navigation:navigation-fragment-ktx:$version"
-            const val ui = "androidx.navigation:navigation-ui-ktx:$version"
+            private const val version = "2.4.0-alpha07"
+            const val compose = "androidx.navigation:navigation-compose:$version"
+        }
+
+        object Hilt {
+            private const val version = "1.0.0"
+            const val compiler = "androidx.hilt:hilt-compiler:$version"
+            const val navigation = "androidx.hilt:hilt-navigation-compose:1.0.0-alpha03"
+            const val lifecycleViewModel = "androidx.hilt:hilt-lifecycle-viewmodel:1.0.0-alpha03"
+            const val work = "androidx.hilt:hilt-work:$version"
+        }
+
+        object Room {
+            private const val version = "2.2.5"
+            const val common = "androidx.room:room-common:$version"
+            const val runtime = "androidx.room:room-runtime:$version"
+            const val compiler = "androidx.room:room-compiler:$version"
+            const val ktx = "androidx.room:room-ktx:$version"
         }
     }
+
+    object Hilt {
+        private const val version = "2.37"
+
+        const val gradlePlugin = "com.google.dagger:hilt-android-gradle-plugin:$version"
+        const val hilt = "com.google.dagger:hilt-android:$version"
+        const val compiler = "com.google.dagger:hilt-android-compiler:$version"
+    }
 }
+

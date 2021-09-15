@@ -24,6 +24,13 @@ interface Store<State, Action : Any> {
     fun dispatch(actions: List<Action>)
 
     /**
+     * Convenience method to send a single action to be processed by the internal reducer
+     * @see Store.dispatch
+     */
+    fun dispatch(action: Action) =
+        dispatch(listOf(action))
+
+    /**
      * Transforms this store in a more specific store that can only emit
      * a subset of its actions and access a subset of its state
      * @param mapToLocalState Function to transform the global state into the local state

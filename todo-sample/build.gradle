@@ -4,6 +4,8 @@ plugins {
     id 'com.android.application'
     id 'kotlin-android'
     id 'kotlin-kapt'
+    id 'dagger.hilt.android.plugin'
+    id 'de.mannodermaus.android-junit5'
 }
 
 def composeVersion = "1.0.1"
@@ -14,12 +16,12 @@ kapt {
 }
 
 android {
-    compileSdk 30
+    compileSdk 31
 
     defaultConfig {
         applicationId "com.toggl.komposable.sample.todo"
         minSdk 26
-        targetSdk 30
+        targetSdk 31
         versionCode 1
         versionName "1.0"
 
@@ -36,8 +38,15 @@ android {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
+
     kotlinOptions {
-        jvmTarget = '1.8'
+        jvmTarget = JavaVersion.VERSION_1_8.toString()
+        freeCompilerArgs += [
+                "-Xopt-in=androidx.compose.foundation.ExperimentalFoundationApi",
+                "-Xopt-in=kotlinx.coroutines.ExperimentalCoroutinesApi",
+                "-Xopt-in=kotlinx.coroutines.FlowPreview",
+                "-Xopt-in=androidx.compose.animation.ExperimentalAnimationApi"
+        ]
     }
 
     buildFeatures {
@@ -57,6 +66,8 @@ dependencies {
     implementation Libs.AndroidX.appcompat
     implementation Libs.AndroidX.Activity.activityCompose
     implementation Libs.AndroidX.Activity.activityKtx
+    implementation Libs.AndroidX.Lifecycle.viewModelCompose
+    implementation Libs.AndroidX.Navigation.compose
     implementation Libs.AndroidX.Compose.runtime
     implementation Libs.AndroidX.Compose.compiler
     implementation Libs.AndroidX.Compose.animation
@@ -68,6 +79,26 @@ dependencies {
     implementation Libs.AndroidX.Compose.Foundation.core
     implementation Libs.AndroidX.Compose.Foundation.layout
     implementation Libs.Google.material
+    implementation Libs.AndroidX.Hilt.work
+    implementation Libs.AndroidX.Hilt.navigation
+    implementation Libs.AndroidX.Hilt.lifecycleViewModel
+    implementation Libs.AndroidX.Lifecycle.runtime
+    implementation Libs.AndroidX.Lifecycle.commonJava8
+    implementation Libs.AndroidX.Room.common
+    implementation Libs.AndroidX.Room.runtime
+    implementation Libs.AndroidX.Room.ktx
+    kapt Libs.AndroidX.Room.compiler
+    implementation Libs.Hilt.hilt
+    kapt Libs.AndroidX.Hilt.compiler
+    kapt Libs.Hilt.compiler
 
     debugImplementation Libs.leakCanary
+
+    testImplementation Libs.Test.Jupiter.api
+    testRuntimeOnly Libs.Test.Jupiter.engine
+    testImplementation Libs.Test.Jupiter.params
+    testImplementation Libs.slf4j
+    testImplementation Libs.Kotlin.Test.kotlinTest
+    testImplementation Libs.Kotlin.Test.kotlinTestJunit
+    testImplementation Libs.Coroutines.Test.kotlinCoroutineTest
 }

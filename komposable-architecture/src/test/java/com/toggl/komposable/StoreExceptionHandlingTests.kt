@@ -5,7 +5,6 @@ import com.toggl.komposable.common.TestAction
 import com.toggl.komposable.common.TestException
 import com.toggl.komposable.common.TestSubscription
 import com.toggl.komposable.common.createTestStore
-import com.toggl.komposable.extensions.dispatch
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
