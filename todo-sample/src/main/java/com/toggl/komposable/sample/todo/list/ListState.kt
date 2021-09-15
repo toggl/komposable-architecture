@@ -9,5 +9,5 @@ data class ListState(
     override val backStack: BackStack,
 ) : BackStackAwareState<ListState> {
     override fun changeBackStack(backStack: BackStack): ListState =
-        copy(backStack = robackStackute)
+        copy(backStack = backStack)
 }
