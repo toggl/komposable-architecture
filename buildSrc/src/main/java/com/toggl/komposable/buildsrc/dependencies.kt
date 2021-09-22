@@ -43,7 +43,7 @@ object Libs {
     }
 
     object Coroutines {
-        private const val version = "1.5.1"
+        private const val version = "1.5.2"
         const val core = "org.jetbrains.kotlinx:kotlinx-coroutines-core:$version"
         const val android = "org.jetbrains.kotlinx:kotlinx-coroutines-android:$version"
 
@@ -100,7 +100,7 @@ object Libs {
         }
 
         object Lifecycle {
-            private const val version = "2.4.0-alpha01"
+            private const val version = "2.4.0-beta01"
             const val viewModel = "androidx.lifecycle:lifecycle-viewmodel-ktx:$version"
             const val viewModelCompose = "androidx.lifecycle:lifecycle-viewmodel-compose:1.0.0-alpha07"
             const val ktx = "androidx.lifecycle:lifecycle-livedata-ktx:$version"
@@ -132,7 +132,7 @@ object Libs {
     }
 
     object Hilt {
-        private const val version = "2.37"
+        private const val version = "2.38.1"
 
         const val gradlePlugin = "com.google.dagger:hilt-android-gradle-plugin:$version"
         const val hilt = "com.google.dagger:hilt-android:$version"
