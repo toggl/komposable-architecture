@@ -16,6 +16,8 @@ object Libs {
 
         const val junit5Plugin = "de.mannodermaus.gradle.plugins:android-junit5:1.7.1.1"
         const val mockk = "io.mockk:mockk:1.12.0"
+        const val turbine = "app.cash.turbine:turbine:0.6.0"
+        const val kotestMatchers = "io.kotest:kotest-assertions-core-jvm:${kotestVersion}"
 
         object Jupiter {
             private const val version = "5.7.1"

@@ -10,6 +10,8 @@ dependencies {
     testRuntimeOnly Libs.Test.Jupiter.engine
     testImplementation Libs.slf4j
     testImplementation Libs.Test.mockk
+    testImplementation Libs.Test.turbine
+    testImplementation Libs.Test.kotestMatchers
     testImplementation Libs.Kotlin.Test.kotlinTest
     testImplementation Libs.Kotlin.Test.kotlinTestJunit
     testImplementation Libs.Coroutines.Test.kotlinCoroutineTest
