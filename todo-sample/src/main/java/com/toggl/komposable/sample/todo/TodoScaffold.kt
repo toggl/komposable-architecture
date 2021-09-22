@@ -2,6 +2,8 @@ package com.toggl.komposable.sample.todo
 
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.BottomAppBar
 import androidx.compose.material.FabPosition
@@ -13,10 +15,13 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
+import com.toggl.komposable.sample.todo.data.Identity
 import com.toggl.komposable.sample.todo.edit.EditAction
 import com.toggl.komposable.sample.todo.list.AddTodoFab
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -43,18 +48,7 @@ fun TodoScaffold() {
         floatingActionButton = { if (currentDestination == AppDestination.List) AddTodoFab() },
         floatingActionButtonPosition = FabPosition.Center,
         isFloatingActionButtonDocked = true,
-        bottomBar = {
-            BottomAppBar(cutoutShape = RoundedCornerShape(100)) {
-                if (currentDestination == AppDestination.Add) {
-                    OutlinedButton(
-                        onClick = { appStore.dispatch(AppAction.Edit(EditAction.SaveTapped)) }
-                    ) {
-                        Icon(Icons.Rounded.Check, contentDescription = null)
-                        Text(text = "Save")
-                    }
-                }
-            }
-        }
+        bottomBar = { TodoBottomAppBar(appStore, currentDestination) }
     ) {
         AppNavigationHost(
             backStack = backStack
@@ -80,4 +74,29 @@ fun AppCompatActivity.handleBackPressesEmitting(callback: () -> Unit) {
             }
         }
     )
+}
+
+@Composable
+private fun TodoBottomAppBar(appStore: AppStoreViewModel, currentDestination: AppDestination) {
+
+    val identity by appStore.state
+        .map { it.identity }
+        .collectAsStateWhenStarted(initial = Identity.Unknown)
+
+    BottomAppBar(cutoutShape = RoundedCornerShape(100)) {
+        if (currentDestination == AppDestination.Add) {
+            OutlinedButton(
+                onClick = { appStore.dispatch(AppAction.Edit(EditAction.SaveTapped)) }
+            ) {
+                Icon(Icons.Rounded.Check, contentDescription = null)
+                Text(text = "Save")
+            }
+        }
+        Spacer(modifier = Modifier.weight(1f))
+        val identityText = when (identity) {
+            Identity.Unknown -> "Loading..."
+            is Identity.User -> (identity as Identity.User).username
+        }
+        Text(text = identityText, modifier = Modifier.padding(end = 12.dp))
+    }
 }
