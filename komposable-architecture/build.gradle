@@ -6,12 +6,8 @@ dependencies {
     implementation Libs.Kotlin.stdlib
     implementation Libs.Coroutines.core
 
-    testImplementation Libs.Test.turbine
     testImplementation Libs.Test.Jupiter.api
     testRuntimeOnly Libs.Test.Jupiter.engine
-    testImplementation Libs.Test.Jupiter.params
-    testImplementation Libs.Test.kotestMatchers
-    testImplementation Libs.Test.kotestProperties
     testImplementation Libs.slf4j
     testImplementation Libs.Test.mockk
     testImplementation Libs.Kotlin.Test.kotlinTest

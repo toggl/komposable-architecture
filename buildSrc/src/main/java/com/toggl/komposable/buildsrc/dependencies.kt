@@ -14,12 +14,7 @@ object Libs {
     object Test {
         const val kotestVersion = "4.2.3"
 
-        const val junit4 = "junit:junit:4.13"
-        const val robolectric = "org.robolectric:robolectric:4.5.1"
-        const val turbine = "app.cash.turbine:turbine:0.6.0"
         const val junit5Plugin = "de.mannodermaus.gradle.plugins:android-junit5:1.7.1.1"
-        const val kotestMatchers = "io.kotest:kotest-assertions-core-jvm:${kotestVersion}"
-        const val kotestProperties = "io.kotest:kotest-property-jvm:${kotestVersion}"
         const val mockk = "io.mockk:mockk:1.12.0"
         const val mockkAndroid = "io.mockk:mockk-android:1.10.0"
         const val assertJ = "org.assertj:assertj-core:3.17.1"
@@ -29,8 +24,7 @@ object Libs {
             // (Required) Writing and executing Unit Tests on the JUnit5 Platform
             const val api = "org.junit.jupiter:junit-jupiter-api:$version"
             const val engine = "org.junit.jupiter:junit-jupiter-engine:$version"
-            // (Optional) If you need "Parameterized Tests"
-            const val params = "org.junit.jupiter:junit-jupiter-params:$version"
+
         }
     }
 
