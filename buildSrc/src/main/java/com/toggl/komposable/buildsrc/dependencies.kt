@@ -16,8 +16,6 @@ object Libs {
 
         const val junit5Plugin = "de.mannodermaus.gradle.plugins:android-junit5:1.7.1.1"
         const val mockk = "io.mockk:mockk:1.12.0"
-        const val mockkAndroid = "io.mockk:mockk-android:1.10.0"
-        const val assertJ = "org.assertj:assertj-core:3.17.1"
 
         object Jupiter {
             private const val version = "5.7.1"
