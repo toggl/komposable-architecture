@@ -1,5 +1,5 @@
 # Komposable Architecture [![Build Status](https://app.bitrise.io/app/8fc708d11fa0a5e5/status.svg?token=Q5m1YqGgX4VrIz4V2d0Olg&branch=main)](https://app.bitrise.io/app/8fc708d11fa0a5e5)
-Kotlin implementation of Point-Free's composable architecture
+Kotlin implementation of [Point-Free's The Composable Architecture](https://github.com/pointfreeco/swift-composable-architecture)
 
 ## Motivations
 When the time or rewritting Toggl's mobile apps came, we decided that we would take the native approach rather than insisting in using Xamarin
