@@ -23,6 +23,7 @@ Additionally we decided to extend Point-Free architecture with something we call
 
 ## 📲 Sample App
 - [Todo Sample](https://github.com/toggl/komposable-architecture/tree/main/todo-sample)
+- More samples soon!
 
 To run the sample app, start by cloning this repo:
 
