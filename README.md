@@ -1,14 +1,14 @@
-# Komposable Architecture [![Build Status](https://app.bitrise.io/app/8fc708d11fa0a5e5/status.svg?token=Q5m1YqGgX4VrIz4V2d0Olg&branch=main)](https://app.bitrise.io/app/8fc708d11fa0a5e5)
+# 🧩 Komposable Architecture [![Build Status](https://app.bitrise.io/app/8fc708d11fa0a5e5/status.svg?token=Q5m1YqGgX4VrIz4V2d0Olg&branch=main)](https://app.bitrise.io/app/8fc708d11fa0a5e5)
 Kotlin implementation of [Point-Free's The Composable Architecture](https://github.com/pointfreeco/swift-composable-architecture)
 
-## Motivations
+## 💡 Motivations
 When the time or rewritting Toggl's mobile apps came, we decided that we would take the native approach rather than insisting in using Xamarin
 We quickly realized, however, that we could still share many things across the app, even if the apps didn't share a common codebase
 The idea behind using the same architecture allowed us to share specs, github issues, creates a single common language that both Android and iOS devs can use and even speeds up development of features that are already implemented in the other platform!
 
 We chose to use [Point-Free](https://www.pointfree.co/)'s Composable Architecture as the apps's architecture, which meant we had to set out to implement it in Kotlin. This repo is the result of our efforts!
 
-## Differences from iOS
+## 🍎 Differences from iOS
 
 While all the core concepts are the same, the composable architecture is still written with Swift in mind, which means not everything can be translated 1:1 to Kotlin. Here are the problems we faced and the solutions we found:
 
@@ -21,13 +21,27 @@ There's no way to simply mutate the state in Kotlin like the Composable architec
 ### Subscriptions
 Additionally we decided to extend Point-Free architecture with something we call subscriptions. This concept is taken from the [Elm Architecture](https://guide.elm-lang.org/architecture/). It's basically a way for us to leverage observable capabilities of different APIs, in our case it's mostly for observing data stored in [Room Database](https://developer.android.com/training/data-storage/room).
 
-### Sample code
+## 📲 Sample App
 - [Todo Sample](https://github.com/toggl/komposable-architecture/tree/main/todo-sample)
 
-## Installation
+To run the sample app, start by cloning this repo:
+
+```
+git clone git@github.com:toggl/komposable-architecture.git
+```
+
+Next, open Android Studio and open the newly created project folder. You'll want to run the todo-sample app.
+
+For more examples take a look at [Point-Free's swift samples](https://github.com/pointfreeco/swift-composable-architecture#examples)
+
+## 🚀 Installation
 Soon:tm:
 
-## Parts of The Architecture
+## © Licence
+
+Soon:tm:
+
+## 🧭 High-level View
 
 This is a high level overview of the different parts of the architecture. 
 
@@ -44,7 +58,9 @@ There's one global `Store` and one `AppState`. But we can *view* into the store 
 There's also one main `Reducer` but multiple sub-reducers that handle a limited set of actions and only a part of the state. Those reducers are then *pulled back* and *combined* into the main 
 reducer.
 
-## Store & State
+## 🔎 Getting into the weeds
+
+### Store & State
 
 The `Store` exposes a flow which emits the whole state of the app every time there's a change and a method to dispatch actions that will modify that state.  The `State` is just a data class that contains ALL the state of the application. It also includes the local state of all the specific modules that need local state. More on this later.
 
@@ -93,7 +109,7 @@ store.state
 
 The store can be "viewed into", which means that we'll treat a generic store as if it was a more specific one which deals with only part of the app state and a subset of the actions. More on the Store Views section.
 
-## Actions
+### Actions
 
 Actions are sealed classes, which makes it easier to discover which actions are available and also add the certainty that we are handling all of them in reducers.
 
@@ -129,7 +145,7 @@ But if the store is a view that takes `EditAction`s we'd do it like this:
 store.dispatch(EditAction.TitleChanged("new title"))
 ```
 
-## Reducers & Effects
+### Reducers & Effects
 
 Reducers are classes that implement the following interface:
 
@@ -151,7 +167,7 @@ interface Effect<out Action> {
 }
 ```
 
-## Subscriptions
+### Subscriptions
 Subscriptions are similar to effects:
 
 ```kotlin
@@ -184,7 +200,7 @@ class ListSubscription @Inject constructor(val locationProvider: LocationProvide
 ```
 
 
-## Pullback
+### Pullback
 
 There's one app level reducer that gets injected into the store. This reducer takes the whole `AppState` and the complete set of `AppActions`. 
 
@@ -216,7 +232,7 @@ class PullbackReducer<LocalState, GlobalState, LocalAction, GlobalAction>(
 
 After we've transformed the reducer we can use `combine` to merge it with other reducers to create one single reducer that is then injected into the store.
 
-## Store Views
+### Store Views
 
 Similarly to reducers and pullback, the store itself can be "mapped" into a specific type of store that only holds some part of the state and only handles some subset of actions. Only this operation is not exactly "map", so it's called `view`.
 
@@ -243,7 +259,7 @@ This method on `Store` takes two closures, one to map the global state into loca
 
 Different modules or features of the app use different store views so they are only able to listen to changes to parts of the state and are only able to dispatch certain actions.
 
-## Local State
+### Local State
 
 Some features have the need of adding some state to be handled by their reducer, but maybe that state is not necessary for the rest of the application. Consider email & password fields in a theoretical Auth module.
 
@@ -273,7 +289,7 @@ data class AppState(
 )
 ```
 
-## High-order reducers
+### High-order reducers
 
 High-order reducers are basically reducers that take another reducer (and maybe also some other parameters). The outer reducer adds some behavior to the inner one, maybe transforming actions, stopping them or doing something with them before sending them forward to the inner reducer.
 
