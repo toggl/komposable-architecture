@@ -7,9 +7,11 @@ import com.toggl.komposable.architecture.Reducer
 import com.toggl.komposable.architecture.Store
 import com.toggl.komposable.extensions.combine
 import com.toggl.komposable.extensions.createStore
+import com.toggl.komposable.extensions.mergeWith
 import com.toggl.komposable.extensions.pullback
 import com.toggl.komposable.sample.todo.data.AppDatabase
 import com.toggl.komposable.sample.todo.data.TodoDao
+import com.toggl.komposable.sample.todo.data.UserSubscription
 import com.toggl.komposable.sample.todo.edit.EditAction
 import com.toggl.komposable.sample.todo.edit.EditReducer
 import com.toggl.komposable.sample.todo.edit.EditState
@@ -35,11 +37,13 @@ class TodoModule {
     @Provides
     fun appReducer(
         navigationReducer: NavigationReducer,
+        authReducer: AuthReducer,
         listReducer: ListReducer,
         editReducer: EditReducer
     ): Reducer<AppState, AppAction> =
         combine(
             navigationReducer,
+            authReducer,
             listReducer.pullback(
                 mapToLocalState = { appState -> ListState(appState.todoList, appState.backStack) },
                 mapToLocalAction = AppAction::unwrap,
@@ -59,13 +63,14 @@ class TodoModule {
     fun appStore(
         reducer: Reducer<AppState, AppAction>,
         listSubscription: ListSubscription,
+        userSubscription: UserSubscription,
         dispatcherProvider: DispatcherProvider,
         application: Application
     ): Store<AppState, AppAction> =
         createStore(
             initialState = AppState(),
             reducer = reducer,
-            subscription = listSubscription,
+            subscription = listSubscription mergeWith userSubscription,
             dispatcherProvider = dispatcherProvider,
             storeScopeProvider = application as StoreScopeProvider
         )
