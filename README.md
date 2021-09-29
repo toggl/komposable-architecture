@@ -2,7 +2,7 @@
 Kotlin implementation of [Point-Free's The Composable Architecture](https://github.com/pointfreeco/swift-composable-architecture)
 
 ## 💡 Motivations
-When the time or rewritting Toggl's mobile apps came, we decided that we would take the native approach rather than insisting in using Xamarin
+When the time of rewriting Toggl's mobile apps came, we decided that we would take the native approach rather than insisting on using Xamarin
 We quickly realized, however, that we could still share many things across the app, even if the apps didn't share a common codebase
 The idea behind using the same architecture allowed us to share specs, github issues, creates a single common language that both Android and iOS devs can use and even speeds up development of features that are already implemented in the other platform!
 
@@ -16,10 +16,10 @@ While all the core concepts are the same, the composable architecture is still w
 The lack of KeyPaths in Kotlin forces us to use functions in order to map from global state to local state.
 
 ### No Value Types
-There's no way to simply mutate the state in Kotlin like the Composable architecture does in Swift. The fix for this is the [`Mutable`](https://github.com/toggl/komposable-architecture/blob/main/komposable-architecture/src/main/java/com/toggl/komposable/architecture/Mutable.kt) class which allows for the state to be mutate without requiring the user to explicitly returning the new copy of the state, making the Reducers read a lot more like their iOS counterparts.
+There's no way to simply mutate the state in Kotlin like the Composable architecture does in Swift. The fix for this is the [`Mutable`](https://github.com/toggl/komposable-architecture/blob/main/komposable-architecture/src/main/java/com/toggl/komposable/architecture/Mutable.kt) class which allows for the state to be mutated without requiring the user to explicitly return the new copy of the state, making the Reducers read a lot more like their iOS counterparts.
 
 ### Subscriptions
-Additionally we decided to extend Point-Free architecture with something we call subscriptions. This concept is taken from the [Elm Architecture](https://guide.elm-lang.org/architecture/). It's basically a way for us to leverage observable capabilities of different APIs, in our case it's mostly for observing data stored in [Room Database](https://developer.android.com/training/data-storage/room).
+Additionally we decided to extend Point-Free architecture with something called subscriptions. This concept is taken from the [Elm Architecture](https://guide.elm-lang.org/architecture/). It's basically a way for us to leverage observable capabilities of different APIs, in our case it's mostly for observing data stored in [Room Database](https://developer.android.com/training/data-storage/room).
 
 ## 📲 Sample App
 - [Todo Sample](https://github.com/toggl/komposable-architecture/tree/main/todo-sample)
@@ -51,13 +51,12 @@ This is a high level overview of the different parts of the architecture.
 - **Store** The central hub of the application. Contains the whole state of the app, handles the dispatched actions passing them to the reducers and fires Effects.
 - **State** The single source of truth for the whole app. This data class will be probably empty when the application start and will be filled after every action. 
 - **Reducers** Reducers are pure functions that take the state and an action and produce a new state. Simple as that. They optionally result in an array of Effects that will asynchronously dispatch further actions. All business logic should reside in them.
-- **Effects** As mentioned, Reducers optionally produce these after handling an action. They are classes that return an optional effect. All the effects emitted from a reducer will be batched, meaning the state change will only be emitted once all actions are dispatched.
+- **Effects** As mentioned, Reducers optionally produce these after handling an action. They are classes that return an optional action. All the effects emitted from a reducer will be batched, meaning the state change will only be emitted once all actions are dispatched.
 - **Subscriptions** Subscriptions are emitting actions based on some underling observable API and/or state changes.   
 
 There's one global `Store` and one `AppState`. But we can *view* into the store to get sub-stores that only work on one part of the state. More on that later.
 
-There's also one main `Reducer` but multiple sub-reducers that handle a limited set of actions and only a part of the state. Those reducers are then *pulled back* and *combined* into the main 
-reducer.
+There's also one main `Reducer` and multiple sub-reducers that handle a limited set of actions and only a part of the state. Those reducers are then *pulled back* and *combined* into the main reducer.
 
 ## 🔎 Getting into the weeds
 
@@ -188,7 +187,7 @@ class ListSubscription @Inject constructor(val todoDao: TodoDao) : Subscription<
 }
 ```
 
-Or some other observable API like for example location services. Subscription flow can be also steered by state changes:
+Or some other observable APIs like for example location services. Subscription flow can be also steered by state changes:
 
 ```kotlin
 class ListSubscription @Inject constructor(val locationProvider: LocationProvider) : Subscription<AppState, AppAction> {
@@ -256,7 +255,7 @@ class MutableStateFlowStore<State, Action : Any> private constructor(
 }
 ```
 
-This method on `Store` takes two closures, one to map the global state into local state and another one to the opposite for the actions.
+This method on `Store` takes two functions, one to map the global state into local state and another one to map local action to global action.
 
 Different modules or features of the app use different store views so they are only able to listen to changes to parts of the state and are only able to dispatch certain actions.
 
