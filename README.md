@@ -36,7 +36,11 @@ Next, open Android Studio and open the newly created project folder. You'll want
 For more examples take a look at [Point-Free's swift samples](https://github.com/pointfreeco/swift-composable-architecture#examples)
 
 ## 🚀 Installation
-Soon:tm:
+The latest release is available on [Maven Central](https://search.maven.org/artifact/com.toggl/komposable-architecture/0.1.0/jar).
+
+```
+implementation 'com.toggl:komposable-architecture:0.1.0'
+```
 
 ## © Licence
 
