@@ -1,6 +1,10 @@
 # 🧩 Komposable Architecture [![Build Status](https://app.bitrise.io/app/8fc708d11fa0a5e5/status.svg?token=Q5m1YqGgX4VrIz4V2d0Olg&branch=main)](https://app.bitrise.io/app/8fc708d11fa0a5e5)
 Kotlin implementation of [Point-Free's The Composable Architecture](https://github.com/pointfreeco/swift-composable-architecture)
 
+## 🚧 Project Status
+We've been using Komposable Architecture in production for almost a year now, and we haven't encountered any major issues. However, the API is still subject to change at least until we reach version 1.0.
+We definitely want to make the setup more straightforward, and we are thinking about ways to integrate jetpack navigation as well.
+
 ## 💡 Motivations
 When the time of rewriting Toggl's mobile apps came, we decided that we would take the native approach rather than insisting on using Xamarin
 We quickly realized, however, that we could still share many things across the app, even if the apps didn't share a common codebase
