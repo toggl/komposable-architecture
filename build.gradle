@@ -5,7 +5,7 @@ import com.toggl.komposable.buildsrc.Versions
 buildscript {
     repositories {
         google()
-        jcenter()
+        mavenCentral()
     }
     dependencies {
         classpath Libs.androidGradlePlugin
@@ -23,7 +23,7 @@ plugins {
 allprojects {
     repositories {
         google()
-        jcenter()
+        mavenCentral()
     }
 }
 
