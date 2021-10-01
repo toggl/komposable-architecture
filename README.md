@@ -42,7 +42,7 @@ For more examples take a look at [Point-Free's swift samples](https://github.com
 ## 🚀 Installation
 The latest release is available on [Maven Central](https://search.maven.org/artifact/com.toggl/komposable-architecture/0.1.0/jar).
 
-```
+```groovy
 implementation 'com.toggl:komposable-architecture:0.1.0'
 ```
 
