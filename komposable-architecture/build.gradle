@@ -1,6 +1,36 @@
 import com.toggl.komposable.buildsrc.Libs
 
-apply plugin: 'kotlin'
+plugins {
+    id 'kotlin'
+}
+
+ext {
+    PUBLISH_GROUP_ID = 'com.toggl'
+    PUBLISH_VERSION = '0.1.1'
+    PUBLISH_ARTIFACT_ID = 'komposable-architecture'
+    PUBLISH_DESCRIPTION = 'Kotlin implementation of Point-Free\'s composable architecture'
+    PUBLISH_URL = 'https://github.com/toggl/komposable-architecture'
+    PUBLISH_LICENSE_NAME = 'Apache License'
+    PUBLISH_LICENSE_URL =
+            'https://github.com/toggl/komposable-architecture/blob/main/LICENSE'
+    PUBLISH_DEVELOPER_ID = 'toggl'
+    PUBLISH_DEVELOPER_NAME = 'Toggle Track Android Team ♥️'
+    PUBLISH_DEVELOPER_EMAIL = 'support@toggl.com'
+    PUBLISH_SCM_CONNECTION =
+            'scm:git:github.com/toggl/komposable-architecture.git'
+    PUBLISH_SCM_DEVELOPER_CONNECTION =
+            'scm:git:ssh://github.com/toggl/komposable-architecture.git'
+    PUBLISH_SCM_URL =
+            'https://github.com/toggl/komposable-architecture/tree/main'
+}
+
+apply from: "${rootProject.projectDir}/scripts/publish-module.gradle"
+
+
+java {
+    withJavadocJar()
+    withSourcesJar()
+}
 
 dependencies {
     implementation Libs.Kotlin.stdlib
