@@ -15,7 +15,7 @@ ext {
             'https://github.com/toggl/komposable-architecture/blob/main/LICENSE'
     PUBLISH_DEVELOPER_ID = 'toggl'
     PUBLISH_DEVELOPER_NAME = 'Toggl Track'
-    PUBLISH_DEVELOPER_EMAIL = 'tomas.valenta@toggl.com'
+    PUBLISH_DEVELOPER_EMAIL = 'support@toggl.com'
     PUBLISH_SCM_CONNECTION =
             'scm:git:github.com/toggl/komposable-architecture.git'
     PUBLISH_SCM_DEVELOPER_CONNECTION =
