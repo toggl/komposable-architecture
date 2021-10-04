@@ -1,4 +1,4 @@
-# 🧩 Komposable Architecture [![Build Status](https://app.bitrise.io/app/8fc708d11fa0a5e5/status.svg?token=Q5m1YqGgX4VrIz4V2d0Olg&branch=main)](https://app.bitrise.io/app/8fc708d11fa0a5e5)
+# 🧩 Komposable Architecture  [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.toggl/komposable-architecture/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.toggl/komposable-architecture) [![Build Status](https://app.bitrise.io/app/8fc708d11fa0a5e5/status.svg?token=Q5m1YqGgX4VrIz4V2d0Olg&branch=main)](https://app.bitrise.io/app/8fc708d11fa0a5e5) [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 Kotlin implementation of [Point-Free's The Composable Architecture](https://github.com/pointfreeco/swift-composable-architecture)
 
 ## 🚧 Project Status
