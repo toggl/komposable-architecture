@@ -14,7 +14,7 @@ ext {
     PUBLISH_LICENSE_URL =
             'https://github.com/toggl/komposable-architecture/blob/main/LICENSE'
     PUBLISH_DEVELOPER_ID = 'toggl'
-    PUBLISH_DEVELOPER_NAME = 'Toggle Track Android Team ♥️'
+    PUBLISH_DEVELOPER_NAME = 'Toggl Track Android Team ♥️'
     PUBLISH_DEVELOPER_EMAIL = 'support@toggl.com'
     PUBLISH_SCM_CONNECTION =
             'scm:git:github.com/toggl/komposable-architecture.git'
