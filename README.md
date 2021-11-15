@@ -173,7 +173,7 @@ Reducers are classes that implement the following interface:
 
 ```kotlin
 interface Reducer<State, Action> {
-    fun reduce(state: MutableValue<State>, action: Action): List<Effect<Action>>
+    fun reduce(state: Mutable<State>, action: Action): List<Effect<Action>>
 }
 ```
 
@@ -322,7 +322,7 @@ The simplest example of this is a logging reducer, which logs every dispatched a
 class LoggingReducer(override val innerReducer: Reducer<AppState, AppAction>)
     : HigherOrderReducer<AppState, AppAction> {
     override fun reduce(
-        state: MutableValue<AppState>,
+        state: Mutable<AppState>,
         action: AppAction
     ): List<Effect<AppAction>> {
         Log.i(
