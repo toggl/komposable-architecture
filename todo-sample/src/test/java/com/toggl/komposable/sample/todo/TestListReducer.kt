@@ -7,7 +7,7 @@ import com.toggl.komposable.sample.todo.data.TodoItem
 import com.toggl.komposable.sample.todo.list.ListAction
 import com.toggl.komposable.sample.todo.list.ListReducer
 import com.toggl.komposable.sample.todo.list.ListState
-import kotlinx.coroutines.test.runBlockingTest
+import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 
@@ -16,7 +16,7 @@ class TestListReducer : CoroutineTest() {
     private val testTodoItem = TodoItem(1, "title", "description")
 
     @Test
-    fun `ListUpdated action should update the list of todos and return no effects`() = runBlockingTest {
+    fun `ListUpdated action should update the list of todos and return no effects`() = runTest {
         val initialState = ListState(todoList = emptyList(), backStack = emptyList())
         reducer.testReduce(
             initialState,
@@ -28,7 +28,7 @@ class TestListReducer : CoroutineTest() {
     }
 
     @Test
-    fun `AddTodoTapped action should add new destination to the backstack and return no effects`() = runBlockingTest {
+    fun `AddTodoTapped action should add new destination to the backstack and return no effects`() = runTest {
         val initialState = ListState(todoList = emptyList(), backStack = emptyList())
         reducer.testReduce(
             initialState,

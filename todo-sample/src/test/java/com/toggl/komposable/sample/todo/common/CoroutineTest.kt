@@ -2,14 +2,14 @@ package com.toggl.komposable.sample.todo.common
 
 import com.toggl.komposable.scope.DispatcherProvider
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.test.TestCoroutineDispatcher
+import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 
 abstract class CoroutineTest {
-    private val testDispatcher = TestCoroutineDispatcher()
+    private val testDispatcher = StandardTestDispatcher()
     protected val dispatcherProvider = DispatcherProvider(testDispatcher, testDispatcher, Dispatchers.Main)
 
     @BeforeEach
@@ -20,6 +20,6 @@ abstract class CoroutineTest {
     @AfterEach
     open fun afterTest() {
         Dispatchers.resetMain()
-        testDispatcher.cleanupTestCoroutines()
+        testDispatcher.scheduler.runCurrent()
     }
 }
