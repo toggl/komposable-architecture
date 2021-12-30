@@ -1,4 +1,4 @@
-# 🧩 Komposable Architecture [![Build Status](https://app.bitrise.io/app/8fc708d11fa0a5e5/status.svg?token=Q5m1YqGgX4VrIz4V2d0Olg&branch=main)](https://app.bitrise.io/app/8fc708d11fa0a5e5)
+# 🧩 Komposable Architecture  [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.toggl/komposable-architecture/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.toggl/komposable-architecture) [![Build Status](https://app.bitrise.io/app/8fc708d11fa0a5e5/status.svg?token=Q5m1YqGgX4VrIz4V2d0Olg&branch=main)](https://app.bitrise.io/app/8fc708d11fa0a5e5) [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 Kotlin implementation of [Point-Free's The Composable Architecture](https://github.com/pointfreeco/swift-composable-architecture)
 
 ## 🚧 Project Status
@@ -173,7 +173,7 @@ Reducers are classes that implement the following interface:
 
 ```kotlin
 interface Reducer<State, Action> {
-    fun reduce(state: MutableValue<State>, action: Action): List<Effect<Action>>
+    fun reduce(state: Mutable<State>, action: Action): List<Effect<Action>>
 }
 ```
 
@@ -322,7 +322,7 @@ The simplest example of this is a logging reducer, which logs every dispatched a
 class LoggingReducer(override val innerReducer: Reducer<AppState, AppAction>)
     : HigherOrderReducer<AppState, AppAction> {
     override fun reduce(
-        state: MutableValue<AppState>,
+        state: Mutable<AppState>,
         action: AppAction
     ): List<Effect<AppAction>> {
         Log.i(
