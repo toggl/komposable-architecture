@@ -8,26 +8,26 @@ import com.toggl.komposable.common.createTestStore
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
-import kotlinx.coroutines.test.runBlockingTest
+import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 
 class StoreExceptionHandlingTests : StoreCoroutineTest() {
 
     @Test
-    fun `reduce exception should be handled`() = runBlockingTest {
+    fun `reduce exception should be handled`() = runTest {
         testStore.dispatch(TestAction.ThrowExceptionAction)
         coVerify(exactly = 1) { testExceptionHandler.handleException(TestException) }
     }
 
     @Test
-    fun `effect exception should be handled`() = runBlockingTest {
+    fun `effect exception should be handled`() = runTest {
         testStore.dispatch(TestAction.StartExceptionThrowingEffectAction)
         coVerify(exactly = 1) { testExceptionHandler.handleException(TestException) }
     }
 
     @Test
-    fun `subscription exception should be handled`() = runBlockingTest {
+    fun `subscription exception should be handled`() = runTest {
         val subscription = mockk<TestSubscription> {
             coEvery { subscribe(any()) } throws TestException
         }

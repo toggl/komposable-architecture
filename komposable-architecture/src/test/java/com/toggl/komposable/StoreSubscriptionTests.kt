@@ -4,20 +4,20 @@ import com.toggl.komposable.common.StoreCoroutineTest
 import com.toggl.komposable.common.TestAction
 import io.mockk.Ordering
 import io.mockk.coVerify
-import kotlinx.coroutines.test.runBlockingTest
+import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Test
 
 class StoreSubscriptionTests : StoreCoroutineTest() {
 
     @Test
-    fun `subscription's method subscribe is called on store creation`() = runBlockingTest {
+    fun `subscription's method subscribe is called on store creation`() = runTest {
         coVerify(exactly = 1) {
             testSubscription.subscribe(any())
         }
     }
 
     @Test
-    fun `all actions coming from a subscription are reduced in correct order`() = runBlockingTest {
+    fun `all actions coming from a subscription are reduced in correct order`() = runTest {
         testSubscription.stateFlow.value = TestAction.DoNothingAction
         testSubscription.stateFlow.value = TestAction.DoNothingFromEffectAction
 

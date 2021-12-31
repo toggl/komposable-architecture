@@ -5,7 +5,7 @@ import com.toggl.komposable.common.StoreCoroutineTest
 import com.toggl.komposable.common.TestAction
 import com.toggl.komposable.common.TestEffect
 import io.kotest.matchers.shouldBe
-import kotlinx.coroutines.test.runBlockingTest
+import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Test
 import kotlin.time.ExperimentalTime
 
@@ -13,7 +13,7 @@ class StoreStateTests : StoreCoroutineTest() {
 
     @ExperimentalTime
     @Test
-    fun `state is emitted in batches after all dispatched actions were reduced`() = runBlockingTest {
+    fun `state is emitted in batches after all dispatched actions were reduced`() = runTest {
         testStore.state.test {
             testStore.dispatch(
                 listOf(
@@ -38,7 +38,7 @@ class StoreStateTests : StoreCoroutineTest() {
 
     @ExperimentalTime
     @Test
-    fun `new state is emitted only when it's different than the previous one`() = runBlockingTest {
+    fun `new state is emitted only when it's different than the previous one`() = runTest {
         testStore.state.test {
             testStore.dispatch(
                 listOf(
@@ -62,7 +62,7 @@ class StoreStateTests : StoreCoroutineTest() {
 
     @ExperimentalTime
     @Test
-    fun `effects emit new state only after the result state of previously dispatched actions was emitted`() = runBlockingTest {
+    fun `effects emit new state only after the result state of previously dispatched actions was emitted`() = runTest {
         testStore.state.test {
             testStore.dispatch(
                 listOf(

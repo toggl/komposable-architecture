@@ -15,8 +15,8 @@ object Libs {
         const val kotestVersion = "4.2.3"
 
         const val junit5Plugin = "de.mannodermaus.gradle.plugins:android-junit5:1.7.1.1"
-        const val mockk = "io.mockk:mockk:1.12.0"
-        const val turbine = "app.cash.turbine:turbine:0.6.0"
+        const val mockk = "io.mockk:mockk:1.12.2"
+        const val turbine = "app.cash.turbine:turbine:0.7.0"
         const val kotestMatchers = "io.kotest:kotest-assertions-core-jvm:${kotestVersion}"
 
         object Jupiter {
@@ -104,7 +104,7 @@ object Libs {
         object Lifecycle {
             private const val version = "2.4.0"
             const val viewModel = "androidx.lifecycle:lifecycle-viewmodel-ktx:$version"
-            const val viewModelCompose = "androidx.lifecycle:lifecycle-viewmodel-compose:1.0.0-alpha07"
+            const val viewModelCompose = "androidx.lifecycle:lifecycle-viewmodel-compose:$version"
             const val ktx = "androidx.lifecycle:lifecycle-livedata-ktx:$version"
             const val commonJava8 = "androidx.lifecycle:lifecycle-common-java8:$version"
             const val compiler = "androidx.lifecycle:lifecycle-compiler:$version"
