@@ -6,6 +6,7 @@ import com.toggl.komposable.common.TestEffect
 import io.mockk.Ordering
 import io.mockk.coVerify
 import io.mockk.spyk
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Test
 
@@ -14,12 +15,14 @@ class StoreReducerTests : StoreCoroutineTest() {
     @Test
     fun `reducer shouldn't be called if the list of dispatched actions is empty`() = runTest {
         testStore.dispatch(emptyList())
+        runCurrent()
         coVerify(exactly = 0) { testReducer.reduce(any(), any()) }
     }
 
     @Test
     fun `reducer should be called exactly once if one action is dispatched`() = runTest {
         testStore.dispatch(TestAction.DoNothingAction)
+        runCurrent()
         coVerify(exactly = 1) { testReducer.reduce(any(), TestAction.DoNothingAction) }
     }
 
@@ -33,6 +36,8 @@ class StoreReducerTests : StoreCoroutineTest() {
                 TestAction.DoNothingAction,
             )
         )
+
+        runCurrent()
 
         coVerify(ordering = Ordering.SEQUENCE) {
             testReducer.reduce(any(), TestAction.DoNothingAction)
@@ -63,6 +68,8 @@ class StoreReducerTests : StoreCoroutineTest() {
                 TestAction.DoNothingAction,
             )
         )
+
+        runCurrent()
 
         coVerify(ordering = Ordering.SEQUENCE) {
 
