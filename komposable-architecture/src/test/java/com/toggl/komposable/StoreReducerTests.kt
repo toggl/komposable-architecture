@@ -6,25 +6,28 @@ import com.toggl.komposable.common.TestEffect
 import io.mockk.Ordering
 import io.mockk.coVerify
 import io.mockk.spyk
-import kotlinx.coroutines.test.runBlockingTest
+import kotlinx.coroutines.test.runCurrent
+import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Test
 
 class StoreReducerTests : StoreCoroutineTest() {
 
     @Test
-    fun `reducer shouldn't be called if the list of dispatched actions is empty`() = runBlockingTest {
+    fun `reducer shouldn't be called if the list of dispatched actions is empty`() = runTest {
         testStore.dispatch(emptyList())
+        runCurrent()
         coVerify(exactly = 0) { testReducer.reduce(any(), any()) }
     }
 
     @Test
-    fun `reducer should be called exactly once if one action is dispatched`() = runBlockingTest {
+    fun `reducer should be called exactly once if one action is dispatched`() = runTest {
         testStore.dispatch(TestAction.DoNothingAction)
+        runCurrent()
         coVerify(exactly = 1) { testReducer.reduce(any(), TestAction.DoNothingAction) }
     }
 
     @Test
-    fun `reducer should be called for each action dispatched in order in which they were provided`() = runBlockingTest {
+    fun `reducer should be called for each action dispatched in order in which they were provided`() = runTest {
         val startUselessEffectAction = TestAction.StartEffectAction(TestEffect(TestAction.DoNothingFromEffectAction))
         testStore.dispatch(
             listOf(
@@ -33,6 +36,8 @@ class StoreReducerTests : StoreCoroutineTest() {
                 TestAction.DoNothingAction,
             )
         )
+
+        runCurrent()
 
         coVerify(ordering = Ordering.SEQUENCE) {
             testReducer.reduce(any(), TestAction.DoNothingAction)
@@ -43,7 +48,7 @@ class StoreReducerTests : StoreCoroutineTest() {
     }
 
     @Test
-    fun `all actions are reduced before any effect gets executed`() = runBlockingTest {
+    fun `all actions are reduced before any effect gets executed`() = runTest {
 
         val uselessEffect = spyk(TestEffect(TestAction.DoNothingFromEffectAction))
         val clearPropertyEffect = spyk(TestEffect(TestAction.ClearTestPropertyFromEffect))
@@ -63,6 +68,8 @@ class StoreReducerTests : StoreCoroutineTest() {
                 TestAction.DoNothingAction,
             )
         )
+
+        runCurrent()
 
         coVerify(ordering = Ordering.SEQUENCE) {
 

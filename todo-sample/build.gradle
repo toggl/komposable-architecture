@@ -8,8 +8,6 @@ plugins {
     id 'de.mannodermaus.android-junit5'
 }
 
-def composeVersion = "1.0.1"
-
 kapt {
     correctErrorTypes = true
     useBuildCache = true
@@ -42,7 +40,6 @@ android {
     kotlinOptions {
         jvmTarget = JavaVersion.VERSION_1_8.toString()
         freeCompilerArgs += [
-                "-Xopt-in=androidx.compose.foundation.ExperimentalFoundationApi",
                 "-Xopt-in=kotlinx.coroutines.ExperimentalCoroutinesApi",
                 "-Xopt-in=kotlinx.coroutines.FlowPreview",
                 "-Xopt-in=androidx.compose.animation.ExperimentalAnimationApi"
@@ -54,7 +51,7 @@ android {
     }
 
     composeOptions {
-        kotlinCompilerExtensionVersion composeVersion
+        kotlinCompilerExtensionVersion Libs.AndroidX.Compose.version
     }
 }
 
