@@ -355,5 +355,5 @@ fun `ListUpdated action should update the list of todos and return no effects`()
          assertEquals(initialState.copy(todoList = listOf(testTodoItem)), state)
          assertEquals(noEffect(), effects)
      }
- }
+}
 ```
