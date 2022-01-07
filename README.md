@@ -338,9 +338,9 @@ class LoggingReducer(override val innerReducer: Reducer<AppState, AppAction>)
 }
 ```
 
-## ✅ Testing extensions 
+## ✅ Testing Extensions 
 
-If you decide to include `com.toggl:komposable-architecture-test` in your dependencies, you'll be able to use a small set of Reducer extensions designed to make testing easier.
+If you decide to include `com.toggl:komposable-architecture-test` to your dependencies, you'll be able to use a small set of Reducer extensions designed to make testing easier.
 
 Take a look at this test from [Todo Sample](https://github.com/toggl/komposable-architecture/tree/main/todo-sample) app which is making a good use of `testReduce` extension method:
 
