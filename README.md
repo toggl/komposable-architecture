@@ -347,13 +347,13 @@ Take a look at this test from [Todo Sample](https://github.com/toggl/komposable-
 ```kotlin
 @Test
 fun `ListUpdated action should update the list of todos and return no effects`() = runTest {
-        val initialState = ListState(todoList = emptyList(), backStack = emptyList())
-        reducer.testReduce(
-            initialState,
-            ListAction.ListUpdated(listOf(testTodoItem))
-        ) { state, effects ->
-            assertEquals(initialState.copy(todoList = listOf(testTodoItem)), state)
-            assertEquals(noEffect(), effects)
-        }
-    }
+     val initialState = ListState(todoList = emptyList(), backStack = emptyList())
+     reducer.testReduce(
+         initialState,
+         ListAction.ListUpdated(listOf(testTodoItem))
+     ) { state, effects ->
+         assertEquals(initialState.copy(todoList = listOf(testTodoItem)), state)
+         assertEquals(noEffect(), effects)
+     }
+ }
 ```
