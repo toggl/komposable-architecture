@@ -44,6 +44,7 @@ The latest release is available on [Maven Central](https://search.maven.org/arti
 
 ```groovy
 implementation 'com.toggl:komposable-architecture:0.1.1'
+testImplementation 'com.toggl:komposable-architecture-test:0.1.1' // optional testing extensions
 ```
 
 ## © Licence
@@ -335,4 +336,24 @@ class LoggingReducer(override val innerReducer: Reducer<AppState, AppAction>)
         return innerReducer.reduce(state, action)
     }
 }
+```
+
+## ✅ Testing extensions 
+
+If you decide to include `com.toggl:komposable-architecture-test` in your dependencies, you'll be able to use a small set of Reducer extensions designed to make testing easier.
+
+Take a look at this test from [Todo Sample](https://github.com/toggl/komposable-architecture/tree/main/todo-sample) app which is making a good use of `testReduce` extension method:
+
+```kotlin
+@Test
+fun `ListUpdated action should update the list of todos and return no effects`() = runTest {
+        val initialState = ListState(todoList = emptyList(), backStack = emptyList())
+        reducer.testReduce(
+            initialState,
+            ListAction.ListUpdated(listOf(testTodoItem))
+        ) { state, effects ->
+            assertEquals(initialState.copy(todoList = listOf(testTodoItem)), state)
+            assertEquals(noEffect(), effects)
+        }
+    }
 ```
