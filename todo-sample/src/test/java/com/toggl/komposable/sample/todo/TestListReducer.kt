@@ -2,11 +2,11 @@ package com.toggl.komposable.sample.todo
 
 import com.toggl.komposable.extensions.noEffect
 import com.toggl.komposable.sample.todo.common.CoroutineTest
-import com.toggl.komposable.sample.todo.common.testReduce
 import com.toggl.komposable.sample.todo.data.TodoItem
 import com.toggl.komposable.sample.todo.list.ListAction
 import com.toggl.komposable.sample.todo.list.ListReducer
 import com.toggl.komposable.sample.todo.list.ListState
+import com.toggl.komposable.test.testReduce
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals

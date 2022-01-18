@@ -91,6 +91,8 @@ dependencies {
 
     debugImplementation Libs.leakCanary
 
+    testImplementation project(':komposable-architecture-test')
+
     testImplementation Libs.Test.Jupiter.api
     testRuntimeOnly Libs.Test.Jupiter.engine
     testImplementation Libs.slf4j
