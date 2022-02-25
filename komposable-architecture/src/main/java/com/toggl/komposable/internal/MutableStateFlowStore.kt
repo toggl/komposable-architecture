@@ -112,9 +112,11 @@ internal class MutableStateFlowStore<State, Action : Any> private constructor(
         }
     }
 
-    override fun dispatch(actions: List<Action>) {
+    override fun send(actions: List<Action>) {
         if (actions.isEmpty()) return
 
         dispatchFn(actions)
     }
+
+    override fun dispatch(actions: List<Action>) = send(actions)
 }

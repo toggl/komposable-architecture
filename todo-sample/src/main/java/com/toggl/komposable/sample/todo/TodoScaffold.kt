@@ -39,7 +39,7 @@ fun TodoScaffold() {
 
     activity.handleBackPressesEmitting {
         if (backStack.size < 2) activity.finish()
-        else appStore.dispatch(AppAction.BackPressed)
+        else appStore.send(AppAction.BackPressed)
     }
 
     val currentDestination = backStack.last()
@@ -86,7 +86,7 @@ private fun TodoBottomAppBar(appStore: AppStoreViewModel, currentDestination: Ap
     BottomAppBar(cutoutShape = RoundedCornerShape(100)) {
         if (currentDestination == AppDestination.Add) {
             OutlinedButton(
-                onClick = { appStore.dispatch(AppAction.Edit(EditAction.SaveTapped)) }
+                onClick = { appStore.send(AppAction.Edit(EditAction.SaveTapped)) }
             ) {
                 Icon(Icons.Rounded.Check, contentDescription = null)
                 Text(text = "Save")

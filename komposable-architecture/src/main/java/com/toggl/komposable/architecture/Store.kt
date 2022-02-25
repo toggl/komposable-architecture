@@ -17,18 +17,35 @@ interface Store<State, Action : Any> {
 
     /**
      * Sends a actions to be processed by the internal reducer
+     * If multiple actions are sent, the state will still only emit
+     * once all actions are processed in a batch
+     * @see state
+     */
+    fun send(actions: List<Action>)
+
+    /**
+     * Convenience method to send a single action to be processed by the internal reducer
+     * @see Store.send
+     */
+    fun send(action: Action) =
+        send(listOf(action))
+
+    /**
+     * Sends a actions to be processed by the internal reducer
      * If multiple actions are dispatched, the state will still only emit
      * once all actions are processed in a batch
      * @see state
      */
+    @Deprecated("Use send(List<Action>)", ReplaceWith("this.send(actions)"))
     fun dispatch(actions: List<Action>)
 
     /**
      * Convenience method to send a single action to be processed by the internal reducer
      * @see Store.dispatch
      */
+    @Deprecated("Use send(Action)", ReplaceWith("this.send(action)"))
     fun dispatch(action: Action) =
-        dispatch(listOf(action))
+        send(listOf(action))
 
     /**
      * Transforms this store in a more specific store that can only emit
