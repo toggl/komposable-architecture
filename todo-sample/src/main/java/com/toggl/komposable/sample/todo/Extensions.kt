@@ -12,6 +12,10 @@ import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
 @Composable
+fun <ViewState> ViewStateProvider<ViewState>.collectViewStateWhenStarted() =
+    viewState.collectAsStateWhenStarted(initial = initialViewState)
+
+@Composable
 fun <T> Flow<T>.collectAsStateWhenStarted(
     initial: T,
     context: CoroutineContext = EmptyCoroutineContext

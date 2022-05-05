@@ -11,19 +11,21 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.material.TextField
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.toggl.komposable.sample.todo.data.EditableTodoItem
-import kotlinx.coroutines.flow.map
+import com.toggl.komposable.sample.todo.collectViewStateWhenStarted
 
 @Composable
 fun EditPage() {
     val store = hiltViewModel<EditStoreViewModel>()
-    val editableTodoItem = store.state.map { it.editableTodo }.collectAsState(initial = EditableTodoItem())
+    val editViewState by store.collectViewStateWhenStarted()
+    val editableTodoItem = editViewState.editableTodo
     Column(
-        modifier = Modifier.padding(horizontal = 16.dp, vertical = 32.dp).fillMaxSize(),
+        modifier = Modifier
+            .padding(horizontal = 16.dp, vertical = 32.dp)
+            .fillMaxSize(),
     ) {
         Text(
             text = "Edit Page",
@@ -33,15 +35,17 @@ fun EditPage() {
         TextField(
             modifier = Modifier.fillMaxWidth(),
             label = { Text("Title") },
-            value = editableTodoItem.value.title,
+            value = editableTodoItem.title,
             onValueChange = { store.dispatch(EditAction.TitleChanged(it)) },
             singleLine = true
         )
         Spacer(modifier = Modifier.height(8.dp))
         TextField(
-            modifier = Modifier.fillMaxWidth().fillMaxHeight(0.5f),
+            modifier = Modifier
+                .fillMaxWidth()
+                .fillMaxHeight(0.5f),
             label = { Text("Description") },
-            value = editableTodoItem.value.description,
+            value = editableTodoItem.description,
             onValueChange = { store.dispatch(EditAction.DescriptionChanged(it)) },
             maxLines = 20
         )
