@@ -10,7 +10,7 @@ import com.toggl.komposable.scope.StoreScopeProvider
 import kotlinx.coroutines.flow.emptyFlow
 
 /**
- * Creates a store that can be used for dispatching actions and listening to state
+ * Creates a store that can be used for sending actions and listening to state
  * @param initialState      First state of
  * @param reducer           The global reducer, which should be a combination of all child reducers
  * @param subscription      A subscription for reacting to state changes and emit actions

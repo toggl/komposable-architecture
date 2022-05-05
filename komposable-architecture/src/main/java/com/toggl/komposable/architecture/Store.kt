@@ -16,7 +16,7 @@ interface Store<State, Action : Any> {
     val state: Flow<State>
 
     /**
-     * Sends a actions to be processed by the internal reducer
+     * Sends actions to be processed by the internal reducer
      * If multiple actions are sent, the state will still only emit
      * once all actions are processed in a batch
      * @see state
@@ -31,7 +31,7 @@ interface Store<State, Action : Any> {
         send(listOf(action))
 
     /**
-     * Sends a actions to be processed by the internal reducer
+     * Sends actions to be processed by the internal reducer
      * If multiple actions are dispatched, the state will still only emit
      * once all actions are processed in a batch
      * @see state

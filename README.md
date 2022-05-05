@@ -262,7 +262,7 @@ Similarly to reducers and pullback, the store itself can be "mapped" into a spec
 ```kotlin
 class MutableStateFlowStore<State, Action : Any> private constructor(
     override val state: Flow<State>,
-    private val dispatchFn: (List<Action>) -> Unit
+    private val sendFn: (List<Action>) -> Unit
 ) : Store<State, Action> {
 
     override fun <ViewState, ViewAction : Any> view(
@@ -270,9 +270,9 @@ class MutableStateFlowStore<State, Action : Any> private constructor(
         mapToGlobalAction: (ViewAction) -> Action?
     ): Store<ViewState, ViewAction> = MutableStateFlowStore(
         state = state.map { mapToLocalState(it) }.distinctUntilChanged(),
-        dispatchFn = { actions ->
+        sendFn = { actions ->
             val globalActions = actions.mapNotNull(mapToGlobalAction)
-            dispatchFn(globalActions)
+            sendFn(globalActions)
         }
     )
 }
@@ -316,7 +316,7 @@ data class AppState(
 
 High-order reducers are basically reducers that take another reducer (and maybe also some other parameters). The outer reducer adds some behavior to the inner one, maybe transforming actions, stopping them or doing something with them before sending them forward to the inner reducer.
 
-The simplest example of this is a logging reducer, which logs every dispatched action to the console:
+The simplest example of this is a logging reducer, which logs every action sent to the console:
 
 
 ```kotlin

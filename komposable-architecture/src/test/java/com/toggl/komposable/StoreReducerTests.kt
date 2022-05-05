@@ -13,21 +13,21 @@ import org.junit.jupiter.api.Test
 class StoreReducerTests : StoreCoroutineTest() {
 
     @Test
-    fun `reducer shouldn't be called if the list of dispatched actions is empty`() = runTest {
+    fun `reducer shouldn't be called if the list of sent actions is empty`() = runTest {
         testStore.send(emptyList())
         runCurrent()
         coVerify(exactly = 0) { testReducer.reduce(any(), any()) }
     }
 
     @Test
-    fun `reducer should be called exactly once if one action is dispatched`() = runTest {
+    fun `reducer should be called exactly once if one action is sent`() = runTest {
         testStore.send(TestAction.DoNothingAction)
         runCurrent()
         coVerify(exactly = 1) { testReducer.reduce(any(), TestAction.DoNothingAction) }
     }
 
     @Test
-    fun `reducer should be called for each action dispatched in order in which they were provided`() = runTest {
+    fun `reducer should be called for each action sent in order in which they were provided`() = runTest {
         val startUselessEffectAction = TestAction.StartEffectAction(TestEffect(TestAction.DoNothingFromEffectAction))
         testStore.send(
             listOf(
@@ -73,7 +73,7 @@ class StoreReducerTests : StoreCoroutineTest() {
 
         coVerify(ordering = Ordering.SEQUENCE) {
 
-            // first: reduce dispatched actions
+            // first: reduce sent actions
             testReducer.reduce(any(), TestAction.DoNothingAction)
             testReducer.reduce(any(), changeTestPropertyAction)
             testReducer.reduce(any(), addTestPropertyAction)
