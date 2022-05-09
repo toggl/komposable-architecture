@@ -11,8 +11,8 @@ interface Effect<out Action> {
      * Executes the effect. This operation can produce side effects and it's the
      * responsibility of the class implementing this interface to change threads
      * to prevent blocking the UI when needed
-     * @return An action that will be dispatched again for further processing
-     * @see Store.dispatch
+     * @return An action that will be sent again for further processing
+     * @see Store.send
      */
     suspend fun execute(): Action?
 }

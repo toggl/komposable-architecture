@@ -13,9 +13,9 @@ class StoreStateTests : StoreCoroutineTest() {
 
     @ExperimentalTime
     @Test
-    fun `state is emitted in batches after all dispatched actions were reduced`() = runTest {
+    fun `state is emitted in batches after all sent actions were reduced`() = runTest {
         testStore.state.test {
-            testStore.dispatch(
+            testStore.send(
                 listOf(
                     TestAction.DoNothingAction,
                     TestAction.ChangeTestProperty("123"),
@@ -40,7 +40,7 @@ class StoreStateTests : StoreCoroutineTest() {
     @Test
     fun `new state is emitted only when it's different than the previous one`() = runTest {
         testStore.state.test {
-            testStore.dispatch(
+            testStore.send(
                 listOf(
                     TestAction.DoNothingAction,
                     TestAction.ChangeTestProperty("123"),
@@ -62,9 +62,9 @@ class StoreStateTests : StoreCoroutineTest() {
 
     @ExperimentalTime
     @Test
-    fun `effects emit new state only after the result state of previously dispatched actions was emitted`() = runTest {
+    fun `effects emit new state only after the result state of previously sent actions was emitted`() = runTest {
         testStore.state.test {
-            testStore.dispatch(
+            testStore.send(
                 listOf(
                     TestAction.DoNothingAction,
                     TestAction.ChangeTestProperty("123"),

@@ -62,7 +62,7 @@ private fun TodoItem(todo: TodoItem) {
 fun AddTodoFab() {
     val listStore = hiltViewModel<ListStoreViewModel>()
     FloatingActionButton(
-        onClick = { listStore.dispatch(ListAction.AddTodoTapped) }
+        onClick = { listStore.send(ListAction.AddTodoTapped) }
     ) {
         Icon(Icons.Rounded.Add, contentDescription = "Add New Todo Item")
     }

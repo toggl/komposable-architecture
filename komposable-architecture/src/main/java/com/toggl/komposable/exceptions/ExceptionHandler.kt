@@ -7,7 +7,7 @@ package com.toggl.komposable.exceptions
 interface ExceptionHandler {
 
     /**
-     * Called whenever an exception is thrown during the dispatch process
+     * Called whenever an exception is thrown during the reduce process
      * @return true if the exception was handled, false if it should be propagated
      * @see com.toggl.komposable.architecture.Store
      */

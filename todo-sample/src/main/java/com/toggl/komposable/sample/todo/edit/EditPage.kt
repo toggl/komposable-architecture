@@ -36,7 +36,7 @@ fun EditPage() {
             modifier = Modifier.fillMaxWidth(),
             label = { Text("Title") },
             value = editableTodoItem.title,
-            onValueChange = { store.dispatch(EditAction.TitleChanged(it)) },
+            onValueChange = { store.send(EditAction.TitleChanged(it)) },
             singleLine = true
         )
         Spacer(modifier = Modifier.height(8.dp))
@@ -46,7 +46,7 @@ fun EditPage() {
                 .fillMaxHeight(0.5f),
             label = { Text("Description") },
             value = editableTodoItem.description,
-            onValueChange = { store.dispatch(EditAction.DescriptionChanged(it)) },
+            onValueChange = { store.send(EditAction.DescriptionChanged(it)) },
             maxLines = 20
         )
         Spacer(modifier = Modifier.height(16.dp))

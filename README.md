@@ -70,11 +70,11 @@ limitations under the License.
 This is a high level overview of the different parts of the architecture. 
 
 - **Views** This is anything that can subscribe to the store to be notified of state changes. Normally this happens only in UI elements, but other elements of the app could also react to state changes.
-- **Action** Simple structs that describe an event, normally originated by the user, but also from other sources or in response to other actions (from Effects). The only way to change the state is through actions. Views dispatch actions to the store which handles them in the main thread as they come.
-- **Store** The central hub of the application. Contains the whole state of the app, handles the dispatched actions passing them to the reducers and fires Effects.
+- **Action** Simple structs that describe an event, normally originated by the user, but also from other sources or in response to other actions (from Effects). The only way to change the state is through actions. Views send actions to the store which handles them in the main thread as they come.
+- **Store** The central hub of the application. Contains the whole state of the app, handles the actions, passing them to the reducers and fires Effects.
 - **State** The single source of truth for the whole app. This data class will be probably empty when the application start and will be filled after every action. 
-- **Reducers** Reducers are pure functions that take the state and an action and produce a new state. Simple as that. They optionally result in an array of Effects that will asynchronously dispatch further actions. All business logic should reside in them.
-- **Effects** As mentioned, Reducers optionally produce these after handling an action. They are classes that return an optional action. All the effects emitted from a reducer will be batched, meaning the state change will only be emitted once all actions are dispatched.
+- **Reducers** Reducers are pure functions that take the state and an action and produce a new state. Simple as that. They optionally result in an array of Effects that will asynchronously send further actions. All business logic should reside in them.
+- **Effects** As mentioned, Reducers optionally produce these after handling an action. They are classes that return an optional action. All the effects emitted from a reducer will be batched, meaning the state change will only be emitted once all actions are handled.
 - **Subscriptions** Subscriptions are emitting actions based on some underling observable API and/or state changes.   
 
 There's one global `Store` and one `AppState`. But we can *view* into the store to get sub-stores that only work on one part of the state. More on that later.
@@ -85,14 +85,14 @@ There's also one main `Reducer` and multiple sub-reducers that handle a limited 
 
 ### Store & State
 
-The `Store` exposes a flow which emits the whole state of the app every time there's a change and a method to dispatch actions that will modify that state.  The `State` is just a data class that contains ALL the state of the application. It also includes the local state of all the specific modules that need local state. More on this later.
+The `Store` exposes a flow which emits the whole state of the app every time there's a change and a method to send actions that will modify that state.  The `State` is just a data class that contains ALL the state of the application. It also includes the local state of all the specific modules that need local state. More on this later.
 
 The store interface looks like this:
 
 ```kotlin
 interface Store<State, Action : Any> {
     val state: Flow<State>
-    fun dispatch(actions: List<Action>)
+    fun send(actions: List<Action>)
     // more code
 }
 ```
@@ -109,10 +109,10 @@ createStore(
 )
 ```
 
-actions are dispatched like this:
+actions are sent like this:
 
 ```kotlin
-store.dispatch(AppAction.BackPressed)
+store.send(AppAction.BackPressed)
 ```
 
 and views can subscribe like this:
@@ -156,16 +156,16 @@ sealed class AppAction {
 }
 ```
 
-So to dispatch an `EditAction` to a store that takes `AppActions` we would do
+So to send an `EditAction` to a store that takes `AppActions` we would do
 
 ```kotlin
-store.dispatch(AppAction.Edit(EditAction.TitleChanged("new title"))
+store.send(AppAction.Edit(EditAction.TitleChanged("new title")))
 ```
 
 But if the store is a view that takes `EditAction`s we'd do it like this:
 
 ```kotlin
-store.dispatch(EditAction.TitleChanged("new title"))
+store.send(EditAction.TitleChanged("new title"))
 ```
 
 ### Reducers & Effects
@@ -180,7 +180,7 @@ interface Reducer<State, Action> {
 
 The idea is they take the state and an action and modify the state depending on the action and its payload.
 
-In order to dispatch actions asynchronously we use `Effect`s. Reducers return an array of `Effect`s. The store waits for those effects and dispatches whatever action they emit, if any.
+In order to send actions asynchronously we use `Effect`s. Reducers return an array of `Effect`s. The store waits for those effects and sends whatever action they emit, if any.
 
 An effect interface is also straightforward:
 
@@ -262,7 +262,7 @@ Similarly to reducers and pullback, the store itself can be "mapped" into a spec
 ```kotlin
 class MutableStateFlowStore<State, Action : Any> private constructor(
     override val state: Flow<State>,
-    private val dispatchFn: (List<Action>) -> Unit
+    private val sendFn: (List<Action>) -> Unit
 ) : Store<State, Action> {
 
     override fun <ViewState, ViewAction : Any> view(
@@ -270,9 +270,9 @@ class MutableStateFlowStore<State, Action : Any> private constructor(
         mapToGlobalAction: (ViewAction) -> Action?
     ): Store<ViewState, ViewAction> = MutableStateFlowStore(
         state = state.map { mapToLocalState(it) }.distinctUntilChanged(),
-        dispatchFn = { actions ->
+        sendFn = { actions ->
             val globalActions = actions.mapNotNull(mapToGlobalAction)
-            dispatchFn(globalActions)
+            sendFn(globalActions)
         }
     )
 }
@@ -280,7 +280,7 @@ class MutableStateFlowStore<State, Action : Any> private constructor(
 
 This method on `Store` takes two functions, one to map the global state into local state and another one to map local action to global action.
 
-Different modules or features of the app use different store views so they are only able to listen to changes to parts of the state and are only able to dispatch certain actions.
+Different modules or features of the app use different store views so they are only able to listen to changes to parts of the state and are only able to send certain actions.
 
 ### Local State
 
@@ -316,7 +316,7 @@ data class AppState(
 
 High-order reducers are basically reducers that take another reducer (and maybe also some other parameters). The outer reducer adds some behavior to the inner one, maybe transforming actions, stopping them or doing something with them before sending them forward to the inner reducer.
 
-The simplest example of this is a logging reducer, which logs every dispatched action to the console:
+The simplest example of this is a logging reducer, which logs every action sent to the console:
 
 
 ```kotlin
