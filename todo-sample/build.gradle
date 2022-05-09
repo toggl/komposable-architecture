@@ -76,7 +76,6 @@ dependencies {
     implementation Libs.AndroidX.Compose.Foundation.core
     implementation Libs.AndroidX.Compose.Foundation.layout
     implementation Libs.Google.material
-    implementation Libs.AndroidX.Hilt.work
     implementation Libs.AndroidX.Hilt.navigation
     implementation Libs.AndroidX.Hilt.lifecycleViewModel
     implementation Libs.AndroidX.Lifecycle.runtime
