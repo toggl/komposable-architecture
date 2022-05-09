@@ -5,9 +5,9 @@ object Versions {
 }
 
 object Libs {
-    const val androidGradlePlugin = "com.android.tools.build:gradle:7.0.4"
-    const val gradleVersionsPlugin = "com.github.ben-manes:gradle-versions-plugin:0.36.0"
-    const val leakCanary = "com.squareup.leakcanary:leakcanary-android:2.7"
+    const val androidGradlePlugin = "com.android.tools.build:gradle:7.1.2"
+    const val gradleVersionsPlugin = "com.github.ben-manes:gradle-versions-plugin:0.42.0"
+    const val leakCanary = "com.squareup.leakcanary:leakcanary-android:2.9.1"
     // fixes warning thrown by SLF4J
     const val slf4j = "org.slf4j:slf4j-simple:1.7.26"
 
@@ -15,8 +15,8 @@ object Libs {
         const val kotestVersion = "4.2.3"
 
         const val junit5Plugin = "de.mannodermaus.gradle.plugins:android-junit5:1.7.1.1"
-        const val mockk = "io.mockk:mockk:1.12.2"
-        const val turbine = "app.cash.turbine:turbine:0.7.0"
+        const val mockk = "io.mockk:mockk:1.12.3"
+        const val turbine = "app.cash.turbine:turbine:0.8.0"
         const val kotestMatchers = "io.kotest:kotest-assertions-core-jvm:${kotestVersion}"
 
         object Jupiter {
@@ -33,7 +33,7 @@ object Libs {
     }
 
     object Kotlin {
-        const val version = "1.6.0"
+        const val version = "1.6.10"
         const val stdlib = "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$version"
         const val gradlePlugin = "org.jetbrains.kotlin:kotlin-gradle-plugin:$version"
 
@@ -45,7 +45,7 @@ object Libs {
     }
 
     object Coroutines {
-        private const val version = "1.6.0"
+        private const val version = "1.6.1"
         const val core = "org.jetbrains.kotlinx:kotlinx-coroutines-core:$version"
         const val android = "org.jetbrains.kotlinx:kotlinx-coroutines-android:$version"
 
@@ -66,7 +66,7 @@ object Libs {
         const val coreKtx = "androidx.core:core-ktx:1.6.0"
 
         object Compose {
-            const val version = "1.1.0-rc01"
+            const val version = "1.1.0"
             const val runtime = "androidx.compose.runtime:runtime:$version"
             const val compiler = "androidx.compose.compiler:compiler:$version"
             const val animation = "androidx.compose.animation:animation:$version"
@@ -121,11 +121,10 @@ object Libs {
             const val compiler = "androidx.hilt:hilt-compiler:$version"
             const val navigation = "androidx.hilt:hilt-navigation-compose:1.0.0-alpha03"
             const val lifecycleViewModel = "androidx.hilt:hilt-lifecycle-viewmodel:1.0.0-alpha03"
-            const val work = "androidx.hilt:hilt-work:$version"
         }
 
         object Room {
-            private const val version = "2.2.5"
+            private const val version = "2.4.2"
             const val common = "androidx.room:room-common:$version"
             const val runtime = "androidx.room:room-runtime:$version"
             const val compiler = "androidx.room:room-compiler:$version"
