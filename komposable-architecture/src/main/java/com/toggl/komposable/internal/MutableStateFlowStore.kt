@@ -21,7 +21,7 @@ import kotlinx.coroutines.runBlocking
 
 internal class MutableStateFlowStore<State, Action : Any> private constructor(
     override val state: Flow<State>,
-    private val dispatchFn: (List<Action>) -> Unit
+    private val sendFn: (List<Action>) -> Unit
 ) : Store<State, Action> {
 
     override fun <ViewState, ViewAction : Any> view(
@@ -29,9 +29,9 @@ internal class MutableStateFlowStore<State, Action : Any> private constructor(
         mapToGlobalAction: (ViewAction) -> Action?
     ): Store<ViewState, ViewAction> = MutableStateFlowStore(
         state = state.map { mapToLocalState(it) }.distinctUntilChanged(),
-        dispatchFn = { actions ->
+        sendFn = { actions ->
             val globalActions = actions.mapNotNull(mapToGlobalAction)
-            dispatchFn(globalActions)
+            sendFn(globalActions)
         }
     )
 
@@ -40,9 +40,9 @@ internal class MutableStateFlowStore<State, Action : Any> private constructor(
         mapToGlobalAction: (ViewAction) -> Action?
     ): Store<ViewState, ViewAction> = MutableStateFlowStore(
         state = state.mapNotNull { mapToLocalState(it) }.distinctUntilChanged(),
-        dispatchFn = { actions ->
+        sendFn = { actions ->
             val globalActions = actions.mapNotNull(mapToGlobalAction)
-            dispatchFn(globalActions)
+            sendFn(globalActions)
         }
     )
 
@@ -58,8 +58,8 @@ internal class MutableStateFlowStore<State, Action : Any> private constructor(
             val storeScope = storeScopeProvider.getStoreScope()
             val state = MutableStateFlow(initialState)
 
-            lateinit var dispatch: (List<Action>) -> Unit
-            dispatch = { actions ->
+            lateinit var send: (List<Action>) -> Unit
+            send = { actions ->
                 storeScope.launch(context = dispatcherProvider.main) {
                     var tempState = state.value
                     val mutableValue = Mutable({ tempState }) { tempState = it }
@@ -81,21 +81,21 @@ internal class MutableStateFlowStore<State, Action : Any> private constructor(
                         }
                     }
                     if (effectActions.isEmpty()) return@launch
-                    dispatch(effectActions)
+                    send(effectActions)
                 }
             }
 
             try {
                 subscription
                     .subscribe(state)
-                    .onEach { action -> dispatch(listOf(action)) }
+                    .onEach { action -> send(listOf(action)) }
                     .launchIn(storeScope)
             } catch (e: Throwable) {
                 runBlocking {
                     exceptionHandler.handleSubscriptionException(e)
                 }
             }
-            return MutableStateFlowStore(state, dispatch)
+            return MutableStateFlowStore(state, send)
         }
 
         private suspend fun ExceptionHandler.handleReduceException(exception: Throwable): List<Effect<Nothing>> =
@@ -112,9 +112,11 @@ internal class MutableStateFlowStore<State, Action : Any> private constructor(
         }
     }
 
-    override fun dispatch(actions: List<Action>) {
+    override fun send(actions: List<Action>) {
         if (actions.isEmpty()) return
 
-        dispatchFn(actions)
+        sendFn(actions)
     }
+
+    override fun dispatch(actions: List<Action>) = send(actions)
 }

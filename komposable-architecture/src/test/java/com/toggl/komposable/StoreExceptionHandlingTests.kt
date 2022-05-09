@@ -17,14 +17,14 @@ class StoreExceptionHandlingTests : StoreCoroutineTest() {
 
     @Test
     fun `reduce exception should be handled`() = runTest {
-        testStore.dispatch(TestAction.ThrowExceptionAction)
+        testStore.send(TestAction.ThrowExceptionAction)
         runCurrent()
         coVerify(exactly = 1) { testExceptionHandler.handleException(TestException) }
     }
 
     @Test
     fun `effect exception should be handled`() = runTest {
-        testStore.dispatch(TestAction.StartExceptionThrowingEffectAction)
+        testStore.send(TestAction.StartExceptionThrowingEffectAction)
         runCurrent()
         coVerify(exactly = 1) { testExceptionHandler.handleException(TestException) }
     }
