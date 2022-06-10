@@ -13,7 +13,7 @@ fun AppNavigationHost(backStack: List<AppDestination>) {
 
     // extremely naive implementation for purposes of this sample
     if (navController.currentDestination != null) {
-        if (backStack.size > 1) {
+        if (backStack.isNotEmpty()) {
             navController.navigate(backStack.last().route)
         } else {
             navController.popBackStack()

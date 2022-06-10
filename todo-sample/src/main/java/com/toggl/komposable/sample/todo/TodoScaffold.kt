@@ -25,16 +25,13 @@ import com.toggl.komposable.sample.todo.data.Identity
 import com.toggl.komposable.sample.todo.edit.EditAction
 import com.toggl.komposable.sample.todo.list.AddTodoFab
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.map
 
 @ExperimentalCoroutinesApi
 @Composable
 fun TodoScaffold() {
     val appStore = hiltViewModel<AppStoreViewModel>()
-    val backStack by appStore.state
-        .map { it.backStack }
-        .collectAsStateWhenStarted(initial = listOf(AppDestination.List))
-
+    val viewState by appStore.collectViewStateWhenStarted()
+    val backStack = viewState.backStack
     val activity = LocalContext.current as AppCompatActivity
 
     activity.handleBackPressesEmitting {
@@ -48,7 +45,7 @@ fun TodoScaffold() {
         floatingActionButton = { if (currentDestination == AppDestination.List) AddTodoFab() },
         floatingActionButtonPosition = FabPosition.Center,
         isFloatingActionButtonDocked = true,
-        bottomBar = { TodoBottomAppBar(appStore, currentDestination) }
+        bottomBar = { TodoBottomAppBar(appStore, currentDestination, viewState.identity) }
     ) {
         AppNavigationHost(
             backStack = backStack
@@ -77,12 +74,7 @@ fun AppCompatActivity.handleBackPressesEmitting(callback: () -> Unit) {
 }
 
 @Composable
-private fun TodoBottomAppBar(appStore: AppStoreViewModel, currentDestination: AppDestination) {
-
-    val identity by appStore.state
-        .map { it.identity }
-        .collectAsStateWhenStarted(initial = Identity.Unknown)
-
+private fun TodoBottomAppBar(appStore: AppStoreViewModel, currentDestination: AppDestination, identity: Identity) {
     BottomAppBar(cutoutShape = RoundedCornerShape(100)) {
         if (currentDestination == AppDestination.Add) {
             OutlinedButton(
@@ -95,7 +87,7 @@ private fun TodoBottomAppBar(appStore: AppStoreViewModel, currentDestination: Ap
         Spacer(modifier = Modifier.weight(1f))
         val identityText = when (identity) {
             Identity.Unknown -> "Loading..."
-            is Identity.User -> (identity as Identity.User).username
+            is Identity.User -> identity.username
         }
         Text(text = identityText, modifier = Modifier.padding(end = 12.dp))
     }

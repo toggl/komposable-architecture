@@ -14,20 +14,17 @@ import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.toggl.komposable.sample.todo.collectAsStateWhenStarted
+import com.toggl.komposable.sample.todo.collectViewStateWhenStarted
 import com.toggl.komposable.sample.todo.data.TodoItem
-import kotlinx.coroutines.flow.map
 
 @Composable
 fun ListPage() {
-    val list = hiltViewModel<ListStoreViewModel>().state
-        .map { it.todoList }
-        .collectAsStateWhenStarted(initial = emptyList())
-        .value
-    TodoList(list)
+    val listViewState by hiltViewModel<ListStoreViewModel>().collectViewStateWhenStarted()
+    TodoList(listViewState.todoList)
 }
 
 @Composable
@@ -44,7 +41,9 @@ private fun TodoList(todoList: List<TodoItem>) {
         }
     } else {
         Text(
-            modifier = Modifier.fillMaxSize().padding(48.dp),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(48.dp),
             text = "Add your first Todo!",
             style = MaterialTheme.typography.h3
         )
