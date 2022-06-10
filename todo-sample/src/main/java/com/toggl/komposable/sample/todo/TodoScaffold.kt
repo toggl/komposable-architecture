@@ -35,7 +35,7 @@ fun TodoScaffold() {
     val activity = LocalContext.current as AppCompatActivity
 
     activity.handleBackPressesEmitting {
-        if (viewState.backStack.size < 2) activity.finish()
+        if (backStack.size < 2) activity.finish()
         else appStore.send(AppAction.BackPressed)
     }
 
