@@ -12,16 +12,16 @@ fun <T, Action> Mutable<T>.mutateWithoutEffects(mutateFn: T.() -> T): List<Effec
     mutate(mutateFn).withoutEffects()
 
 /**
- * Used to create a fluent api for mutating and returning an effect
+ * Used to create a fluent api for mutating and returning an effect.
  */
 infix fun <T, Action> T.returnEffect(effect: Effect<Action>) = effectOf(effect)
 
 /**
- * Used to create a fluent api for mutating and returning an effect
+ * Used to create a fluent api for mutating and returning an effect.
  */
 infix fun <T, Action> T.returnEffect(effects: List<Effect<Action>>) = effects
 
 /**
- * Used to create a fluent api for mutating and returning an effect
+ * Used to create a fluent api for mutating and returning an effect.
  */
 fun <T> T.withoutEffects() = noEffect()

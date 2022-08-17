@@ -1,8 +1,8 @@
 package com.toggl.komposable.exceptions
 
 /**
- * ExceptionHandler that forwards the exceptions to all innerHandlers
- * The exception is no longer forwarded as soon as any handler return true
+ * ExceptionHandler that forwards the exceptions to all innerHandlers.
+ * The exception is no longer forwarded as soon as any handler returns true.
  * @see ExceptionHandler
  */
 class CompositeExceptionHandler(private val innerHandlers: List<ExceptionHandler>) : ExceptionHandler {

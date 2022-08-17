@@ -1,7 +1,7 @@
 package com.toggl.komposable.exceptions
 
 /**
- * ExceptionHandler that always marks exceptions as handled
+ * ExceptionHandler that always marks exceptions as handled.
  * @see ExceptionHandler
  */
 class RelaxedExceptionHandler : ExceptionHandler {
