@@ -3,7 +3,7 @@ package com.toggl.komposable.architecture
 import kotlinx.coroutines.flow.Flow
 
 /**
- * Subscriptions are like long running effects that can emit actions without ever stopping
+ * Subscriptions are like long-running effects that can emit actions without ever stopping.
  * A common use for subscriptions is to leverage database observing to ensure the entities
  * in your app that are backed by a database are always up-to-date.
  * @see Effect

@@ -10,8 +10,8 @@ class Mutable<T>(private val getValue: () -> T, private val setValue: (T) -> Uni
     operator fun invoke() = getValue()
 
     /**
-     * Mutates the underlying value of this Mutable
-     * @param transformFn   Function that transforms the state and returns a new one
+     * Mutates the underlying value of this Mutable.
+     * @param transformFn   Function that transforms the state and returns a new one.
      */
     fun mutate(transformFn: T.() -> (T)) {
         val newValue = transformFn(getValue())
@@ -19,16 +19,16 @@ class Mutable<T>(private val getValue: () -> T, private val setValue: (T) -> Uni
     }
 
     /**
-     * Allows using the current value of this mutable inside a function
-     * @param fn A function that will be called using the current value of this mutable as this
+     * Allows using the current value of this mutable inside a function.
+     * @param fn A function that will be called using the current value of this mutable as this.
      */
     fun withValue(fn: T.() -> Unit) {
         fn(getValue())
     }
 
     /**
-     * Allows mapping the current value of this mutable
-     * @param fn A function that will be called using the current value of this mutable as this
+     * Allows mapping the current value of this mutable.
+     * @param fn A function that will be called using the current value of this mutable as this.
      */
     fun <R> withValue(fn: T.() -> R): R =
         fn(getValue())

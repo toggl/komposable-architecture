@@ -1,7 +1,7 @@
 package com.toggl.komposable.architecture
 
 /**
- * Types responsible for handling actions and mutating the state
+ * Types responsible for handling actions and mutating the state.
  */
 fun interface Reducer<State, Action> {
 
