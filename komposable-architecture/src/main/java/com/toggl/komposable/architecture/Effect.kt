@@ -5,7 +5,7 @@ package com.toggl.komposable.architecture
  * This can be anything from cpu/io bound operations to changes that simply affect the UI.
  * @see Reducer.reduce
  */
-interface Effect<out Action> {
+fun interface Effect<out Action> {
 
     /**
      * Executes the effect. This operation can produce side effects, and it's the
