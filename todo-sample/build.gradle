@@ -53,6 +53,7 @@ android {
     composeOptions {
         kotlinCompilerExtensionVersion Libs.AndroidX.Compose.compilerVersion
     }
+    namespace 'com.toggl.komposable.sample.todo'
 }
 
 dependencies {
