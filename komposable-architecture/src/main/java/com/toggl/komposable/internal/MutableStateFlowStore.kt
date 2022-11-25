@@ -118,5 +118,6 @@ internal class MutableStateFlowStore<State, Action : Any> private constructor(
         sendFn(actions)
     }
 
+    @Deprecated("Use send(List<Action>)", replaceWith = ReplaceWith("this.send(actions)"))
     override fun dispatch(actions: List<Action>) = send(actions)
 }

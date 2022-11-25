@@ -5,9 +5,9 @@ object Versions {
 }
 
 object Libs {
-    const val androidGradlePlugin = "com.android.tools.build:gradle:7.1.2"
-    const val gradleVersionsPlugin = "com.github.ben-manes:gradle-versions-plugin:0.42.0"
-    const val leakCanary = "com.squareup.leakcanary:leakcanary-android:2.9.1"
+    const val androidGradlePlugin = "com.android.tools.build:gradle:7.3.1"
+    const val gradleVersionsPlugin = "com.github.ben-manes:gradle-versions-plugin:0.44.0"
+    const val leakCanary = "com.squareup.leakcanary:leakcanary-android:2.10"
     // fixes warning thrown by SLF4J
     const val slf4j = "org.slf4j:slf4j-simple:1.7.26"
 
@@ -15,8 +15,8 @@ object Libs {
         const val kotestVersion = "4.2.3"
 
         const val junit5Plugin = "de.mannodermaus.gradle.plugins:android-junit5:1.7.1.1"
-        const val mockk = "io.mockk:mockk:1.12.3"
-        const val turbine = "app.cash.turbine:turbine:0.8.0"
+        const val mockk = "io.mockk:mockk:1.13.2"
+        const val turbine = "app.cash.turbine:turbine:0.12.1"
         const val kotestMatchers = "io.kotest:kotest-assertions-core-jvm:${kotestVersion}"
 
         object Jupiter {
@@ -29,11 +29,11 @@ object Libs {
     }
 
     object Google {
-        const val material = "com.google.android.material:material:1.3.0-beta01"
+        const val material = "com.google.android.material:material:1.7.0"
     }
 
     object Kotlin {
-        const val version = "1.6.10"
+        const val version = "1.7.20"
         const val stdlib = "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$version"
         const val gradlePlugin = "org.jetbrains.kotlin:kotlin-gradle-plugin:$version"
 
@@ -45,7 +45,7 @@ object Libs {
     }
 
     object Coroutines {
-        private const val version = "1.6.1"
+        private const val version = "1.6.4"
         const val core = "org.jetbrains.kotlinx:kotlinx-coroutines-core:$version"
         const val android = "org.jetbrains.kotlinx:kotlinx-coroutines-android:$version"
 
@@ -57,20 +57,20 @@ object Libs {
     object AndroidX {
 
         object Activity {
-            const val version = "1.4.0"
+            const val version = "1.6.1"
             const val activityKtx = "androidx.activity:activity-ktx:$version"
             const val activityCompose = "androidx.activity:activity-compose:$version"
         }
 
-        const val appcompat = "androidx.appcompat:appcompat:1.4.0"
+        const val appcompat = "androidx.appcompat:appcompat:1.5.1"
         const val coreKtx = "androidx.core:core-ktx:1.6.0"
 
         object Compose {
-            const val version = "1.1.0"
+            const val version = "1.3.1"
+            const val compilerVersion = "1.3.2"
             const val runtime = "androidx.compose.runtime:runtime:$version"
-            const val compiler = "androidx.compose.compiler:compiler:$version"
+            const val compiler = "androidx.compose.compiler:compiler:$compilerVersion"
             const val animation = "androidx.compose.animation:animation:$version"
-
 
             object UI {
                 const val core = "androidx.compose.ui:ui:$version"
@@ -102,7 +102,7 @@ object Libs {
         }
 
         object Lifecycle {
-            private const val version = "2.4.0"
+            private const val version = "2.5.1"
             const val viewModel = "androidx.lifecycle:lifecycle-viewmodel-ktx:$version"
             const val viewModelCompose = "androidx.lifecycle:lifecycle-viewmodel-compose:$version"
             const val ktx = "androidx.lifecycle:lifecycle-livedata-ktx:$version"
@@ -112,19 +112,18 @@ object Libs {
         }
 
         object Navigation {
-            private const val version = "2.4.0-alpha07"
+            private const val version = "2.5.3"
             const val compose = "androidx.navigation:navigation-compose:$version"
         }
 
         object Hilt {
             private const val version = "1.0.0"
             const val compiler = "androidx.hilt:hilt-compiler:$version"
-            const val navigation = "androidx.hilt:hilt-navigation-compose:1.0.0-alpha03"
-            const val lifecycleViewModel = "androidx.hilt:hilt-lifecycle-viewmodel:1.0.0-alpha03"
+            const val navigation = "androidx.hilt:hilt-navigation-compose:$version"
         }
 
         object Room {
-            private const val version = "2.4.2"
+            private const val version = "2.4.3"
             const val common = "androidx.room:room-common:$version"
             const val runtime = "androidx.room:room-runtime:$version"
             const val compiler = "androidx.room:room-compiler:$version"
@@ -133,7 +132,7 @@ object Libs {
     }
 
     object Hilt {
-        private const val version = "2.40.5"
+        private const val version = "2.44.2"
 
         const val gradlePlugin = "com.google.dagger:hilt-android-gradle-plugin:$version"
         const val hilt = "com.google.dagger:hilt-android:$version"

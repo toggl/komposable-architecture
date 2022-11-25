@@ -14,12 +14,12 @@ kapt {
 }
 
 android {
-    compileSdk 31
+    compileSdk 33
 
     defaultConfig {
         applicationId "com.toggl.komposable.sample.todo"
         minSdk 26
-        targetSdk 31
+        targetSdk 33
         versionCode 1
         versionName "1.0"
 
@@ -51,8 +51,9 @@ android {
     }
 
     composeOptions {
-        kotlinCompilerExtensionVersion Libs.AndroidX.Compose.version
+        kotlinCompilerExtensionVersion Libs.AndroidX.Compose.compilerVersion
     }
+    namespace 'com.toggl.komposable.sample.todo'
 }
 
 dependencies {
@@ -77,7 +78,6 @@ dependencies {
     implementation Libs.AndroidX.Compose.Foundation.layout
     implementation Libs.Google.material
     implementation Libs.AndroidX.Hilt.navigation
-    implementation Libs.AndroidX.Hilt.lifecycleViewModel
     implementation Libs.AndroidX.Lifecycle.runtime
     implementation Libs.AndroidX.Lifecycle.commonJava8
     implementation Libs.AndroidX.Room.common
