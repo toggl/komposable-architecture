@@ -44,7 +44,7 @@ The latest release is available on [Maven Central](https://search.maven.org/arti
 
 ```groovy
 implementation 'com.toggl:komposable-architecture:0.2.0'
-testImplementation 'com.toggl:komposable-architecture-test:0.2.2' // optional testing extensions
+testImplementation 'com.toggl:komposable-architecture-test:0.2.0' // optional testing extensions
 ```
 
 ## © Licence
