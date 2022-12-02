@@ -15,8 +15,8 @@ following steps:
 1. Use `0` for the expiration (never)
 1. Use any name, email address, and password
 
-This creates your key in `~/.gnupg/openpgp-revocs.d/` with `.rev` format. The last 8 characters
-before the `.rev` extension are your **Key ID**.
+This creates your key in `~/.gnupg/openpgp-revocs.d/` with `.rev` format. The **last 8 characters**
+before the `.rev` extension are your <KEY ID>.
 
 To export the key, run:
 
@@ -27,20 +27,23 @@ gpg --export-secret-keys -o $HOME/sonatype.gpg
 Finally upload your key to the keyserver:
 
 ```
-gpg --keyserver keys.openpgp.org --send-keys <YOUR KEY ID>
+gpg --keyserver keys.openpgp.org --send-keys <KEY ID>
 ```
 
 ### Local Properties
 
-Open your `$HOME/.gradle/gradle.properties` file at and fill in the values:
+Open your local gradle properties file either in your project or at `$HOME/.gradle/gradle.properties` and fill in the values:
 
 ```
 signing.keyId=<KEY ID>
 signing.password=<PASSWORD YOU CHOSE>
 signing.secretKeyRingFile=<FULL PATH TO YOUR GPG FILE>
-mavenCentralRepositoryUsername=<SONATYPE USERNAME>
-mavenCentralRepositoryUsername=<PASSWORD FROM VALENTINE>
+ossrhUsername=<SONATYPE USERNAME> 
+ossrhPassword=<SONATYPE PASSWORD> 
+sonatypeStagingProfileId=<SONATYPE PROFILE ID>
 ```
+  
+To get your <SONATYPE PROFILE ID> go to https://oss.sonatype.org/ and log in. In the menu on the left, select Staging profiles, select your profile, and then look for the ID in the URL.
 
 ### Publish
 
