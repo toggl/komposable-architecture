@@ -37,7 +37,7 @@ Open your `komposable-architecture/local.properties` file and fill in the values
 ```gradle
 signing.keyId=<KEY ID> // 8 chars
 signing.password=<PASSWORD YOU CHOSE>
-signing.secretKeyRingFile=<FULL PATH TO YOUR GPG FILE> // ../xxx.gpg
+signing.secretKeyRingFile=<PATH TO YOUR GPG FILE> // ../keyname.gpg
 ossrhUsername=<SONATYPE USERNAME>
 ossrhPassword=<SONATYPE PASSWORD>
 sonatypeStagingProfileId=<PROFILE ID>
