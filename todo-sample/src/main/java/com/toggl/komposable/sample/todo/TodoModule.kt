@@ -39,7 +39,7 @@ class TodoModule {
         navigationReducer: NavigationReducer,
         authReducer: AuthReducer,
         listReducer: ListReducer,
-        editReducer: EditReducer
+        editReducer: EditReducer,
     ): Reducer<AppState, AppAction> =
         combine(
             navigationReducer,
@@ -48,14 +48,14 @@ class TodoModule {
                 mapToLocalState = { appState -> ListState(appState.todoList, appState.backStack) },
                 mapToLocalAction = AppAction::unwrap,
                 mapToGlobalState = { appState, listState -> appState.copy(todoList = listState.todoList, backStack = listState.backStack) },
-                mapToGlobalAction = { listAction -> AppAction.List(listAction) }
+                mapToGlobalAction = { listAction -> AppAction.List(listAction) },
             ),
             editReducer.pullback(
                 mapToLocalState = { appState -> EditState(appState.editableTodo, appState.backStack) },
                 mapToLocalAction = AppAction::unwrap,
                 mapToGlobalState = { appState, editState -> appState.copy(editableTodo = editState.editableTodo, backStack = editState.backStack) },
-                mapToGlobalAction = { listAction -> AppAction.Edit(listAction) }
-            )
+                mapToGlobalAction = { listAction -> AppAction.Edit(listAction) },
+            ),
         )
 
     @Provides
@@ -65,14 +65,14 @@ class TodoModule {
         listSubscription: ListSubscription,
         userSubscription: UserSubscription,
         dispatcherProvider: DispatcherProvider,
-        application: Application
+        application: Application,
     ): Store<AppState, AppAction> =
         createStore(
             initialState = AppState(),
             reducer = reducer,
             subscription = listSubscription mergeWith userSubscription,
             dispatcherProvider = dispatcherProvider,
-            storeScopeProvider = application as StoreScopeProvider
+            storeScopeProvider = application as StoreScopeProvider,
         )
 
     @Provides
@@ -81,7 +81,7 @@ class TodoModule {
         DispatcherProvider(
             io = Dispatchers.IO,
             computation = Dispatchers.Default,
-            main = Dispatchers.Main
+            main = Dispatchers.Main,
         )
 
     @Provides
@@ -90,7 +90,7 @@ class TodoModule {
         Room.databaseBuilder(
             applicationContext,
             AppDatabase::class.java,
-            "todo-app-database"
+            "todo-app-database",
         ).build()
 
     @Provides
@@ -107,13 +107,13 @@ object AppViewModelModule {
     fun listStore(store: Store<AppState, AppAction>): Store<ListState, ListAction> =
         store.view(
             mapToLocalState = { appState -> ListState(appState.todoList, appState.backStack) },
-            mapToGlobalAction = { listAction -> AppAction.List(listAction) }
+            mapToGlobalAction = { listAction -> AppAction.List(listAction) },
         )
 
     @Provides
     fun editStore(store: Store<AppState, AppAction>): Store<EditState, EditAction> =
         store.view(
             mapToLocalState = { appState -> EditState(appState.editableTodo, appState.backStack) },
-            mapToGlobalAction = { editAction -> AppAction.Edit(editAction) }
+            mapToGlobalAction = { editAction -> AppAction.Edit(editAction) },
         )
 }

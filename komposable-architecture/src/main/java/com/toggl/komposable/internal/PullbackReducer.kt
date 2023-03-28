@@ -11,11 +11,11 @@ internal class PullbackReducer<LocalState, GlobalState, LocalAction, GlobalActio
     private val mapToLocalState: (GlobalState) -> LocalState,
     private val mapToLocalAction: (GlobalAction) -> LocalAction?,
     private val mapToGlobalState: (GlobalState, LocalState) -> GlobalState,
-    private val mapToGlobalAction: (LocalAction) -> GlobalAction
+    private val mapToGlobalAction: (LocalAction) -> GlobalAction,
 ) : Reducer<GlobalState, GlobalAction> {
     override fun reduce(
         state: Mutable<GlobalState>,
-        action: GlobalAction
+        action: GlobalAction,
     ): List<Effect<GlobalAction>> {
         val localAction = mapToLocalAction(action)
             ?: return noEffect()

@@ -16,5 +16,8 @@ interface ActionWrapper<WrappedAction> {
 }
 
 inline fun <From, reified To> From.unwrap(): To? =
-    if (this !is ActionWrapper<*> || this.action !is To) null
-    else this.action as To
+    if (this !is ActionWrapper<*> || this.action !is To) {
+        null
+    } else {
+        this.action as To
+    }

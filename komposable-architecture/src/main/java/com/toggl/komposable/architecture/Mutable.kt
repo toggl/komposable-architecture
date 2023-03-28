@@ -36,6 +36,6 @@ class Mutable<T>(private val getValue: () -> T, private val setValue: (T) -> Uni
     internal fun <R> map(getMap: (T) -> R, mapSet: (T, R) -> T): Mutable<R> =
         Mutable(
             getValue = { getMap(getValue()) },
-            setValue = { value -> this.mutate { mapSet(this, value) } }
+            setValue = { value -> this.mutate { mapSet(this, value) } },
         )
 }

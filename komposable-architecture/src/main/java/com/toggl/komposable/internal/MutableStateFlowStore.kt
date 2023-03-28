@@ -21,29 +21,29 @@ import kotlinx.coroutines.runBlocking
 
 internal class MutableStateFlowStore<State, Action : Any> private constructor(
     override val state: Flow<State>,
-    private val sendFn: (List<Action>) -> Unit
+    private val sendFn: (List<Action>) -> Unit,
 ) : Store<State, Action> {
 
     override fun <ViewState, ViewAction : Any> view(
         mapToLocalState: (State) -> ViewState,
-        mapToGlobalAction: (ViewAction) -> Action?
+        mapToGlobalAction: (ViewAction) -> Action?,
     ): Store<ViewState, ViewAction> = MutableStateFlowStore(
         state = state.map { mapToLocalState(it) }.distinctUntilChanged(),
         sendFn = { actions ->
             val globalActions = actions.mapNotNull(mapToGlobalAction)
             sendFn(globalActions)
-        }
+        },
     )
 
     override fun <ViewState : Any, ViewAction : Any> optionalView(
         mapToLocalState: (State) -> ViewState?,
-        mapToGlobalAction: (ViewAction) -> Action?
+        mapToGlobalAction: (ViewAction) -> Action?,
     ): Store<ViewState, ViewAction> = MutableStateFlowStore(
         state = state.mapNotNull { mapToLocalState(it) }.distinctUntilChanged(),
         sendFn = { actions ->
             val globalActions = actions.mapNotNull(mapToGlobalAction)
             sendFn(globalActions)
-        }
+        },
     )
 
     companion object {
@@ -53,7 +53,7 @@ internal class MutableStateFlowStore<State, Action : Any> private constructor(
             subscription: Subscription<State, Action>,
             exceptionHandler: ExceptionHandler,
             storeScopeProvider: StoreScopeProvider,
-            dispatcherProvider: DispatcherProvider
+            dispatcherProvider: DispatcherProvider,
         ): Store<State, Action> {
             val storeScope = storeScopeProvider.getStoreScope()
             val state = MutableStateFlow(initialState)
@@ -99,12 +99,18 @@ internal class MutableStateFlowStore<State, Action : Any> private constructor(
         }
 
         private suspend fun ExceptionHandler.handleReduceException(exception: Throwable): List<Effect<Nothing>> =
-            if (handleException(exception)) noEffect()
-            else throw exception
+            if (handleException(exception)) {
+                noEffect()
+            } else {
+                throw exception
+            }
 
         private suspend fun ExceptionHandler.handleEffectException(exception: Throwable): Nothing? =
-            if (handleException(exception)) null
-            else throw exception
+            if (handleException(exception)) {
+                null
+            } else {
+                throw exception
+            }
 
         private suspend fun ExceptionHandler.handleSubscriptionException(exception: Throwable) {
             if (handleException(exception)) return

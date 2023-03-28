@@ -11,7 +11,7 @@ data class AppState(
     val todoList: List<TodoItem> = emptyList(),
     val editableTodo: EditableTodoItem = EditableTodoItem(title = "", description = ""),
     val identity: Identity = Identity.Unknown,
-    override val backStack: BackStack = listOf(AppDestination.List)
+    override val backStack: BackStack = listOf(AppDestination.List),
 ) : BackStackAwareState<AppState> {
     override fun changeBackStack(backStack: BackStack): AppState =
         copy(backStack = backStack)

@@ -56,7 +56,7 @@ interface Store<State, Action : Any> {
      */
     fun <ViewState, ViewAction : Any> view(
         mapToLocalState: (State) -> ViewState,
-        mapToGlobalAction: (ViewAction) -> Action?
+        mapToGlobalAction: (ViewAction) -> Action?,
     ): Store<ViewState, ViewAction>
 
     /**
@@ -70,6 +70,6 @@ interface Store<State, Action : Any> {
      */
     fun <ViewState : Any, ViewAction : Any> optionalView(
         mapToLocalState: (State) -> ViewState?,
-        mapToGlobalAction: (ViewAction) -> Action?
+        mapToGlobalAction: (ViewAction) -> Action?,
     ): Store<ViewState, ViewAction>
 }

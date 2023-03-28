@@ -40,7 +40,7 @@ class StoreExceptionHandlingTests : StoreCoroutineTest() {
         assertThrows<Throwable> {
             createTestStore(
                 subscription = subscription,
-                defaultExceptionHandler = testExceptionHandler
+                defaultExceptionHandler = testExceptionHandler,
             )
         }
 

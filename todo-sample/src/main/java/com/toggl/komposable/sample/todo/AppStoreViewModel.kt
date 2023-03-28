@@ -10,7 +10,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class AppStoreViewModel @Inject constructor(
-    store: Store<AppState, AppAction>
+    store: Store<AppState, AppAction>,
 ) : ViewModel(), ViewStateProvider<AppViewState>, Store<AppState, AppAction> by store {
     override val viewState: Flow<AppViewState> = state.map { AppViewState(it.identity, it.backStack) }
     override val initialViewState: AppViewState = AppViewState()

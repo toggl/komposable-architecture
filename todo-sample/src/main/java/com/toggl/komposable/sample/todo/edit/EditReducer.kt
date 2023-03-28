@@ -15,7 +15,7 @@ import javax.inject.Singleton
 
 @Singleton
 class EditReducer @Inject constructor(
-    private val saveTodoEffectFactory: SaveTodoEffect.Factory
+    private val saveTodoEffectFactory: SaveTodoEffect.Factory,
 ) : Reducer<EditState, EditAction> {
     override fun reduce(state: Mutable<EditState>, action: EditAction): List<Effect<EditAction>> =
         when (action) {
@@ -23,7 +23,8 @@ class EditReducer @Inject constructor(
             is EditAction.TitleChanged -> state.mutateWithoutEffects { copy(editableTodo = editableTodo.copy(title = action.title)) }
             EditAction.SaveTapped -> effectOf(saveTodoEffectFactory.create(state().editableTodo))
             EditAction.Saved,
-            EditAction.CloseTapped -> state.mutateWithoutEffects {
+            EditAction.CloseTapped,
+            -> state.mutateWithoutEffects {
                 copy(editableTodo = EditableTodoItem()).popBackStack()
             }
         }
@@ -46,7 +47,7 @@ class SaveTodoEffect(
     @Singleton
     class Factory @Inject constructor(
         private val dispatcherProvider: DispatcherProvider,
-        private val todoDao: TodoDao
+        private val todoDao: TodoDao,
     ) {
         fun create(editableTodoItem: EditableTodoItem) =
             SaveTodoEffect(dispatcherProvider, todoDao, editableTodoItem)

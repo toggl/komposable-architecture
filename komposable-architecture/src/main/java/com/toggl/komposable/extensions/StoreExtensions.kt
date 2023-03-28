@@ -28,12 +28,12 @@ fun <State, Action : Any> createStore(
     subscription: Subscription<State, Action> = Subscription { emptyFlow() },
     exceptionHandler: ExceptionHandler = RethrowingExceptionHandler(),
     storeScopeProvider: StoreScopeProvider,
-    dispatcherProvider: DispatcherProvider
+    dispatcherProvider: DispatcherProvider,
 ) = MutableStateFlowStore.create(
     initialState = initialState,
     reducer = reducer,
     subscription = subscription,
     exceptionHandler = exceptionHandler,
     storeScopeProvider = storeScopeProvider,
-    dispatcherProvider = dispatcherProvider
+    dispatcherProvider = dispatcherProvider,
 )

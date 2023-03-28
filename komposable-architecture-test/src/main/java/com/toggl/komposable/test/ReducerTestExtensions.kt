@@ -14,7 +14,7 @@ fun <T> T.toMutableValue(setFunction: (T) -> Unit) =
 suspend fun <State, Action> Reducer<State, Action>.testReduce(
     initialState: State,
     action: Action,
-    testCase: suspend (State, List<Effect<Action>>) -> Unit
+    testCase: suspend (State, List<Effect<Action>>) -> Unit,
 ) {
     var state = initialState
     val mutableValue = state.toMutableValue { state = it }
@@ -25,7 +25,7 @@ suspend fun <State, Action> Reducer<State, Action>.testReduce(
 fun <State, Action, EX : Exception> Reducer<State, Action>.testReduceException(
     initialState: State,
     action: Action,
-    exception: KClass<EX>
+    exception: KClass<EX>,
 ) {
     assertFailsWith(exception) {
         runTest {
@@ -37,23 +37,23 @@ fun <State, Action, EX : Exception> Reducer<State, Action>.testReduceException(
 suspend fun <State, Action> Reducer<State, Action>.testReduceState(
     initialState: State,
     action: Action,
-    testCase: suspend (State) -> Unit
+    testCase: suspend (State) -> Unit,
 ) = testReduce(initialState, action) { state, _ -> testCase(state) }
 
 suspend fun <State, Action> Reducer<State, Action>.testReduceEffects(
     initialState: State,
     action: Action,
-    testCase: suspend (List<Effect<Action>>) -> Unit
+    testCase: suspend (List<Effect<Action>>) -> Unit,
 ) = testReduce(initialState, action) { _, effects -> testCase(effects) }
 
 suspend fun <State, Action> Reducer<State, Action>.testReduceNoEffects(
     initialState: State,
-    action: Action
+    action: Action,
 ) = testReduce(initialState, action, ::assertNoEffectsWereReturned)
 
 suspend fun <State, Action> Reducer<State, Action>.testReduceNoOp(
     initialState: State,
-    action: Action
+    action: Action,
 ) = testReduce(initialState, action) { state, effects ->
     assertEquals(initialState, state)
     assertEquals(0, effects.size)
