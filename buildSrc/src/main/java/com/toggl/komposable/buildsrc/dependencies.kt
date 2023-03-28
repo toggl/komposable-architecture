@@ -1,12 +1,12 @@
 package com.toggl.komposable.buildsrc
 
 object Versions {
-    const val ktlint = "0.38.1"
+    const val ktlint = "0.48.2"
 }
 
 object Libs {
     const val androidGradlePlugin = "com.android.tools.build:gradle:7.3.1"
-    const val gradleVersionsPlugin = "com.github.ben-manes:gradle-versions-plugin:0.44.0"
+    const val gradleVersionsPlugin = "com.github.ben-manes:gradle-versions-plugin:0.46.0"
     const val leakCanary = "com.squareup.leakcanary:leakcanary-android:2.10"
     // fixes warning thrown by SLF4J
     const val slf4j = "org.slf4j:slf4j-simple:1.7.26"
@@ -15,7 +15,7 @@ object Libs {
         const val kotestVersion = "4.2.3"
 
         const val junit5Plugin = "de.mannodermaus.gradle.plugins:android-junit5:1.7.1.1"
-        const val mockk = "io.mockk:mockk:1.13.2"
+        const val mockk = "io.mockk:mockk:1.13.4"
         const val turbine = "app.cash.turbine:turbine:0.12.1"
         const val kotestMatchers = "io.kotest:kotest-assertions-core-jvm:${kotestVersion}"
 
@@ -29,11 +29,11 @@ object Libs {
     }
 
     object Google {
-        const val material = "com.google.android.material:material:1.7.0"
+        const val material = "com.google.android.material:material:1.8.0"
     }
 
     object Kotlin {
-        const val version = "1.7.20"
+        const val version = "1.8.10"
         const val stdlib = "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$version"
         const val gradlePlugin = "org.jetbrains.kotlin:kotlin-gradle-plugin:$version"
 
@@ -57,38 +57,38 @@ object Libs {
     object AndroidX {
 
         object Activity {
-            const val version = "1.6.1"
+            const val version = "1.7.0"
             const val activityKtx = "androidx.activity:activity-ktx:$version"
             const val activityCompose = "androidx.activity:activity-compose:$version"
         }
 
-        const val appcompat = "androidx.appcompat:appcompat:1.5.1"
+        const val appcompat = "androidx.appcompat:appcompat:1.6.1"
         const val coreKtx = "androidx.core:core-ktx:1.6.0"
 
         object Compose {
-            const val version = "1.3.1"
-            const val compilerVersion = "1.3.2"
-            const val runtime = "androidx.compose.runtime:runtime:$version"
+            const val compilerVersion = "1.4.4"
             const val compiler = "androidx.compose.compiler:compiler:$compilerVersion"
-            const val animation = "androidx.compose.animation:animation:$version"
+            const val bom = "androidx.compose:compose-bom:2023.03.00"
+            const val runtime = "androidx.compose.runtime:runtime"
+            const val animation = "androidx.compose.animation:animation"
 
             object UI {
-                const val core = "androidx.compose.ui:ui:$version"
-                const val tooling = "androidx.compose.ui:ui-tooling:$version"
-                const val viewbinding = "androidx.compose.ui:ui-viewbinding:$version"
-                const val junit = "androidx.compose.ui:ui-test-junit4:$version"
-                const val testManifest = "androidx.compose.ui:ui-test-manifest:$version"
+                const val core = "androidx.compose.ui:ui"
+                const val tooling = "androidx.compose.ui:ui-tooling"
+                const val viewbinding = "androidx.compose.ui:ui-viewbinding"
+                const val testManifest = "androidx.compose.ui:ui-test-manifest"
+                const val junit = "androidx.compose.ui:ui-test-junit4:1.4.0"
             }
 
             object Material {
-                const val core = "androidx.compose.material:material:$version"
+                const val core = "androidx.compose.material:material"
                 const val ripple = "androidx.compose.material:material-ripple"
-                const val icons = "androidx.compose.material:material-icons-extended:$version"
+                const val icons = "androidx.compose.material:material-icons-extended"
             }
 
             object Foundation {
-                const val layout = "androidx.compose.foundation:foundation-layout:$version"
-                const val core = "androidx.compose.foundation:foundation:$version"
+                const val layout = "androidx.compose.foundation:foundation-layout"
+                const val core = "androidx.compose.foundation:foundation"
             }
         }
 
@@ -102,7 +102,7 @@ object Libs {
         }
 
         object Lifecycle {
-            private const val version = "2.5.1"
+            private const val version = "2.6.1"
             const val viewModel = "androidx.lifecycle:lifecycle-viewmodel-ktx:$version"
             const val viewModelCompose = "androidx.lifecycle:lifecycle-viewmodel-compose:$version"
             const val ktx = "androidx.lifecycle:lifecycle-livedata-ktx:$version"
@@ -123,7 +123,7 @@ object Libs {
         }
 
         object Room {
-            private const val version = "2.4.3"
+            private const val version = "2.5.1"
             const val common = "androidx.room:room-common:$version"
             const val runtime = "androidx.room:room-runtime:$version"
             const val compiler = "androidx.room:room-compiler:$version"
@@ -132,7 +132,7 @@ object Libs {
     }
 
     object Hilt {
-        private const val version = "2.44.2"
+        private const val version = "2.45"
 
         const val gradlePlugin = "com.google.dagger:hilt-android-gradle-plugin:$version"
         const val hilt = "com.google.dagger:hilt-android:$version"

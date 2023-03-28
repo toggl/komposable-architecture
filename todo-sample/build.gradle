@@ -14,6 +14,8 @@ kapt {
 }
 
 android {
+    namespace 'com.toggl.komposable.sample.todo'
+
     compileSdk 33
 
     defaultConfig {
@@ -33,12 +35,12 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
     }
 
     kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_1_8.toString()
+        jvmTarget = JavaVersion.VERSION_11.toString()
         freeCompilerArgs += [
                 "-Xopt-in=kotlinx.coroutines.ExperimentalCoroutinesApi",
                 "-Xopt-in=kotlinx.coroutines.FlowPreview",
@@ -53,7 +55,6 @@ android {
     composeOptions {
         kotlinCompilerExtensionVersion Libs.AndroidX.Compose.compilerVersion
     }
-    namespace 'com.toggl.komposable.sample.todo'
 }
 
 dependencies {
@@ -66,6 +67,8 @@ dependencies {
     implementation Libs.AndroidX.Activity.activityKtx
     implementation Libs.AndroidX.Lifecycle.viewModelCompose
     implementation Libs.AndroidX.Navigation.compose
+
+    implementation platform(Libs.AndroidX.Compose.bom)
     implementation Libs.AndroidX.Compose.runtime
     implementation Libs.AndroidX.Compose.compiler
     implementation Libs.AndroidX.Compose.animation
