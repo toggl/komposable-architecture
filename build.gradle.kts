@@ -36,6 +36,10 @@ subprojects {
         }
     }
 
+    tasks.withType<JavaCompile> {
+        targetCompatibility = JavaVersion.VERSION_11.toString()
+    }
+
     tasks.withType<KotlinCompile>().configureEach {
         kotlinOptions {
             allWarningsAsErrors = true
