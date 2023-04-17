@@ -16,7 +16,7 @@ androidxComposeCompiler = "1.4.5"
 gradleVersionsPlugin = "0.46.0"
 nexus = "1.1.0"
 junit = "4.13.2"
-junit5Plugin = "1.7.1.1"
+junit5Plugin = "1.8.2.1"
 junitJupiter = "5.7.1"
 kotlin = "1.8.20"
 kotlinxCoroutines = "1.6.4"
@@ -44,12 +44,12 @@ android-library = { id = "com.android.library", version.ref = "androidGradlePlug
 android-lint = { id = "com.android.lint", version.ref = "androidGradlePlugin" }
 android-test = { id = "com.android.test", version.ref = "androidGradlePlugin" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+kotlin-jvm  = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-kapt = { id = "org.jetbrains.kotlin.kapt", version.ref = "kotlin" }
 spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }
 hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
 nexus = { id = "io.github.gradle-nexus.publish-plugin", version.ref = "nexus" }
-
-
+junit5 = { id = "de.mannodermaus.android-junit5", version.ref = "junit5Plugin" }
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "androidxCore" }

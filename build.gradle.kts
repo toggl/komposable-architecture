@@ -1,22 +1,13 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import com.diffplug.gradle.spotless.SpotlessExtension
 
-// Top-level build file where you can add configuration options common to all sub-projects/modules.
-
-buildscript {
-    repositories {
-        google()
-        mavenCentral()
-    }
-    dependencies {
-        classpath(libs.android.gradlePlugin)
-        classpath(libs.kotlin.gradlePlugin)
-        classpath(libs.hilt.gradlePlugin)
-        classpath(libs.junit5.gradlePlugin)
-    }
-}
-
 plugins {
+    alias(libs.plugins.android.application) apply false
+    alias(libs.plugins.kotlin.android) apply false
+    alias(libs.plugins.kotlin.jvm) apply false
+    alias(libs.plugins.kotlin.kapt) apply false
+    alias(libs.plugins.hilt) apply false
+    alias(libs.plugins.junit5) apply false
     alias(libs.plugins.spotless)
     alias(libs.plugins.nexus)
 }
@@ -36,13 +27,6 @@ extra.apply {
 
 apply(from = "${rootDir}/scripts/publish-root.gradle")
 
-allprojects {
-    repositories {
-        google()
-        mavenCentral()
-    }
-}
-
 subprojects {
     apply(plugin = rootProject.libs.plugins.spotless.get().pluginId)
     configure<SpotlessExtension> {
@@ -56,7 +40,7 @@ subprojects {
         kotlinOptions {
             allWarningsAsErrors = true
             jvmTarget = JavaVersion.VERSION_11.toString()
-            freeCompilerArgs += listOf(
+            freeCompilerArgs = freeCompilerArgs + listOf(
                 "-Xskip-prerelease-check",
                 "-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi",
                 "-opt-in=kotlinx.coroutines.FlowPreview"
