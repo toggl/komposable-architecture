@@ -33,6 +33,10 @@ android {
         }
     }
 
+    tasks.withType<JavaCompile> {
+        targetCompatibility = JavaVersion.VERSION_11.toString()
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
