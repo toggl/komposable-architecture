@@ -2,13 +2,14 @@
 Kotlin implementation of [Point-Free's The Composable Architecture](https://github.com/pointfreeco/swift-composable-architecture)
 
 ## 🚧 Project Status
-We've been using Komposable Architecture in production for almost a year now, and we haven't encountered any major issues. However, the API is still subject to change at least until we reach version 1.0.
-We definitely want to make the setup more straightforward, and we are thinking about ways to integrate jetpack navigation as well.
+We've been using the Komposable Architecture in production for years now, and we haven't encountered any major issues. 
+However, the API is still subject to change, at least until we reach version 1.0. We are working to make the setup more straightforward and are considering ways to integrate Jetpack Navigation as well.
 
 ## 💡 Motivations
-When the time of rewriting Toggl's mobile apps came, we decided that we would take the native approach rather than insisting on using Xamarin
-We quickly realized, however, that we could still share many things across the app, even if the apps didn't share a common codebase
-The idea behind using the same architecture allowed us to share specs, github issues, creates a single common language that both Android and iOS devs can use and even speeds up development of features that are already implemented in the other platform!
+When it came time to rewrite Toggl's mobile apps, we chose a native approach instead of continuing with Xamarin.
+We quickly realized that, despite the apps not sharing a common codebase, we could still share many aspects across them.
+Using the same architecture allowed us to share specs, GitHub issues, and create a single common language that both Android and iOS developers can use.
+This approach has even sped up the development of features already implemented on the other platform!
 
 We chose to use [Point-Free](https://www.pointfree.co/)'s Composable Architecture as the apps's architecture, which meant we had to set out to implement it in Kotlin. This repo is the result of our efforts!
 
