@@ -6,7 +6,7 @@ plugins {
 
 extra.apply {
     set("PUBLISH_GROUP_ID", "com.toggl")
-    set("PUBLISH_VERSION", "0.2.1")
+    set("PUBLISH_VERSION", "0.2.2")
     set("PUBLISH_ARTIFACT_ID", "komposable-architecture")
 }
 
