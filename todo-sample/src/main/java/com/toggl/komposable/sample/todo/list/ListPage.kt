@@ -32,11 +32,11 @@ private fun TodoList(todoList: List<TodoItem>) {
     if (todoList.isNotEmpty()) {
         LazyColumn(
             verticalArrangement = Arrangement.spacedBy(12.dp),
-            contentPadding = PaddingValues(16.dp)
+            contentPadding = PaddingValues(16.dp),
         ) {
             items(
                 items = todoList,
-                itemContent = { TodoItem(it) }
+                itemContent = { TodoItem(it) },
             )
         }
     } else {
@@ -45,7 +45,7 @@ private fun TodoList(todoList: List<TodoItem>) {
                 .fillMaxSize()
                 .padding(48.dp),
             text = "Add your first Todo!",
-            style = MaterialTheme.typography.h3
+            style = MaterialTheme.typography.h3,
         )
     }
 }
@@ -62,7 +62,7 @@ private fun TodoItem(todo: TodoItem) {
 fun AddTodoFab() {
     val listStore = hiltViewModel<ListStoreViewModel>()
     FloatingActionButton(
-        onClick = { listStore.send(ListAction.AddTodoTapped) }
+        onClick = { listStore.send(ListAction.AddTodoTapped) },
     ) {
         Icon(Icons.Rounded.Add, contentDescription = "Add New Todo Item")
     }

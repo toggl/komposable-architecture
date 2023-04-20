@@ -35,8 +35,11 @@ fun TodoScaffold() {
     val activity = LocalContext.current as AppCompatActivity
 
     activity.handleBackPressesEmitting {
-        if (backStack.size < 2) activity.finish()
-        else appStore.send(AppAction.BackPressed)
+        if (backStack.size < 2) {
+            activity.finish()
+        } else {
+            appStore.send(AppAction.BackPressed)
+        }
     }
 
     val currentDestination = backStack.last()
@@ -45,10 +48,10 @@ fun TodoScaffold() {
         floatingActionButton = { if (currentDestination == AppDestination.List) AddTodoFab() },
         floatingActionButtonPosition = FabPosition.Center,
         isFloatingActionButtonDocked = true,
-        bottomBar = { TodoBottomAppBar(appStore, currentDestination, viewState.identity) }
+        bottomBar = { TodoBottomAppBar(appStore, currentDestination, viewState.identity) },
     ) {
         AppNavigationHost(
-            backStack = backStack
+            backStack = backStack,
         )
     }
 }
@@ -69,7 +72,7 @@ fun AppCompatActivity.handleBackPressesEmitting(callback: () -> Unit) {
             override fun onPause(owner: LifecycleOwner) {
                 backPressedCallback.remove()
             }
-        }
+        },
     )
 }
 
@@ -78,7 +81,7 @@ private fun TodoBottomAppBar(appStore: AppStoreViewModel, currentDestination: Ap
     BottomAppBar(cutoutShape = RoundedCornerShape(100)) {
         if (currentDestination == AppDestination.Add) {
             OutlinedButton(
-                onClick = { appStore.send(AppAction.Edit(EditAction.SaveTapped)) }
+                onClick = { appStore.send(AppAction.Edit(EditAction.SaveTapped)) },
             ) {
                 Icon(Icons.Rounded.Check, contentDescription = null)
                 Text(text = "Save")

@@ -31,8 +31,8 @@ abstract class StoreCoroutineTest {
             createTestStore(
                 reducer = testReducer,
                 subscription = testSubscription,
-                defaultExceptionHandler = testExceptionHandler
-            )
+                defaultExceptionHandler = testExceptionHandler,
+            ),
         )
     }
 

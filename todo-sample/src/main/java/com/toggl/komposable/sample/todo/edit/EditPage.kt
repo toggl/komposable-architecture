@@ -35,7 +35,7 @@ fun EditPage() {
     ) {
         Text(
             text = "Edit Page",
-            style = MaterialTheme.typography.h3
+            style = MaterialTheme.typography.h3,
         )
         Spacer(modifier = Modifier.height(16.dp))
         TextField(
@@ -46,7 +46,7 @@ fun EditPage() {
                 title = it
                 store.send(EditAction.TitleChanged(it.text))
             },
-            singleLine = true
+            singleLine = true,
         )
         Spacer(modifier = Modifier.height(8.dp))
         TextField(
@@ -59,7 +59,7 @@ fun EditPage() {
                 description = it
                 store.send(EditAction.DescriptionChanged(it.text))
             },
-            maxLines = 20
+            maxLines = 20,
         )
         Spacer(modifier = Modifier.height(16.dp))
     }

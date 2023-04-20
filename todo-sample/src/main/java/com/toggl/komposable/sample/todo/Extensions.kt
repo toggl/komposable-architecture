@@ -18,7 +18,7 @@ fun <ViewState> ViewStateProvider<ViewState>.collectViewStateWhenStarted() =
 @Composable
 fun <T> Flow<T>.collectAsStateWhenStarted(
     initial: T,
-    context: CoroutineContext = EmptyCoroutineContext
+    context: CoroutineContext = EmptyCoroutineContext,
 ): State<T> {
     val lifecycleOwner = LocalLifecycleOwner.current
     val flowLifecycleAware = remember(this, lifecycleOwner) {

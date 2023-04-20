@@ -20,8 +20,8 @@ class StoreStateTests : StoreCoroutineTest() {
                     TestAction.DoNothingAction,
                     TestAction.ChangeTestProperty("123"),
                     TestAction.AddToTestProperty("4"),
-                    TestAction.DoNothingAction
-                )
+                    TestAction.DoNothingAction,
+                ),
             )
 
             // initial state
@@ -45,8 +45,8 @@ class StoreStateTests : StoreCoroutineTest() {
                     TestAction.DoNothingAction,
                     TestAction.ChangeTestProperty("123"),
                     TestAction.AddToTestProperty("4"),
-                    TestAction.ChangeTestProperty("")
-                )
+                    TestAction.ChangeTestProperty(""),
+                ),
             )
 
             // initial state
@@ -70,8 +70,8 @@ class StoreStateTests : StoreCoroutineTest() {
                     TestAction.ChangeTestProperty("123"),
                     TestAction.AddToTestProperty("4"),
                     TestAction.StartEffectAction(TestEffect(TestAction.DoNothingFromEffectAction)),
-                    TestAction.StartEffectAction(TestEffect(TestAction.ClearTestPropertyFromEffect))
-                )
+                    TestAction.StartEffectAction(TestEffect(TestAction.ClearTestPropertyFromEffect)),
+                ),
             )
 
             // initial state

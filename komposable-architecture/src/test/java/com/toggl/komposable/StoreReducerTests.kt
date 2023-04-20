@@ -34,7 +34,7 @@ class StoreReducerTests : StoreCoroutineTest() {
                 TestAction.DoNothingAction,
                 startUselessEffectAction,
                 TestAction.DoNothingAction,
-            )
+            ),
         )
 
         runCurrent()
@@ -49,7 +49,6 @@ class StoreReducerTests : StoreCoroutineTest() {
 
     @Test
     fun `all actions are reduced before any effect gets executed`() = runTest {
-
         val uselessEffect = spyk(TestEffect(TestAction.DoNothingFromEffectAction))
         val clearPropertyEffect = spyk(TestEffect(TestAction.ClearTestPropertyFromEffect))
         val startUselessEffectAction = TestAction.StartEffectAction(uselessEffect)
@@ -66,13 +65,12 @@ class StoreReducerTests : StoreCoroutineTest() {
                 startUselessEffectAction,
                 startClearPropertyEffectAction,
                 TestAction.DoNothingAction,
-            )
+            ),
         )
 
         runCurrent()
 
         coVerify(ordering = Ordering.SEQUENCE) {
-
             // first: reduce sent actions
             testReducer.reduce(any(), TestAction.DoNothingAction)
             testReducer.reduce(any(), changeTestPropertyAction)

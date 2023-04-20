@@ -11,7 +11,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ListStoreViewModel @Inject constructor(
-    store: Store<ListState, ListAction>
+    store: Store<ListState, ListAction>,
 ) : ViewModel(), ViewStateProvider<ListViewState>, Store<ListState, ListAction> by store {
     override val viewState: Flow<ListViewState> = state.map { ListViewState(it.todoList) }
     override val initialViewState: ListViewState = ListViewState()

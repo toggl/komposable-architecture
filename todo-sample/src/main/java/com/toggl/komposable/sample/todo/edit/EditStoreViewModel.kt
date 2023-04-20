@@ -11,7 +11,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class EditStoreViewModel @Inject constructor(
-    store: Store<EditState, EditAction>
+    store: Store<EditState, EditAction>,
 ) : ViewModel(), ViewStateProvider<EditViewState>, Store<EditState, EditAction> by store {
     override val viewState: Flow<EditViewState> = state.map { EditViewState(it.editableTodo) }
     override val initialViewState: EditViewState = EditViewState()

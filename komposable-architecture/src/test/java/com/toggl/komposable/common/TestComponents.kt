@@ -23,14 +23,14 @@ fun StoreCoroutineTest.createTestStore(
     subscription: Subscription<TestState, TestAction> = TestSubscription(),
     defaultExceptionHandler: ExceptionHandler = TestStoreExceptionHandler(),
     dispatcherProvider: DispatcherProvider = this.dispatcherProvider,
-    storeScopeProvider: StoreScopeProvider = StoreScopeProvider { this.testCoroutineScope }
+    storeScopeProvider: StoreScopeProvider = StoreScopeProvider { this.testCoroutineScope },
 ) = MutableStateFlowStore.create(
     initialState,
     reducer,
     subscription,
     defaultExceptionHandler,
     storeScopeProvider,
-    dispatcherProvider
+    dispatcherProvider,
 )
 
 data class TestState(val testProperty: String = "")

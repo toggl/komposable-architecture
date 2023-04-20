@@ -1,4 +1,0 @@
-rootProject.name = "Komposable Architecture"
-include ':komposable-architecture'
-include ':komposable-architecture-test'
-include ':todo-sample'

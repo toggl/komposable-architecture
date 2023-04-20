@@ -7,11 +7,11 @@ import androidx.room.PrimaryKey
 data class TodoItem(
     @PrimaryKey(autoGenerate = true) val id: Long? = null,
     val title: String,
-    val description: String
+    val description: String,
 )
 
 data class EditableTodoItem(
     val id: Long? = null,
     val title: String = "",
-    val description: String = ""
+    val description: String = "",
 )

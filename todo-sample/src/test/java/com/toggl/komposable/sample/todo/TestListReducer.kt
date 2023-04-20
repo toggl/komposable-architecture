@@ -20,7 +20,7 @@ class TestListReducer : CoroutineTest() {
         val initialState = ListState(todoList = emptyList(), backStack = emptyList())
         reducer.testReduce(
             initialState,
-            ListAction.ListUpdated(listOf(testTodoItem))
+            ListAction.ListUpdated(listOf(testTodoItem)),
         ) { state, effects ->
             assertEquals(initialState.copy(todoList = listOf(testTodoItem)), state)
             assertEquals(noEffect(), effects)
@@ -32,7 +32,7 @@ class TestListReducer : CoroutineTest() {
         val initialState = ListState(todoList = emptyList(), backStack = emptyList())
         reducer.testReduce(
             initialState,
-            ListAction.AddTodoTapped
+            ListAction.AddTodoTapped,
         ) { state, effects ->
             assertEquals(initialState.copy(backStack = listOf(AppDestination.Add)), state)
             assertEquals(noEffect(), effects)

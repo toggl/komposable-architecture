@@ -22,7 +22,7 @@ fun AppNavigationHost(backStack: List<AppDestination>) {
 
     NavHost(
         navController = navController,
-        startDestination = AppDestination.List.route
+        startDestination = AppDestination.List.route,
     ) {
         composable(AppDestination.List.route) { ListPage() }
         composable(AppDestination.Add.route) { EditPage() }
