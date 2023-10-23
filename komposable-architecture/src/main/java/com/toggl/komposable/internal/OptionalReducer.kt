@@ -1,7 +1,6 @@
 package com.toggl.komposable.internal
 
-import com.toggl.komposable.architecture.Effect
-import com.toggl.komposable.architecture.Mutable
+import com.toggl.komposable.architecture.ReduceResult
 import com.toggl.komposable.architecture.Reducer
 import com.toggl.komposable.extensions.map
 import com.toggl.komposable.extensions.noEffect
@@ -14,23 +13,14 @@ internal class OptionalReducer<LocalState, GlobalState, LocalAction, GlobalActio
     private val mapToGlobalAction: (LocalAction) -> GlobalAction,
 ) : Reducer<GlobalState, GlobalAction> {
     override fun reduce(
-        state: Mutable<GlobalState>,
+        state: GlobalState,
         action: GlobalAction,
-    ): List<Effect<GlobalAction>> {
-        val localAction = mapToLocalAction(action) ?: return noEffect()
-
-        var localState: LocalState = state
-            .map(mapToLocalState, mapToGlobalState)
-            .withValue<LocalState?> { this } ?: return noEffect()
-
-        val localMutableValue = Mutable({ localState }) { localState = it }
-
-        val effects = innerReducer
-            .reduce(localMutableValue, localAction)
-            .map { effect -> effect.map { action -> action?.run(mapToGlobalAction) } }
-
-        state.mutate { mapToGlobalState(this, localState) }
-
-        return effects
+    ): ReduceResult<GlobalState, GlobalAction> {
+        val localAction = mapToLocalAction(action) ?: return ReduceResult(state, noEffect())
+        val localState = mapToLocalState(state) ?: return ReduceResult(state, noEffect())
+        val (newLocalState, newLocalEffects) = innerReducer.reduce(localState, localAction)
+        val newGlobalState = mapToGlobalState(state, newLocalState)
+        val newGlobalEffects = newLocalEffects.map { effects -> effects.map { e -> e?.run(mapToGlobalAction) } }
+        return ReduceResult(newGlobalState, newGlobalEffects)
     }
 }

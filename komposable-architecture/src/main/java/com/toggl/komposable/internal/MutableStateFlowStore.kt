@@ -1,7 +1,7 @@
 package com.toggl.komposable.internal
 
 import com.toggl.komposable.architecture.Effect
-import com.toggl.komposable.architecture.Mutable
+import com.toggl.komposable.architecture.ReduceResult
 import com.toggl.komposable.architecture.Reducer
 import com.toggl.komposable.architecture.Store
 import com.toggl.komposable.architecture.Subscription
@@ -61,19 +61,18 @@ internal class MutableStateFlowStore<State, Action : Any> private constructor(
             lateinit var send: (List<Action>) -> Unit
             send = { actions ->
                 storeScope.launch(context = dispatcherProvider.main) {
-                    var tempState = state.value
-                    val mutableValue = Mutable({ tempState }) { tempState = it }
-
-                    val effects = actions.flatMap { action ->
+                    val result: ReduceResult<State, Action> = actions.fold(ReduceResult(state.value, noEffect())) { accResult, action ->
                         try {
-                            reducer.reduce(mutableValue, action)
+                            val r = reducer.reduce(accResult.state, action)
+                            return@fold ReduceResult(r.state, accResult.effects + r.effects)
                         } catch (e: Throwable) {
-                            exceptionHandler.handleReduceException(e)
+                            ReduceResult(accResult.state, exceptionHandler.handleReduceException(e))
                         }
                     }
-                    state.value = tempState
 
-                    val effectActions = effects.mapNotNull { effect ->
+                    state.value = result.state
+
+                    val effectActions = result.effects.mapNotNull { effect ->
                         try {
                             effect.execute()
                         } catch (e: Throwable) {

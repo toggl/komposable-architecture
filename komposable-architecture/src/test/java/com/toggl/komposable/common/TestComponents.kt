@@ -1,12 +1,11 @@
 package com.toggl.komposable.common
 
 import com.toggl.komposable.architecture.Effect
-import com.toggl.komposable.architecture.Mutable
+import com.toggl.komposable.architecture.ReduceResult
 import com.toggl.komposable.architecture.Reducer
 import com.toggl.komposable.architecture.Subscription
 import com.toggl.komposable.exceptions.ExceptionHandler
 import com.toggl.komposable.extensions.effectOf
-import com.toggl.komposable.extensions.mutateWithoutEffects
 import com.toggl.komposable.extensions.noEffect
 import com.toggl.komposable.internal.MutableStateFlowStore
 import com.toggl.komposable.scope.DispatcherProvider
@@ -67,22 +66,20 @@ class TestStoreExceptionHandler : ExceptionHandler {
 }
 
 class TestReducer : Reducer<TestState, TestAction> {
-    override fun reduce(state: Mutable<TestState>, action: TestAction): List<Effect<TestAction>> =
+    override fun reduce(state: TestState, action: TestAction): ReduceResult<TestState, TestAction> =
         when (action) {
-            is TestAction.ChangeTestProperty -> state.mutateWithoutEffects {
-                copy(testProperty = action.testProperty)
-            }
-            is TestAction.AddToTestProperty -> state.mutateWithoutEffects {
-                copy(testProperty = testProperty + action.testPropertySuffix)
-            }
-            TestAction.ClearTestPropertyFromEffect -> state.mutateWithoutEffects {
-                copy(testProperty = "")
-            }
-            is TestAction.StartEffectAction -> effectOf(action.effect)
-            TestAction.DoNothingAction -> noEffect()
-            TestAction.DoNothingFromEffectAction -> noEffect()
+            is TestAction.ChangeTestProperty ->
+                ReduceResult(state.copy(testProperty = action.testProperty), noEffect())
+            is TestAction.AddToTestProperty ->
+                ReduceResult(state.copy(testProperty = state.testProperty + action.testPropertySuffix), noEffect())
+            TestAction.ClearTestPropertyFromEffect ->
+                ReduceResult(state.copy(testProperty = ""), noEffect())
+            is TestAction.StartEffectAction ->
+                ReduceResult(state, effectOf(action.effect))
+            TestAction.DoNothingAction -> ReduceResult(state, noEffect())
+            TestAction.DoNothingFromEffectAction -> ReduceResult(state, noEffect())
             TestAction.ThrowExceptionAction -> throw TestException
-            TestAction.StartExceptionThrowingEffectAction -> effectOf(TestExceptionEffect())
+            TestAction.StartExceptionThrowingEffectAction -> ReduceResult(state, effectOf(TestExceptionEffect()))
         }
 }
 
