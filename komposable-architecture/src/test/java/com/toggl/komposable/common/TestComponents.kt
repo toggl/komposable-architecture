@@ -32,17 +32,18 @@ fun StoreCoroutineTest.createTestStore(
     dispatcherProvider,
 )
 
-data class TestState(val testProperty: String = "")
+data class TestState(val testProperty: String = "", val testIntProperty: Int = 0)
 
 sealed class TestAction {
+    data class LocalActionWrapper(val action: LocalTestAction) : TestAction()
     data class ChangeTestProperty(val testProperty: String) : TestAction()
     data class AddToTestProperty(val testPropertySuffix: String) : TestAction()
     data class StartEffectAction(val effect: Effect<TestAction>) : TestAction()
-    object ClearTestPropertyFromEffect : TestAction()
-    object DoNothingAction : TestAction()
-    object StartExceptionThrowingEffectAction : TestAction()
-    object DoNothingFromEffectAction : TestAction()
-    object ThrowExceptionAction : TestAction()
+    data object ClearTestPropertyFromEffect : TestAction()
+    data object DoNothingAction : TestAction()
+    data object StartExceptionThrowingEffectAction : TestAction()
+    data object DoNothingFromEffectAction : TestAction()
+    data object ThrowExceptionAction : TestAction()
 }
 
 class TestEffect(private val action: TestAction = TestAction.DoNothingFromEffectAction) : Effect<TestAction> {
@@ -68,6 +69,7 @@ class TestStoreExceptionHandler : ExceptionHandler {
 class TestReducer : Reducer<TestState, TestAction> {
     override fun reduce(state: TestState, action: TestAction): ReduceResult<TestState, TestAction> =
         when (action) {
+            is TestAction.LocalActionWrapper -> ReduceResult(state, noEffect())
             is TestAction.ChangeTestProperty ->
                 ReduceResult(state.copy(testProperty = action.testProperty), noEffect())
             is TestAction.AddToTestProperty ->
@@ -84,3 +86,26 @@ class TestReducer : Reducer<TestState, TestAction> {
 }
 
 object TestException : Exception()
+
+data class LocalTestState(val testIntProperty: Int = 0)
+sealed class LocalTestAction {
+    data class ChangeTestIntProperty(val testIntProperty: Int) : LocalTestAction()
+    data class StartEffectAction(val effect: Effect<LocalTestAction>) : LocalTestAction()
+    data object DoNothingLocalAction : LocalTestAction()
+    data object DoNothingFromEffectAction : LocalTestAction()
+}
+
+class LocalTestReducer : Reducer<LocalTestState, LocalTestAction> {
+    override fun reduce(
+        state: LocalTestState,
+        action: LocalTestAction,
+    ): ReduceResult<LocalTestState, LocalTestAction> =
+        when (action) {
+            is LocalTestAction.ChangeTestIntProperty ->
+                ReduceResult(state.copy(testIntProperty = action.testIntProperty), noEffect())
+            is LocalTestAction.StartEffectAction -> ReduceResult(state, effectOf(action.effect))
+            LocalTestAction.DoNothingLocalAction,
+            LocalTestAction.DoNothingFromEffectAction,
+            -> ReduceResult(state, noEffect())
+        }
+}

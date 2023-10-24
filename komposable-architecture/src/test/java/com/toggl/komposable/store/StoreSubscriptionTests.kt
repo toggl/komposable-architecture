@@ -1,4 +1,4 @@
-package com.toggl.komposable
+package com.toggl.komposable.store
 
 import com.toggl.komposable.common.StoreCoroutineTest
 import com.toggl.komposable.common.TestAction
