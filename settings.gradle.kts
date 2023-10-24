@@ -18,5 +18,5 @@ rootProject.name = "Komposable Architecture"
 include(
     ":komposable-architecture",
     ":komposable-architecture-test",
-    ":todo-sample"
+    "samples:todos"
 )
