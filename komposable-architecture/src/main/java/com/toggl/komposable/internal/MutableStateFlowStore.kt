@@ -57,11 +57,12 @@ internal class MutableStateFlowStore<State, Action : Any> private constructor(
         ): Store<State, Action> {
             val storeScope = storeScopeProvider.getStoreScope()
             val state = MutableStateFlow(initialState)
+            val noEffect = noEffect()
 
             lateinit var send: (List<Action>) -> Unit
             send = { actions ->
                 storeScope.launch(context = dispatcherProvider.main) {
-                    val result: ReduceResult<State, Action> = actions.fold(ReduceResult(state.value, noEffect())) { accResult, action ->
+                    val result: ReduceResult<State, Action> = actions.fold(ReduceResult(state.value, noEffect)) { accResult, action ->
                         try {
                             val r = reducer.reduce(accResult.state, action)
                             return@fold ReduceResult(r.state, accResult.effects + r.effects)
