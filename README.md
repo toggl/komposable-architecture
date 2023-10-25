@@ -21,7 +21,7 @@ While all the core concepts are the same, the composable architecture is still w
 The lack of KeyPaths in Kotlin forces us to use functions in order to map from global state to local state.
 
 ### No Value Types
-There's no way to simply mutate the state in Kotlin like the Composable architecture does in Swift. Instead, reduced state is returned from the reducer along with any effects in [`ReduceResult`](https://github.com/toggl/komposable-architecture/blob/main/komposable-architecture/src/main/java/com/toggl/komposable/architecture/ReduceResult.kt).
+There's no way to simply mutate the state in Kotlin like the Composable architecture does in Swift. Instead, the reduced state is returned from the reducer along with any effects in [`ReduceResult`](https://github.com/toggl/komposable-architecture/blob/main/komposable-architecture/src/main/java/com/toggl/komposable/architecture/ReduceResult.kt).
 
 ### Subscriptions
 Additionally we decided to extend Point-Free architecture with something called subscriptions. This concept is taken from the [Elm Architecture](https://guide.elm-lang.org/architecture/). It's basically a way for us to leverage observable capabilities of different APIs, in our case it's mostly for observing data stored in [Room Database](https://developer.android.com/training/data-storage/room).
