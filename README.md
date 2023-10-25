@@ -21,7 +21,7 @@ While all the core concepts are the same, the composable architecture is still w
 The lack of KeyPaths in Kotlin forces us to use functions in order to map from global state to local state.
 
 ### No Value Types
-There's no way to simply mutate the state in Kotlin like the Composable architecture does in Swift. The fix for this is the [`Mutable`](https://github.com/toggl/komposable-architecture/blob/main/komposable-architecture/src/main/java/com/toggl/komposable/architecture/Mutable.kt) class which allows for the state to be mutated without requiring the user to explicitly return the new copy of the state, making the Reducers read a lot more like their iOS counterparts.
+There's no way to simply mutate the state in Kotlin like the Composable architecture does in Swift. Instead, reduced state is returned from the reducer along with any effects in [`ReduceResult`](https://github.com/toggl/komposable-architecture/blob/main/komposable-architecture/src/main/java/com/toggl/komposable/architecture/ReduceResult.kt).
 
 ### Subscriptions
 Additionally we decided to extend Point-Free architecture with something called subscriptions. This concept is taken from the [Elm Architecture](https://guide.elm-lang.org/architecture/). It's basically a way for us to leverage observable capabilities of different APIs, in our case it's mostly for observing data stored in [Room Database](https://developer.android.com/training/data-storage/room).
@@ -174,8 +174,8 @@ store.send(EditAction.TitleChanged("new title"))
 Reducers are classes that implement the following interface:
 
 ```kotlin
-interface Reducer<State, Action> {
-    fun reduce(state: Mutable<State>, action: Action): List<Effect<Action>>
+fun interface Reducer<State, Action> {
+    fun reduce(state: State, action: Action): ReduceResult<State, Action>
 }
 ```
 
@@ -233,23 +233,26 @@ The rest of the reducers only handle one part of that state, for a particular su
 This aids in modularity. But in order to merge those reducers with the app level one, their types need to be compatible. That's what `pullback` is for. It converts a specific reducer into a global one.
 
 ```kotlin
-class PullbackReducer<LocalState, GlobalState, LocalAction, GlobalAction>(
+internal class PullbackReducer<LocalState, GlobalState, LocalAction, GlobalAction>(
     private val innerReducer: Reducer<LocalState, LocalAction>,
     private val mapToLocalState: (GlobalState) -> LocalState,
     private val mapToLocalAction: (GlobalAction) -> LocalAction?,
     private val mapToGlobalState: (GlobalState, LocalState) -> GlobalState,
-    private val mapToGlobalAction: (LocalAction) -> GlobalAction
+    private val mapToGlobalAction: (LocalAction) -> GlobalAction,
 ) : Reducer<GlobalState, GlobalAction> {
     override fun reduce(
-        state: Mutable<GlobalState>,
-        action: GlobalAction
-    ): List<Effect<GlobalAction>> {
+        state: GlobalState,
+        action: GlobalAction,
+    ): ReduceResult<GlobalState, GlobalAction> {
         val localAction = mapToLocalAction(action)
-            ?: return noEffect()
+            ?: return ReduceResult(state, noEffect())
 
-        return innerReducer
-            .reduce(state.map(mapToLocalState, mapToGlobalState), localAction)
-            .map { effect -> effect.map { action -> action?.run(mapToGlobalAction) } }
+        val newLocalState = innerReducer.reduce(mapToLocalState(state), localAction)
+
+        return ReduceResult(
+            mapToGlobalState(state, newLocalState.state),
+            newLocalState.effects.map { effects -> effects.map { e -> e?.run(mapToGlobalAction) } },
+        )
     }
 }
 ```
@@ -268,13 +271,13 @@ class MutableStateFlowStore<State, Action : Any> private constructor(
 
     override fun <ViewState, ViewAction : Any> view(
         mapToLocalState: (State) -> ViewState,
-        mapToGlobalAction: (ViewAction) -> Action?
+        mapToGlobalAction: (ViewAction) -> Action?,
     ): Store<ViewState, ViewAction> = MutableStateFlowStore(
         state = state.map { mapToLocalState(it) }.distinctUntilChanged(),
         sendFn = { actions ->
             val globalActions = actions.mapNotNull(mapToGlobalAction)
             sendFn(globalActions)
-        }
+        },
     )
 }
 ```
@@ -324,9 +327,9 @@ The simplest example of this is a logging reducer, which logs every action sent 
 class LoggingReducer(override val innerReducer: Reducer<AppState, AppAction>)
     : HigherOrderReducer<AppState, AppAction> {
     override fun reduce(
-        state: Mutable<AppState>,
+        state: AppState,
         action: AppAction
-    ): List<Effect<AppAction>> {
+    ): ReduceResult<AppAction> {
         Log.i(
             "LoggingReducer", when (action) {
                 is AppAction.List -> action.list.formatForDebug()
