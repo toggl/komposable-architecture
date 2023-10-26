@@ -1,7 +1,6 @@
 package com.toggl.komposable.internal
 
-import com.toggl.komposable.architecture.Effect
-import com.toggl.komposable.architecture.Mutable
+import com.toggl.komposable.architecture.ReduceResult
 import com.toggl.komposable.architecture.Reducer
 import com.toggl.komposable.extensions.map
 import com.toggl.komposable.extensions.noEffect
@@ -14,14 +13,17 @@ internal class PullbackReducer<LocalState, GlobalState, LocalAction, GlobalActio
     private val mapToGlobalAction: (LocalAction) -> GlobalAction,
 ) : Reducer<GlobalState, GlobalAction> {
     override fun reduce(
-        state: Mutable<GlobalState>,
+        state: GlobalState,
         action: GlobalAction,
-    ): List<Effect<GlobalAction>> {
+    ): ReduceResult<GlobalState, GlobalAction> {
         val localAction = mapToLocalAction(action)
-            ?: return noEffect()
+            ?: return ReduceResult(state, noEffect())
 
-        return innerReducer
-            .reduce(state.map(mapToLocalState, mapToGlobalState), localAction)
-            .map { effect -> effect.map { action -> action?.run(mapToGlobalAction) } }
+        val newLocalState = innerReducer.reduce(mapToLocalState(state), localAction)
+
+        return ReduceResult(
+            mapToGlobalState(state, newLocalState.state),
+            newLocalState.effects.map { effects -> effects.map { e -> e?.run(mapToGlobalAction) } },
+        )
     }
 }

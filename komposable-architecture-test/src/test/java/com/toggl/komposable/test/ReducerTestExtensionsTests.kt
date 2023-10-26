@@ -1,17 +1,14 @@
 package com.toggl.komposable.test
 
 import com.toggl.komposable.architecture.Effect
-import com.toggl.komposable.architecture.Mutable
+import com.toggl.komposable.architecture.ReduceResult
 import com.toggl.komposable.architecture.Reducer
 import com.toggl.komposable.extensions.effectOf
-import com.toggl.komposable.extensions.mutateWithoutEffects
 import com.toggl.komposable.extensions.noEffect
 import io.kotest.assertions.throwables.shouldThrow
-import io.kotest.matchers.shouldBe
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.slot
 import io.mockk.verify
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Test
@@ -34,72 +31,64 @@ class ReducerTestExtensionsTests {
     fun `testReduce calls the right methods`() = runTest {
         val testCase: suspend (TestState, List<Effect<TestAction>>) -> Unit = mockk(relaxed = true)
         val reducer = mockk<Reducer<TestState, TestAction>> {
-            every { reduce(any(), any()) } returns returnedEffects
+            every { reduce(any(), any()) } returns ReduceResult(initState, returnedEffects)
         }
 
         reducer.testReduce(initState, inputAction, testCase)
 
-        val mutableStateSlot = slot<Mutable<TestState>>()
         coVerify {
-            reducer.reduce(capture(mutableStateSlot), inputAction)
+            reducer.reduce(initState, inputAction)
             testCase.invoke(initState, returnedEffects)
         }
-        mutableStateSlot.captured() shouldBe initState
     }
 
     @Test
     fun `testReduceState calls the right methods`() = runTest {
         val testCase: suspend (TestState) -> Unit = mockk(relaxed = true)
         val reducer = mockk<Reducer<TestState, TestAction>> {
-            every { reduce(any(), any()) } returns returnedEffects
+            every { reduce(any(), any()) } returns ReduceResult(initState, returnedEffects)
         }
 
         reducer.testReduceState(initState, inputAction, testCase)
 
-        val mutableStateSlot = slot<Mutable<TestState>>()
         coVerify {
-            reducer.reduce(capture(mutableStateSlot), inputAction)
+            reducer.reduce(initState, inputAction)
             testCase.invoke(initState)
         }
-        mutableStateSlot.captured() shouldBe initState
     }
 
     @Test
     fun `testReduceEffects calls the right methods`() = runTest {
         val testCase: suspend (List<Effect<TestAction>>) -> Unit = mockk(relaxed = true)
         val reducer = mockk<Reducer<TestState, TestAction>> {
-            every { reduce(any(), any()) } returns returnedEffects
+            every { reduce(any(), any()) } returns ReduceResult(initState, returnedEffects)
         }
 
         reducer.testReduceEffects(initState, inputAction, testCase)
 
-        val mutableStateSlot = slot<Mutable<TestState>>()
         coVerify {
-            reducer.reduce(capture(mutableStateSlot), inputAction)
+            reducer.reduce(initState, inputAction)
             testCase.invoke(returnedEffects)
         }
-        mutableStateSlot.captured() shouldBe initState
     }
 
     @Test
     fun `testReduceNoEffects calls the right methods`() = runTest {
         val reducer = mockk<Reducer<TestState, TestAction>> {
-            every { reduce(any(), any()) } returns noEffect()
+            every { reduce(any(), any()) } returns ReduceResult(initState, noEffect())
         }
 
         reducer.testReduceNoEffects(initState, inputAction)
 
-        val mutableStateSlot = slot<Mutable<TestState>>()
         coVerify {
-            reducer.reduce(capture(mutableStateSlot), inputAction)
+            reducer.reduce(initState, inputAction)
         }
-        mutableStateSlot.captured() shouldBe initState
     }
 
     @Test
     fun `testReduceNoEffects should fail when some effects are returned`() = runTest {
         val reducer = mockk<Reducer<TestState, TestAction>> {
-            every { reduce(any(), any()) } returns returnedEffects
+            every { reduce(any(), any()) } returns ReduceResult(initState, returnedEffects)
         }
 
         shouldThrow<AssertionError> {
@@ -110,22 +99,20 @@ class ReducerTestExtensionsTests {
     @Test
     fun `testReduceNoOp calls the right methods`() = runTest {
         val reducer = mockk<Reducer<TestState, TestAction>> {
-            every { reduce(any(), any()) } returns noEffect()
+            every { reduce(any(), any()) } returns ReduceResult(initState, noEffect())
         }
 
         reducer.testReduceNoOp(initState, inputAction)
 
-        val mutableStateSlot = slot<Mutable<TestState>>()
         verify {
-            reducer.reduce(capture(mutableStateSlot), inputAction)
+            reducer.reduce(initState, inputAction)
         }
-        mutableStateSlot.captured() shouldBe initState
     }
 
     @Test
     fun `testReduceNoOp fails when some effects are returned`() = runTest {
         val reducer = mockk<Reducer<TestState, TestAction>> {
-            every { reduce(any(), any()) } returns returnedEffects
+            every { reduce(any(), any()) } returns ReduceResult(initState, returnedEffects)
         }
 
         shouldThrow<AssertionError> {
@@ -136,7 +123,7 @@ class ReducerTestExtensionsTests {
     @Test
     fun `testReduceNoOp fails when state has been changed`() = runTest {
         val reducer =
-            Reducer<TestState, TestAction> { s, _ -> s.mutateWithoutEffects { TestState("Changed") } }
+            Reducer<TestState, TestAction> { _, _ -> ReduceResult(TestState("Changed"), noEffect()) }
 
         shouldThrow<AssertionError> {
             reducer.testReduceNoOp(initState, inputAction)
@@ -151,11 +138,9 @@ class ReducerTestExtensionsTests {
 
         reducer.testReduceException(initState, inputAction, IllegalStateException::class)
 
-        val mutableStateSlot = slot<Mutable<TestState>>()
         coVerify {
-            reducer.reduce(capture(mutableStateSlot), inputAction)
+            reducer.reduce(initState, inputAction)
         }
-        mutableStateSlot.captured() shouldBe initState
     }
 
     @Test
@@ -172,7 +157,7 @@ class ReducerTestExtensionsTests {
     @Test
     fun `testReduceException fails when no exception is thrown`() = runTest {
         val reducer = mockk<Reducer<TestState, TestAction>> {
-            every { reduce(any(), any()) } returns noEffect()
+            every { reduce(any(), any()) } returns ReduceResult(initState, noEffect())
         }
 
         shouldThrow<AssertionError> {
