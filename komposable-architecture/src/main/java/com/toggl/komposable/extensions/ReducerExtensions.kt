@@ -65,8 +65,9 @@ fun <LocalState, GlobalState, LocalAction, GlobalAction>
     OptionalReducer(this, mapToLocalState, mapToLocalAction, mapToGlobalState, mapToGlobalAction)
 
 /**
- * A specialized version of [forEach] for handling a parent state with a map of elements,
- * each associated with a unique identifier. For non-map collections, use [forEach].
+ * A specialized version of [forEach] for handling a parent state with a [Map] of elements,
+ * each associated with a unique key.
+ * For a [List] based element collection see [forEachList]. For anything else, see [forEach].
  * @see forEach
  */
 fun <ParentState, ElementState, ParentAction, ElementAction, ID>
@@ -81,13 +82,41 @@ fun <ParentState, ElementState, ParentAction, ElementAction, ID>
         parentReducer = this,
         elementReducer = elementReducer,
         mapToElementAction = mapToElementAction,
-        mapToElementState = { state, id -> mapToElementMap(state)[id] ?: throw NoSuchElementException("Element with id $id not found") },
+        mapToElementState = { state, key -> mapToElementMap(state)[key] ?: throw NoSuchElementException("Element with key=$key not found") },
         mapToParentAction = mapToParentAction,
-        mapToParentState = { state, elementState, id ->
+        mapToParentState = { state, elementState, key ->
             val newElementMap = mapToElementMap(state).toMutableMap().apply {
-                this[id] = elementState
+                this[key] = elementState
             }
             mapToParentState(state, newElementMap)
+        },
+    )
+
+/**
+ * A specialized version of [forEach] for handling a parent state with a [List] of elements.
+ * For a [Map] based element collection see [forEachMap]. For anything else, see [forEach].
+ * @see forEachMap
+ * @see forEach
+ */
+fun <ParentState, ElementState, ParentAction, ElementAction>
+        Reducer<ParentState, ParentAction>.forEachList(
+    elementReducer: Reducer<ElementState, ElementAction>,
+    mapToElementAction: (ParentAction) -> Pair<Int, ElementAction>?,
+    mapToElementList: (ParentState) -> List<ElementState>,
+    mapToParentAction: (ElementAction, Int) -> ParentAction,
+    mapToParentState: (ParentState, List<ElementState>) -> ParentState,
+): Reducer<ParentState, ParentAction> =
+    ForEachReducer(
+        parentReducer = this,
+        elementReducer = elementReducer,
+        mapToElementAction = mapToElementAction,
+        mapToElementState = { state, index -> mapToElementList(state)[index] ?: throw NoSuchElementException("Element with index=$index not found") },
+        mapToParentAction = mapToParentAction,
+        mapToParentState = { state, elementState, index ->
+            val newElementList = mapToElementList(state).toMutableList().apply {
+                set(index, elementState)
+            }
+            mapToParentState(state, newElementList)
         },
     )
 
