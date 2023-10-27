@@ -99,13 +99,13 @@ fun <ParentState, ElementState, ParentAction, ElementAction, ID>
  * @see forEach
  */
 fun <ParentState, ElementState, ParentAction, ElementAction>
-        Reducer<ParentState, ParentAction>.forEachList(
-    elementReducer: Reducer<ElementState, ElementAction>,
-    mapToElementAction: (ParentAction) -> Pair<Int, ElementAction>?,
-    mapToElementList: (ParentState) -> List<ElementState>,
-    mapToParentAction: (ElementAction, Int) -> ParentAction,
-    mapToParentState: (ParentState, List<ElementState>) -> ParentState,
-): Reducer<ParentState, ParentAction> =
+    Reducer<ParentState, ParentAction>.forEachList(
+        elementReducer: Reducer<ElementState, ElementAction>,
+        mapToElementAction: (ParentAction) -> Pair<Int, ElementAction>?,
+        mapToElementList: (ParentState) -> List<ElementState>,
+        mapToParentAction: (ElementAction, Int) -> ParentAction,
+        mapToParentState: (ParentState, List<ElementState>) -> ParentState,
+    ): Reducer<ParentState, ParentAction> =
     ForEachReducer(
         parentReducer = this,
         elementReducer = elementReducer,

@@ -22,7 +22,7 @@ class ForEachMapTests {
         parentText = "parent",
         lastEditedKey = null,
         elementsTextLength = initialElements.values.sumOf { it.elementText.length },
-        elements = initialElements
+        elements = initialElements,
     )
 
     private val parentReducer =
@@ -41,7 +41,6 @@ class ForEachMapTests {
             }
         }
 
-
     private val mergedReducer: Reducer<ParentMapState, ParentAction> = parentReducer.forEachMap(
         elementReducer = elementReducer,
         mapToElementAction = { action -> (action as? ParentAction.ElementActionWrapper)?.let { it.id to it.elementAction } },
@@ -49,7 +48,7 @@ class ForEachMapTests {
         mapToParentAction = { elementAction, id ->
             ParentAction.ElementActionWrapper(
                 id,
-                elementAction
+                elementAction,
             )
         },
         mapToParentState = { state, elementMap -> state.copy(elements = elementMap) },
@@ -83,4 +82,3 @@ class ForEachMapTests {
         }
     }
 }
-

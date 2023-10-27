@@ -22,7 +22,7 @@ class ForEachListTests {
         parentText = "parent",
         lastEditedIndex = null,
         elementsTextLength = initialElements.values.sumOf { it.elementText.length },
-        elements = initialElements.values.toList()
+        elements = initialElements.values.toList(),
     )
     private val parentReducer =
         Reducer<ParentListState, ParentAction> { state, action ->
@@ -47,7 +47,7 @@ class ForEachListTests {
         mapToParentAction = { elementAction, id ->
             ParentAction.ElementActionWrapper(
                 id,
-                elementAction
+                elementAction,
             )
         },
         mapToParentState = { state, elementList -> state.copy(elements = elementList) },
