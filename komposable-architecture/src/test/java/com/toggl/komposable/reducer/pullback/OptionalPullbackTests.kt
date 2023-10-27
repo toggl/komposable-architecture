@@ -1,4 +1,4 @@
-package com.toggl.komposable.reducer
+package com.toggl.komposable.reducer.pullback
 
 import com.toggl.komposable.architecture.Reducer
 import com.toggl.komposable.common.LocalTestReducer
@@ -15,7 +15,7 @@ import io.mockk.verify
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Test
 
-class OptionalReducerTests : BasePullbackReducerTests() {
+class OptionalPullbackTests : BasePullbackTests() {
     override val localReducer = spyk(LocalTestReducer())
     override val pulledBackReducer: Reducer<TestState, TestAction> = localReducer.optionalPullback(
         mapToLocalState = { if (it.testIntProperty != 0) LocalTestState(it.testIntProperty) else null },
