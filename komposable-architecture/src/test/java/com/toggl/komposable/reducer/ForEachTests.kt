@@ -1,9 +1,9 @@
 package com.toggl.komposable.reducer
 
+import com.toggl.komposable.architecture.ReduceResult
 import com.toggl.komposable.architecture.Reducer
-import com.toggl.komposable.extensions.forEach
 import com.toggl.komposable.extensions.forEachMap
-import com.toggl.komposable.extensions.mutateWithoutEffects
+import com.toggl.komposable.extensions.noEffect
 import com.toggl.komposable.test.testReduceState
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.test.runTest
@@ -20,28 +20,29 @@ class ForEachTests {
         parentText = "parent",
         lastEditedId = null,
         elementsTextLength = initialElements.values.sumOf { it.elementText.length },
-        elements = initialElements
+        elements = initialElements,
     )
     private val parentReducer =
         Reducer<ParentState, ParentAction> { state, action ->
-            when(action) {
+            when (action) {
                 is ParentAction.EditText ->
-                    state.mutateWithoutEffects { copy(parentText = action.text) }
+                    ReduceResult(state.copy(parentText = action.text), noEffect())
                 is ParentAction.ElementActionWrapper ->
-                    state.mutateWithoutEffects {
-                        copy(
+                    ReduceResult(
+                        state.copy(
                             lastEditedId = action.id,
-                            elementsTextLength = elements.values.sumOf { it.elementText.length }
-                        )
-                    }
+                            elementsTextLength = state.elements.values.sumOf { it.elementText.length },
+                        ),
+                        noEffect(),
+                    )
             }
         }
 
     private val elementReducer =
         Reducer<ElementState, ElementAction> { state, action ->
-            when(action) {
+            when (action) {
                 is ElementAction.EditText ->
-                    state.mutateWithoutEffects { copy(elementText = action.text) }
+                    ReduceResult(state.copy(elementText = action.text), noEffect())
             }
         }
 
@@ -50,17 +51,17 @@ class ForEachTests {
         mapToElementAction = { action -> (action as? ParentAction.ElementActionWrapper)?.let { it.id to it.elementAction } },
         mapToElementMap = { state -> state.elements },
         mapToParentAction = { elementAction, id -> ParentAction.ElementActionWrapper(id, elementAction) },
-        mapToParentState = { state, elementMap -> state.copy(elements = elementMap) }
+        mapToParentState = { state, elementMap -> state.copy(elements = elementMap) },
     )
 
     @Test
     fun `parent actions should work normally`() = runTest {
         mergedReducer.testReduceState(
             initialParentState,
-            ParentAction.EditText("updated"))
-        { state ->
+            ParentAction.EditText("updated"),
+        ) { state ->
             state shouldBe initialParentState.copy(
-                parentText = "updated"
+                parentText = "updated",
             )
         }
     }
@@ -69,14 +70,14 @@ class ForEachTests {
     fun `parent reducer should handle the action after element reduced, the state should also be already modified by element reducer`() = runTest {
         mergedReducer.testReduceState(
             initialParentState,
-            ParentAction.ElementActionWrapper(3, ElementAction.EditText("a")))
-        { state ->
+            ParentAction.ElementActionWrapper(3, ElementAction.EditText("a")),
+        ) { state ->
             state shouldBe initialParentState.copy(
                 lastEditedId = 3,
                 elementsTextLength = 17,
                 elements = initialParentState.elements.toMutableMap().apply {
                     this[3] = ElementState(3, "a")
-                }
+                },
             )
         }
     }
@@ -95,7 +96,7 @@ data class ParentState(
     val parentText: String,
     val lastEditedId: Int?,
     val elementsTextLength: Int,
-    val elements: Map<Int, ElementState>
+    val elements: Map<Int, ElementState>,
 )
 
 data class ElementState(val id: Int, val elementText: String)
