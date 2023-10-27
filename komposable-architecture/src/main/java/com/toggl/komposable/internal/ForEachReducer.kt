@@ -1,10 +1,8 @@
 package com.toggl.komposable.internal
 
-import com.toggl.komposable.architecture.Effect
-import com.toggl.komposable.architecture.Mutable
+import com.toggl.komposable.architecture.ReduceResult
 import com.toggl.komposable.architecture.Reducer
 import com.toggl.komposable.extensions.map
-import com.toggl.komposable.extensions.noEffect
 
 internal class ForEachReducer<ElementState, ParentState, ElementAction, ParentAction, ID>(
     private val parentReducer: Reducer<ParentState, ParentAction>,
@@ -15,26 +13,21 @@ internal class ForEachReducer<ElementState, ParentState, ElementAction, ParentAc
     private val mapToParentState: (ParentState, ElementState, ID) -> ParentState,
 ) : Reducer<ParentState, ParentAction> {
     override fun reduce(
-        state: Mutable<ParentState>,
+        state: ParentState,
         action: ParentAction,
-    ): List<Effect<ParentAction>> {
+    ): ReduceResult<ParentState, ParentAction> {
         val (id: ID, elementAction: ElementAction) = mapToElementAction(action) ?: return parentReducer.reduce(state, action)
         val mapToLocalState: (ParentState) -> ElementState = { parentState: ParentState -> mapToElementState(parentState, id) }
         val mapToGlobalState: (ParentState, ElementState) -> ParentState = { parentState: ParentState, elementState: ElementState -> mapToParentState(parentState, elementState!!, id) }
 
-        val originalState = state()
-        var elementState = mapToLocalState(originalState)
-        val elementMutableValue = Mutable({ elementState }) { elementState = it }
-        val elementEffects = elementReducer
-            .reduce(elementMutableValue, elementAction)
-            .map { effect -> effect.map { action -> action?.run { mapToParentAction(this, id) } } }
+        val (elementState, elementEffects) = elementReducer.reduce(mapToLocalState(state), elementAction)
+        val (parentState, parentEffects) = parentReducer.reduce(mapToGlobalState(state, elementState), action)
 
-        var newParentState = mapToGlobalState(originalState, elementState)
-        val parentMutableValue = Mutable({ newParentState }) { newParentState = it }
-        val parentEffect = parentReducer.reduce(parentMutableValue, action)
-
-        state.mutate { newParentState }
-
-        return elementEffects + parentEffect
+        return ReduceResult(
+            state = parentState,
+            effects = elementEffects.map { effect ->
+                effect.map { action -> action?.run { mapToParentAction(this, id) } }
+            } + parentEffects,
+        )
     }
 }
