@@ -65,39 +65,56 @@ fun <LocalState, GlobalState, LocalAction, GlobalAction>
     OptionalReducer(this, mapToLocalState, mapToLocalAction, mapToGlobalState, mapToGlobalAction)
 
 /**
- * TODO: Add documentation
+ * A specialized version of [forEach] for handling a parent state with a map of elements,
+ * each associated with a unique identifier. For non-map collections, use [forEach].
+ * @see forEach
  */
 fun <ParentState, ElementState, ParentAction, ElementAction, ID>
-        Reducer<ParentState, ParentAction>.forEachMap(
-    elementReducer: Reducer<ElementState, ElementAction>,
-    mapToElementAction: (ParentAction) -> Pair<ID, ElementAction>?,
-    mapToElementMap: (ParentState) -> Map<ID, ElementState>,
-    mapToParentAction: (ElementAction, ID) -> ParentAction,
-    mapToParentState: (ParentState, Map<ID, ElementState>) -> ParentState,
-): Reducer<ParentState, ParentAction> =
+    Reducer<ParentState, ParentAction>.forEachMap(
+        elementReducer: Reducer<ElementState, ElementAction>,
+        mapToElementAction: (ParentAction) -> Pair<ID, ElementAction>?,
+        mapToElementMap: (ParentState) -> Map<ID, ElementState>,
+        mapToParentAction: (ElementAction, ID) -> ParentAction,
+        mapToParentState: (ParentState, Map<ID, ElementState>) -> ParentState,
+    ): Reducer<ParentState, ParentAction> =
     ForEachReducer(
         parentReducer = this,
         elementReducer = elementReducer,
         mapToElementAction = mapToElementAction,
-        mapToElementState =  { state, id -> mapToElementMap(state)[id] ?: throw NoSuchElementException("Element with id $id not found") },
+        mapToElementState = { state, id -> mapToElementMap(state)[id] ?: throw NoSuchElementException("Element with id $id not found") },
         mapToParentAction = mapToParentAction,
         mapToParentState = { state, elementState, id ->
             val newElementMap = mapToElementMap(state).toMutableMap().apply {
                 this[id] = elementState
             }
             mapToParentState(state, newElementMap)
-        }
+        },
     )
 
 /**
- * TODO: Add documentation
+ * Embeds a child reducer within a parent domain, allowing it to operate on elements of a collection
+ * within the parent's state.
+ *
+ * For example, if a parent feature manages an array of child states, you can utilize the `forEach`
+ * operator to execute both the parent and child's logic:
+ *
+ * The `forEach` function ensures a specific order of operations, first running the child reducer and
+ * then the parent reducer. Reversing this order could lead to subtle bugs, as the parent feature
+ * might remove the child state from the array before the child can react to the action.
  */
 fun <ParentState, ElementState, ParentAction, ElementAction, ID>
-        Reducer<ParentState, ParentAction>.forEach(
-    elementReducer: Reducer<ElementState, ElementAction>,
-    mapToElementAction: (ParentAction) -> Pair<ID, ElementAction>?,
-    mapToElementState: (ParentState, ID) -> ElementState,
-    mapToParentAction: (ElementAction, ID) -> ParentAction,
-    mapToParentState: (ParentState, ElementState, ID) -> ParentState,
-): Reducer<ParentState, ParentAction> =
-    ForEachReducer(this, elementReducer, mapToElementAction, mapToElementState, mapToParentAction, mapToParentState)
+    Reducer<ParentState, ParentAction>.forEach(
+        elementReducer: Reducer<ElementState, ElementAction>,
+        mapToElementAction: (ParentAction) -> Pair<ID, ElementAction>?,
+        mapToElementState: (ParentState, ID) -> ElementState,
+        mapToParentAction: (ElementAction, ID) -> ParentAction,
+        mapToParentState: (ParentState, ElementState, ID) -> ParentState,
+    ): Reducer<ParentState, ParentAction> =
+    ForEachReducer(
+        parentReducer = this,
+        elementReducer = elementReducer,
+        mapToElementAction = mapToElementAction,
+        mapToElementState = mapToElementState,
+        mapToParentAction = mapToParentAction,
+        mapToParentState = mapToParentState,
+    )
