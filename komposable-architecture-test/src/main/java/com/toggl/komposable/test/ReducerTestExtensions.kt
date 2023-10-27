@@ -1,24 +1,18 @@
 package com.toggl.komposable.test
 
 import com.toggl.komposable.architecture.Effect
-import com.toggl.komposable.architecture.Mutable
 import com.toggl.komposable.architecture.Reducer
 import kotlinx.coroutines.test.runTest
 import kotlin.reflect.KClass
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
-fun <T> T.toMutableValue(setFunction: (T) -> Unit) =
-    Mutable({ this }, setFunction)
-
 suspend fun <State, Action> Reducer<State, Action>.testReduce(
     initialState: State,
     action: Action,
     testCase: suspend (State, List<Effect<Action>>) -> Unit,
 ) {
-    var state = initialState
-    val mutableValue = state.toMutableValue { state = it }
-    val effect = reduce(mutableValue, action)
+    val (state, effect) = reduce(initialState, action)
     testCase(state, effect)
 }
 
