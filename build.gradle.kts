@@ -8,6 +8,7 @@ plugins {
     alias(libs.plugins.kotlin.kapt) apply false
     alias(libs.plugins.hilt) apply false
     alias(libs.plugins.junit5) apply false
+    alias(libs.plugins.ksp) apply false
     alias(libs.plugins.spotless)
     alias(libs.plugins.nexus)
 }
@@ -44,11 +45,6 @@ subprojects {
         kotlinOptions {
             allWarningsAsErrors = true
             jvmTarget = JavaVersion.VERSION_11.toString()
-            freeCompilerArgs = freeCompilerArgs + listOf(
-                "-Xskip-prerelease-check",
-                "-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi",
-                "-opt-in=kotlinx.coroutines.FlowPreview"
-            )
         }
     }
 }

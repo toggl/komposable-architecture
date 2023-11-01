@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.junit5)
+    alias(libs.plugins.ksp)
 }
 
 android {
@@ -58,6 +59,7 @@ android {
 
 dependencies {
     implementation(project(":komposable-architecture"))
+    ksp(project(":komposable-architecture-compiler"))
     implementation(libs.androidx.activity)
     implementation(libs.androidx.activity.ktx)
     implementation(libs.androidx.activity.compose)
