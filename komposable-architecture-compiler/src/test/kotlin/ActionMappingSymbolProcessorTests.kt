@@ -27,6 +27,27 @@ class ActionMappingSymbolProcessorTests {
     }
 
     @Test
+    fun `Action mapping methods are generated on files without a package`() {
+        // Arrange
+        val compilation = KotlinCompilation().apply {
+            sources = listOf(SourceFiles.appActionWithoutPackage, SourceFiles.settingsActionWithoutPackage)
+            symbolProcessorProviders = listOf(ActionMappingSymbolProcessorProvider())
+            inheritClassPath = true
+            messageOutputStream = System.out
+        }
+
+        // Act
+        val result = compilation.compile()
+
+        // Assert
+        result.exitCode shouldBe KotlinCompilation.ExitCode.OK
+
+        val sources = result.kspGeneratedSources()
+        sources.size.shouldBe(1)
+        sources.single().readText().contentEquals(SourceFiles.generatedSettingsFileWithoutPackage)
+    }
+
+    @Test
     fun `If a class annotated with @WrapperAction has multiple properties then the compilation fails`() {
         // Arrange
         val compilation = KotlinCompilation().apply {

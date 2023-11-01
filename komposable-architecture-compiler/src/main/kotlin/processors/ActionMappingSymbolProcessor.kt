@@ -36,7 +36,9 @@ class ActionMappingSymbolProcessor(
                         val childActionClassName = childAction.toClassName()
 
                         val sealedParentActionTypeName = parentActionSealedType.toClassName().simpleName
-                        val parentActionTypeName = parentActionClassName.canonicalName.substring(parentActionClassName.packageName.length, parentActionClassName.canonicalName.length)
+                        val parentActionTypeName = parentActionClassName.canonicalName
+                            .substring(parentActionClassName.packageName.length, parentActionClassName.canonicalName.length)
+                            .trim('.')
                         val childActionTypeName = childActionClassName.simpleName
 
                         val childActionArgumentName = childActionTypeName.toCamelCase()
