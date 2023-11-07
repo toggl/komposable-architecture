@@ -1,4 +1,4 @@
-package com.toggl.komposable.reducer
+package com.toggl.komposable.reducer.pullback
 
 import com.toggl.komposable.architecture.Reducer
 import com.toggl.komposable.common.LocalTestReducer
@@ -8,7 +8,7 @@ import com.toggl.komposable.common.TestState
 import com.toggl.komposable.extensions.pullback
 import io.mockk.spyk
 
-class PullbackReducerTests : BasePullbackReducerTests() {
+class PullbackTests : BasePullbackTests() {
     override val localReducer = spyk(LocalTestReducer())
     override val pulledBackReducer: Reducer<TestState, TestAction> = localReducer.pullback(
         mapToLocalState = { LocalTestState(it.testIntProperty) },

@@ -29,6 +29,7 @@ dependencies {
     testImplementation(libs.turbine)
     testImplementation(libs.kotestMatchers)
 
+    testImplementation(project(":komposable-architecture-test"))
     testImplementation(libs.kotlin.stdlib)
     testImplementation(libs.kotlin.test.core)
     testImplementation(libs.kotlin.test.junit5)

@@ -1,4 +1,4 @@
-package com.toggl.komposable.reducer
+package com.toggl.komposable.reducer.pullback
 
 import com.toggl.komposable.architecture.Reducer
 import com.toggl.komposable.common.LocalTestAction
@@ -15,7 +15,7 @@ import io.mockk.verify
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Test
 
-abstract class BasePullbackReducerTests {
+abstract class BasePullbackTests {
     abstract val localReducer: Reducer<LocalTestState, LocalTestAction>
     abstract val pulledBackReducer: Reducer<TestState, TestAction>
 
