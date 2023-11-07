@@ -125,7 +125,6 @@ fun <ParentState, ElementState, ParentAction, ElementAction>
  * within the parent's state.
  *
  * For example, if a parent feature manages an array of child states, you can utilize the [forEach]
- 
  * operator to execute both the parent and child's logic:
  *
  * The `forEach` function ensures a specific order of operations, first running the child reducer and
