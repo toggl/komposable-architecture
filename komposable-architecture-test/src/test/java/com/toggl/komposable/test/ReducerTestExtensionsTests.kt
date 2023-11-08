@@ -64,7 +64,7 @@ class ReducerTestExtensionsTests {
             every { reduce(any(), any()) } returns ReduceResult(initState, returnedEffects)
         }
 
-        reducer.testReduceEffects(initState, inputAction, testCase)
+        reducer.testReduceEffect(initState, inputAction, testCase)
 
         coVerify {
             reducer.reduce(initState, inputAction)
@@ -78,7 +78,7 @@ class ReducerTestExtensionsTests {
             every { reduce(any(), any()) } returns ReduceResult(initState, noEffect())
         }
 
-        reducer.testReduceNoEffects(initState, inputAction)
+        reducer.testReduceNoEffect(initState, inputAction)
 
         coVerify {
             reducer.reduce(initState, inputAction)
@@ -92,7 +92,7 @@ class ReducerTestExtensionsTests {
         }
 
         shouldThrow<AssertionError> {
-            reducer.testReduceNoEffects(initState, inputAction)
+            reducer.testReduceNoEffect(initState, inputAction)
         }
     }
 

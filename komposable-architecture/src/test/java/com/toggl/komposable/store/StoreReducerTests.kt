@@ -48,7 +48,7 @@ class StoreReducerTests : StoreCoroutineTest() {
     }
 
     @Test
-    fun `all actions are reduced before any effect gets executed`() = runTest {
+    fun `all actions are reduced before any effect gets processed`() = runTest {
         val uselessEffect = spyk(TestEffect(TestAction.DoNothingFromEffectAction))
         val clearPropertyEffect = spyk(TestEffect(TestAction.ClearTestPropertyFromEffect))
         val startUselessEffectAction = TestAction.StartEffectAction(uselessEffect)
@@ -80,12 +80,44 @@ class StoreReducerTests : StoreCoroutineTest() {
             testReducer.reduce(any(), TestAction.DoNothingAction)
 
             // second: execute effects
-            uselessEffect.execute()
-            clearPropertyEffect.execute()
+//            uselessEffect.execute()
+//            clearPropertyEffect.execute()
 
             // third: reduce action returned from testEffect1
-            testReducer.reduce(any(), TestAction.DoNothingFromEffectAction)
             testReducer.reduce(any(), TestAction.ClearTestPropertyFromEffect)
+            testReducer.reduce(any(), TestAction.DoNothingFromEffectAction)
+        }
+    }
+
+    @Test
+    fun `effects with multiple actions are processed correctly`() = runTest {
+        val flowEffect = spyk(
+            TestEffect(
+                TestAction.ClearTestPropertyFromEffect,
+                TestAction.ChangeTestProperty("123"),
+                TestAction.AddToTestProperty("4"),
+            ),
+        )
+        val startFlowEffectAction = TestAction.StartEffectAction(flowEffect)
+
+        testStore.send(
+            listOf(
+                TestAction.DoNothingAction,
+                startFlowEffectAction,
+            ),
+        )
+
+        runCurrent()
+
+        coVerify(ordering = Ordering.SEQUENCE) {
+            // first: reduce sent actions
+            testReducer.reduce(any(), TestAction.DoNothingAction)
+            testReducer.reduce(any(), startFlowEffectAction)
+
+            // second: reduce action coming from effect
+            testReducer.reduce(any(), TestAction.ClearTestPropertyFromEffect)
+            testReducer.reduce(any(), TestAction.ChangeTestProperty("123"))
+            testReducer.reduce(any(), TestAction.AddToTestProperty("4"))
         }
     }
 }

@@ -6,6 +6,7 @@ import com.toggl.komposable.common.TestAction
 import com.toggl.komposable.common.TestState
 import com.toggl.komposable.extensions.combine
 import com.toggl.komposable.extensions.effectOf
+import com.toggl.komposable.extensions.merge
 import com.toggl.komposable.test.testReduce
 import io.kotest.matchers.shouldBe
 import io.mockk.Ordering
@@ -33,9 +34,9 @@ class CompositeReducerTests {
 
     @Test
     fun `reducers should be called sequentially`() = runTest {
-        combinedReducer.testReduce(originalState, TestAction.DoNothingAction) { state, effects ->
+        combinedReducer.testReduce(originalState, TestAction.DoNothingAction) { state, effect ->
             state shouldBe stateFromSecond
-            effects shouldBe effectsFromFirst + effectsFromSecond
+            effect shouldBe effectsFromFirst.merge(effectsFromSecond)
         }
 
         verify(ordering = Ordering.SEQUENCE) {
