@@ -1,15 +1,16 @@
 package com.toggl.komposable.test
 
 import com.toggl.komposable.architecture.Effect
+import com.toggl.komposable.architecture.NoEffect
 import com.toggl.komposable.architecture.ReduceResult
 import com.toggl.komposable.architecture.Reducer
-import com.toggl.komposable.extensions.effectOf
-import com.toggl.komposable.extensions.noEffect
 import io.kotest.assertions.throwables.shouldThrow
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Test
 import java.lang.AssertionError
@@ -18,18 +19,18 @@ import kotlin.IllegalStateException
 data class TestState(val title: String)
 enum class TestAction { FirstAction, SecondAction }
 class TestEffect : Effect<TestAction> {
-    override suspend fun execute(): TestAction = TestAction.SecondAction
+    override fun actions(): Flow<TestAction> = flowOf(TestAction.SecondAction)
 }
 
 class ReducerTestExtensionsTests {
 
     private val initState = TestState("")
     private val inputAction = TestAction.FirstAction
-    private val returnedEffects = effectOf(TestEffect())
+    private val returnedEffects = TestEffect()
 
     @Test
     fun `testReduce calls the right methods`() = runTest {
-        val testCase: suspend (TestState, List<Effect<TestAction>>) -> Unit = mockk(relaxed = true)
+        val testCase: suspend (TestState, Effect<TestAction>) -> Unit = mockk(relaxed = true)
         val reducer = mockk<Reducer<TestState, TestAction>> {
             every { reduce(any(), any()) } returns ReduceResult(initState, returnedEffects)
         }
@@ -59,7 +60,7 @@ class ReducerTestExtensionsTests {
 
     @Test
     fun `testReduceEffects calls the right methods`() = runTest {
-        val testCase: suspend (List<Effect<TestAction>>) -> Unit = mockk(relaxed = true)
+        val testCase: suspend (Effect<TestAction>) -> Unit = mockk(relaxed = true)
         val reducer = mockk<Reducer<TestState, TestAction>> {
             every { reduce(any(), any()) } returns ReduceResult(initState, returnedEffects)
         }
@@ -75,7 +76,7 @@ class ReducerTestExtensionsTests {
     @Test
     fun `testReduceNoEffects calls the right methods`() = runTest {
         val reducer = mockk<Reducer<TestState, TestAction>> {
-            every { reduce(any(), any()) } returns ReduceResult(initState, noEffect())
+            every { reduce(any(), any()) } returns ReduceResult(initState, NoEffect)
         }
 
         reducer.testReduceNoEffect(initState, inputAction)
@@ -99,7 +100,7 @@ class ReducerTestExtensionsTests {
     @Test
     fun `testReduceNoOp calls the right methods`() = runTest {
         val reducer = mockk<Reducer<TestState, TestAction>> {
-            every { reduce(any(), any()) } returns ReduceResult(initState, noEffect())
+            every { reduce(any(), any()) } returns ReduceResult(initState, NoEffect)
         }
 
         reducer.testReduceNoOp(initState, inputAction)
@@ -123,7 +124,7 @@ class ReducerTestExtensionsTests {
     @Test
     fun `testReduceNoOp fails when state has been changed`() = runTest {
         val reducer =
-            Reducer<TestState, TestAction> { _, _ -> ReduceResult(TestState("Changed"), noEffect()) }
+            Reducer<TestState, TestAction> { _, _ -> ReduceResult(TestState("Changed"), NoEffect) }
 
         shouldThrow<AssertionError> {
             reducer.testReduceNoOp(initState, inputAction)
@@ -157,7 +158,7 @@ class ReducerTestExtensionsTests {
     @Test
     fun `testReduceException fails when no exception is thrown`() = runTest {
         val reducer = mockk<Reducer<TestState, TestAction>> {
-            every { reduce(any(), any()) } returns ReduceResult(initState, noEffect())
+            every { reduce(any(), any()) } returns ReduceResult(initState, NoEffect)
         }
 
         shouldThrow<AssertionError> {
