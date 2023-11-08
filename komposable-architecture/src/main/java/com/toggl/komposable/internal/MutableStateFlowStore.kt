@@ -1,12 +1,13 @@
 package com.toggl.komposable.internal
 
 import com.toggl.komposable.architecture.Effect
+import com.toggl.komposable.architecture.NoEffect
 import com.toggl.komposable.architecture.ReduceResult
 import com.toggl.komposable.architecture.Reducer
 import com.toggl.komposable.architecture.Store
 import com.toggl.komposable.architecture.Subscription
 import com.toggl.komposable.exceptions.ExceptionHandler
-import com.toggl.komposable.extensions.noEffect
+import com.toggl.komposable.extensions.merge
 import com.toggl.komposable.scope.DispatcherProvider
 import com.toggl.komposable.scope.StoreScopeProvider
 import kotlinx.coroutines.flow.Flow
@@ -57,7 +58,7 @@ internal class MutableStateFlowStore<State, Action : Any> private constructor(
         ): Store<State, Action> {
             val storeScope = storeScopeProvider.getStoreScope()
             val state = MutableStateFlow(initialState)
-            val noEffect = noEffect()
+            val noEffect = NoEffect
 
             lateinit var send: (List<Action>) -> Unit
             send = { actions ->
@@ -65,7 +66,7 @@ internal class MutableStateFlowStore<State, Action : Any> private constructor(
                     val result: ReduceResult<State, Action> = actions.fold(ReduceResult(state.value, noEffect)) { accResult, action ->
                         try {
                             val r = reducer.reduce(accResult.state, action)
-                            return@fold ReduceResult(r.state, accResult.effects + r.effects)
+                            return@fold ReduceResult(r.state, accResult.effect.merge(r.effect))
                         } catch (e: Throwable) {
                             ReduceResult(accResult.state, exceptionHandler.handleReduceException(e))
                         }
@@ -73,15 +74,14 @@ internal class MutableStateFlowStore<State, Action : Any> private constructor(
 
                     state.value = result.state
 
-                    val effectActions = result.effects.mapNotNull { effect ->
-                        try {
-                            effect.execute()
-                        } catch (e: Throwable) {
-                            exceptionHandler.handleEffectException(e)
-                        }
+                    try {
+                        result.effect.actions().onEach {
+                                action ->
+                            send(listOf(action))
+                        }.launchIn(storeScope)
+                    } catch (e: Throwable) {
+                        exceptionHandler.handleEffectException(e)
                     }
-                    if (effectActions.isEmpty()) return@launch
-                    send(effectActions)
                 }
             }
 
@@ -98,9 +98,9 @@ internal class MutableStateFlowStore<State, Action : Any> private constructor(
             return MutableStateFlowStore(state, send)
         }
 
-        private suspend fun ExceptionHandler.handleReduceException(exception: Throwable): List<Effect<Nothing>> =
+        private suspend fun ExceptionHandler.handleReduceException(exception: Throwable): Effect<Nothing> =
             if (handleException(exception)) {
-                noEffect()
+                NoEffect
             } else {
                 throw exception
             }
