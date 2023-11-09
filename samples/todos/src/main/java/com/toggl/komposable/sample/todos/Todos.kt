@@ -57,7 +57,7 @@ class TodosReducer : Reducer<TodosState, TodosAction> {
                     suspended {
                         delay(1000)
                         TodosAction.SortCompletedTodos
-                    }.cancellable(key = "sort", cancelInFlight = true)
+                    }.cancellable(id = "sort", cancelInFlight = true)
                 }
             } else {
                 state.withoutEffect()

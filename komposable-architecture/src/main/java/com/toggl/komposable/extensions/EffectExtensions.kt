@@ -3,12 +3,17 @@ package com.toggl.komposable.extensions
 import com.toggl.komposable.architecture.Effect
 import com.toggl.komposable.architecture.NoEffect
 import com.toggl.komposable.architecture.ReduceResult
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.ProducerScope
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.cancellable
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlin.experimental.ExperimentalTypeInference
 
 fun <Action> Effect<Action>.merge(vararg effects: Effect<Action>): Effect<Action> =
@@ -32,13 +37,33 @@ fun <T, R> Effect<T>.map(mapFn: (T) -> R): Effect<R> =
 fun <Action> effectOf(action: Action): Effect<Action> =
     Effect { flowOf(action) }
 
-@Suppress("UNUSED_PARAMETER")
-fun <Action, Key> Effect<Action>.cancellable(key: Key, cancelInFlight: Boolean = false): Effect<Action> =
-    this // TODO implement this
+private val mutex = Mutex()
+private val cancellationJobs: MutableMap<Any, MutableSet<Job>> = mutableMapOf()
 
-@Suppress("UNUSED_PARAMETER")
-fun <Action, Key> Effect.Companion.cancel(action: Key): Effect<Action> =
-    Effect { emptyFlow() } // TODO implement this
+fun <Action> Effect<Action>.cancellable(id: Any, cancelInFlight: Boolean = false): Effect<Action> =
+    Effect {
+        this.actions()
+            .onStart {
+                mutex.withLock {
+                    if (cancelInFlight) {
+                        cancellationJobs[id]?.forEach { it.cancel() }
+                        cancellationJobs.remove(id)
+                    }
+                    val job = currentCoroutineContext()[Job]
+                    job?.let { cancellationJobs.getOrPut(id) { mutableSetOf() }.add(it) }
+                }
+            }.cancellable()
+    }
+
+fun <Action> Effect.Companion.cancel(action: Any): Effect<Action> =
+    Effect {
+        flow {
+            mutex.withLock {
+                cancellationJobs[action]?.forEach { it.cancel() }
+                cancellationJobs.remove(action)
+            }
+        }
+    }
 
 fun <S, Action> S.withoutEffect(): ReduceResult<S, Action> =
     ReduceResult(this, NoEffect)
