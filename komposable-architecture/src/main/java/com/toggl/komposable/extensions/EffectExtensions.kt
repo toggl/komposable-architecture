@@ -56,7 +56,7 @@ fun <Action> Effect<Action>.cancellable(id: Any, cancelInFlight: Boolean = false
             }.cancellable()
     }
 
-fun <Action> Effect.Companion.cancel(action: Any): Effect<Action> =
+fun Effect.Companion.cancel(action: Any): Effect<Nothing> =
     Effect {
         flow {
             mutex.withLock {
