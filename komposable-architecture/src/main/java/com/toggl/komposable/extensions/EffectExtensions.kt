@@ -7,6 +7,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.cancellable
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
@@ -76,7 +77,7 @@ object EffectBuilderScope {
         Effect { flowOf(*actions) }
 
     fun <Action> suspended(func: suspend () -> Action): Effect<Action> =
-        Effect { flow { emit(func()) } }
+        Effect { func.asFlow() }
     fun <Action> flow(actionFlow: Flow<Action>): Effect<Action> =
         Effect { actionFlow }
 
