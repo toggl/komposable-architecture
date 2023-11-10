@@ -6,9 +6,6 @@ import com.toggl.komposable.architecture.Reducer
 import com.toggl.komposable.common.TestAction
 import com.toggl.komposable.common.TestState
 import com.toggl.komposable.extensions.combine
-import com.toggl.komposable.extensions.effectOf
-import com.toggl.komposable.extensions.merge
-import com.toggl.komposable.test.testReduce
 import com.toggl.komposable.test.testReduceState
 import io.kotest.matchers.shouldBe
 import io.mockk.Ordering
