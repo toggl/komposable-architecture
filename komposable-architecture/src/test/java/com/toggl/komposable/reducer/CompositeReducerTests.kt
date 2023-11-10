@@ -1,5 +1,6 @@
 package com.toggl.komposable.reducer
 
+import com.toggl.komposable.architecture.NoEffect
 import com.toggl.komposable.architecture.ReduceResult
 import com.toggl.komposable.architecture.Reducer
 import com.toggl.komposable.common.TestAction
@@ -8,6 +9,7 @@ import com.toggl.komposable.extensions.combine
 import com.toggl.komposable.extensions.effectOf
 import com.toggl.komposable.extensions.merge
 import com.toggl.komposable.test.testReduce
+import com.toggl.komposable.test.testReduceState
 import io.kotest.matchers.shouldBe
 import io.mockk.Ordering
 import io.mockk.every
@@ -19,24 +21,21 @@ import org.junit.jupiter.api.Test
 class CompositeReducerTests {
     private val originalState = TestState("original")
     private val stateFromFirst = TestState("first")
-    private val effectsFromFirst = effectOf(TestAction.DoNothingAction)
     private val firstReducer: Reducer<TestState, TestAction> = mockk<Reducer<TestState, TestAction>> {
-        every { reduce(originalState, any()) } returns ReduceResult(stateFromFirst, effectsFromFirst)
+        every { reduce(originalState, any()) } returns ReduceResult(stateFromFirst, NoEffect)
     }
 
     private val stateFromSecond = TestState("second")
-    private val effectsFromSecond = effectOf(TestAction.DoNothingFromEffectAction)
     private val secondReducer: Reducer<TestState, TestAction> = mockk<Reducer<TestState, TestAction>> {
-        every { reduce(stateFromFirst, any()) } returns ReduceResult(stateFromSecond, effectsFromSecond)
+        every { reduce(stateFromFirst, any()) } returns ReduceResult(stateFromSecond, NoEffect)
     }
 
     private val combinedReducer = combine(firstReducer, secondReducer)
 
     @Test
     fun `reducers should be called sequentially`() = runTest {
-        combinedReducer.testReduce(originalState, TestAction.DoNothingAction) { state, effect ->
+        combinedReducer.testReduceState(originalState, TestAction.DoNothingAction) { state ->
             state shouldBe stateFromSecond
-            effect shouldBe effectsFromFirst.merge(effectsFromSecond)
         }
 
         verify(ordering = Ordering.SEQUENCE) {
