@@ -75,10 +75,16 @@ fun <State, Action> State.withCancellationEffect(id: Any): ReduceResult<State, A
 
 /**
  * @param effect An effect to be part of the ReduceResult.
+ * @param id Optional ID to make the effect cancellable. If null, the effect is not cancellable.
+ * @param cancelInFlight If true, any existing effect with the same ID will be cancelled.
  * @return ReduceResult containing the current state and the specified effect.
  */
-fun <State, Action> State.withEffect(effect: Effect<Action>): ReduceResult<State, Action> =
-    ReduceResult(this, effect)
+fun <State, Action> State.withEffect(
+    effect: Effect<Action>,
+    id: Any? = null,
+    cancelInFlight: Boolean = false
+): ReduceResult<State, Action> =
+    ReduceResult(this, effect.maybeCancellable(id, cancelInFlight))
 
 /**
  * @param actions Vararg of actions to be returned by the effect.
