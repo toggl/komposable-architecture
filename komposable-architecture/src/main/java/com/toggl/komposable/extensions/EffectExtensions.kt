@@ -82,7 +82,7 @@ fun <State, Action> State.withCancellationEffect(id: Any): ReduceResult<State, A
 fun <State, Action> State.withEffect(
     effect: Effect<Action>,
     id: Any? = null,
-    cancelInFlight: Boolean = false
+    cancelInFlight: Boolean = false,
 ): ReduceResult<State, Action> =
     ReduceResult(this, effect.maybeCancellable(id, cancelInFlight))
 
