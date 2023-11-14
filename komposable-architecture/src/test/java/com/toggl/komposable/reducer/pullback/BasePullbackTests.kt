@@ -1,5 +1,6 @@
 package com.toggl.komposable.reducer.pullback
 
+import app.cash.turbine.test
 import com.toggl.komposable.architecture.NoEffect
 import com.toggl.komposable.architecture.Reducer
 import com.toggl.komposable.common.LocalTestAction
@@ -8,10 +9,10 @@ import com.toggl.komposable.common.TestAction
 import com.toggl.komposable.common.TestState
 import com.toggl.komposable.extensions.effectOf
 import com.toggl.komposable.test.testReduce
+import com.toggl.komposable.test.testReduceNoOp
 import io.kotest.matchers.shouldBe
 import io.mockk.Called
 import io.mockk.verify
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Test
 
@@ -51,7 +52,10 @@ abstract class BasePullbackTests {
             action,
         ) { state, effect ->
             state shouldBe globalState
-            effect.actions() shouldBe flowOf(TestAction.LocalActionWrapper(LocalTestAction.DoNothingFromEffectAction))
+            effect().test {
+                awaitItem() shouldBe TestAction.LocalActionWrapper(LocalTestAction.DoNothingFromEffectAction)
+                awaitComplete()
+            }
         }
         verify {
             localReducer.reduce(
@@ -66,13 +70,10 @@ abstract class BasePullbackTests {
         val globalState = TestState("", 1)
         val action = TestAction.ChangeTestProperty("")
 
-        pulledBackReducer.testReduce(
+        pulledBackReducer.testReduceNoOp(
             globalState,
             action,
-        ) { state, effect ->
-            state shouldBe globalState
-            effect shouldBe NoEffect
-        }
+        )
         verify {
             localReducer wasNot Called
         }
