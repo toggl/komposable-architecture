@@ -19,7 +19,9 @@ fun interface Effect<out Action> {
      */
     operator fun invoke(): Flow<Action>
 
-    companion object
+    companion object {
+        fun none(): Effect<Nothing> = NoEffect
+    }
 }
 
 object NoEffect : Effect<Nothing> {
