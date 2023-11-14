@@ -28,8 +28,8 @@ class EffectCancellationTests {
         val cancelEffect1 = Effect.cancel("effect1")
 
         turbineScope {
-            val effect1Turbine = effect1.actions().testIn(backgroundScope)
-            val effect2Turbine = effect2.actions().testIn(backgroundScope)
+            val effect1Turbine = effect1().testIn(backgroundScope)
+            val effect2Turbine = effect2().testIn(backgroundScope)
 
             effect1Turbine.awaitItem() shouldBe 0
             effect1Flow.value = 1
@@ -39,7 +39,7 @@ class EffectCancellationTests {
             effect2Flow.value = 1
             effect2Turbine.awaitItem() shouldBe 1
 
-            cancelEffect1.actions().testIn(backgroundScope)
+            cancelEffect1().testIn(backgroundScope)
             effect1Turbine.awaitError().shouldBeInstanceOf<CancellationException>()
             // effect2 should not be canceled
             effect2Flow.value = 2
@@ -62,8 +62,8 @@ class EffectCancellationTests {
         val cancelEffect = Effect.cancel("effect")
 
         turbineScope {
-            val effect1Turbine = effect1.actions().testIn(backgroundScope)
-            val effect2Turbine = effect2.actions().testIn(backgroundScope)
+            val effect1Turbine = effect1().testIn(backgroundScope)
+            val effect2Turbine = effect2().testIn(backgroundScope)
 
             effect1Turbine.awaitItem() shouldBe 0
             effect1Flow.value = 1
@@ -73,7 +73,7 @@ class EffectCancellationTests {
             effect2Flow.value = 1
             effect2Turbine.awaitItem() shouldBe 1
 
-            cancelEffect.actions().testIn(backgroundScope)
+            cancelEffect().testIn(backgroundScope)
             effect1Turbine.awaitError().shouldBeInstanceOf<CancellationException>()
             effect2Turbine.awaitError().shouldBeInstanceOf<CancellationException>()
         }
@@ -97,7 +97,7 @@ class EffectCancellationTests {
         val cancelEffect2 = Effect.cancel("effect2")
 
         turbineScope {
-            val mergedEffectTurbine = mergedEffect.actions().testIn(backgroundScope)
+            val mergedEffectTurbine = mergedEffect().testIn(backgroundScope)
 
             mergedEffectTurbine.awaitItem() shouldBe 0
             mergedEffectTurbine.awaitItem() shouldBe 0
@@ -107,13 +107,13 @@ class EffectCancellationTests {
             effect2Flow.value = 2
             mergedEffectTurbine.awaitItem() shouldBe 2
 
-            cancelEffect1.actions().testIn(backgroundScope)
+            cancelEffect1().testIn(backgroundScope)
 
             // mergedEffect should not be canceled because effect2Flow is still alive
             effect2Flow.value = 4
             mergedEffectTurbine.awaitItem() shouldBe 4
 
-            cancelEffect2.actions().testIn(backgroundScope)
+            cancelEffect2().testIn(backgroundScope)
 
             // now it should be dead too
             effect2Flow.value = 5
@@ -134,8 +134,8 @@ class EffectCancellationTests {
         }.cancellable("effect", cancelInFlight = false)
 
         turbineScope {
-            val effect1Turbine = effect1.actions().testIn(backgroundScope)
-            val effect2Turbine = effect2.actions().testIn(backgroundScope)
+            val effect1Turbine = effect1().testIn(backgroundScope)
+            val effect2Turbine = effect2().testIn(backgroundScope)
 
             effect1Turbine.awaitItem() shouldBe 0
             effect1Flow.value = 1
@@ -160,13 +160,13 @@ class EffectCancellationTests {
         }.cancellable("effect", cancelInFlight = true)
 
         turbineScope {
-            val effect1Turbine = effect1.actions().testIn(backgroundScope)
+            val effect1Turbine = effect1().testIn(backgroundScope)
 
             effect1Turbine.awaitItem() shouldBe 0
             effect1Flow.value = 1
             effect1Turbine.awaitItem() shouldBe 1
 
-            val effect2Turbine = effect2.actions().testIn(backgroundScope)
+            val effect2Turbine = effect2().testIn(backgroundScope)
             effect1Turbine.awaitError().shouldBeInstanceOf<CancellationException>()
 
             effect2Turbine.awaitItem() shouldBe 0

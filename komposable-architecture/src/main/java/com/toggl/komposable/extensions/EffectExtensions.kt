@@ -19,7 +19,7 @@ import kotlin.experimental.ExperimentalTypeInference
 
 fun <Action> Effect<Action>.merge(vararg effects: Effect<Action>): Effect<Action> =
     Effect {
-        kotlinx.coroutines.flow.merge(actions(), *effects.map { it.actions() }.toTypedArray())
+        kotlinx.coroutines.flow.merge(invoke(), *effects.map { it.invoke() }.toTypedArray())
     }
 
 /**
@@ -28,7 +28,11 @@ fun <Action> Effect<Action>.merge(vararg effects: Effect<Action>): Effect<Action
  * @return An effect whose return action type has been mapped.
  */
 fun <T, R> Effect<T>.map(mapFn: (T) -> R): Effect<R> =
-    Effect { actions().map { mapFn(it) } }
+    if (this is NoEffect) {
+        NoEffect
+    } else {
+        Effect { this().map { mapFn(it) } }
+    }
 
 /**
  * Creates a list containing a single effect that when executed returns an action.
@@ -43,17 +47,16 @@ private val cancellationJobs: MutableMap<Any, MutableSet<Job>> = mutableMapOf()
 
 fun <Action> Effect<Action>.cancellable(id: Any, cancelInFlight: Boolean = false): Effect<Action> =
     Effect {
-        this.actions()
-            .onStart {
-                mutex.withLock {
-                    if (cancelInFlight) {
-                        cancellationJobs[id]?.forEach { it.cancel() }
-                        cancellationJobs.remove(id)
-                    }
-                    val job = currentCoroutineContext()[Job]
-                    job?.let { cancellationJobs.getOrPut(id) { mutableSetOf() }.add(it) }
+        this().onStart {
+            mutex.withLock {
+                if (cancelInFlight) {
+                    cancellationJobs[id]?.forEach { it.cancel() }
+                    cancellationJobs.remove(id)
                 }
-            }.cancellable()
+                val job = currentCoroutineContext()[Job]
+                job?.let { cancellationJobs.getOrPut(id) { mutableSetOf() }.add(it) }
+            }
+        }.cancellable()
     }
 
 fun Effect.Companion.cancel(action: Any): Effect<Nothing> =

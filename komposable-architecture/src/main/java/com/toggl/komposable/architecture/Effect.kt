@@ -17,11 +17,11 @@ fun interface Effect<out Action> {
      * @return An action that will be sent again for further processing
      * @see Store.send
      */
-    fun actions(): Flow<Action>
+    operator fun invoke(): Flow<Action>
 
     companion object
 }
 
 object NoEffect : Effect<Nothing> {
-    override fun actions(): Flow<Nothing> = emptyFlow()
+    override fun invoke(): Flow<Nothing> = emptyFlow()
 }

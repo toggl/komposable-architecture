@@ -19,7 +19,7 @@ import kotlin.IllegalStateException
 data class TestState(val title: String)
 enum class TestAction { FirstAction, SecondAction }
 class TestEffect : Effect<TestAction> {
-    override fun actions(): Flow<TestAction> = flowOf(TestAction.SecondAction)
+    override fun invoke(): Flow<TestAction> = flowOf(TestAction.SecondAction)
 }
 
 class ReducerTestExtensionsTests {

@@ -47,11 +47,11 @@ sealed class TestAction {
 }
 
 class TestEffect(private vararg val actions: TestAction = arrayOf(TestAction.DoNothingFromEffectAction)) : Effect<TestAction> {
-    override fun actions(): Flow<TestAction> = flowOf(*actions)
+    override fun invoke(): Flow<TestAction> = flowOf(*actions)
 }
 
 class TestExceptionEffect : Effect<TestAction> {
-    override fun actions(): Flow<TestAction> = throw TestException
+    override fun invoke(): Flow<TestAction> = throw TestException
 }
 
 class TestSubscription : Subscription<TestState, TestAction> {
