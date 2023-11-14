@@ -7,7 +7,7 @@ import com.toggl.komposable.architecture.Reducer
 import com.toggl.komposable.architecture.Store
 import com.toggl.komposable.architecture.Subscription
 import com.toggl.komposable.exceptions.ExceptionHandler
-import com.toggl.komposable.extensions.merge
+import com.toggl.komposable.extensions.mergeWith
 import com.toggl.komposable.scope.DispatcherProvider
 import com.toggl.komposable.scope.StoreScopeProvider
 import kotlinx.coroutines.flow.Flow
@@ -65,8 +65,8 @@ internal class MutableStateFlowStore<State, Action : Any> private constructor(
                 storeScope.launch(context = dispatcherProvider.main) {
                     val result: ReduceResult<State, Action> = actions.fold(ReduceResult(state.value, noEffect)) { accResult, action ->
                         try {
-                            val r = reducer.reduce(accResult.state, action)
-                            return@fold ReduceResult(r.state, accResult.effect.merge(r.effect))
+                            val (nextState, nextEffect) = reducer.reduce(accResult.state, action)
+                            return@fold ReduceResult(nextState, accResult.effect mergeWith nextEffect)
                         } catch (e: Throwable) {
                             ReduceResult(accResult.state, exceptionHandler.handleReduceException(e))
                         }

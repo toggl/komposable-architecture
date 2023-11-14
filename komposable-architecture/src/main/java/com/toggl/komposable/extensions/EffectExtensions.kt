@@ -3,7 +3,7 @@ package com.toggl.komposable.extensions
 import com.toggl.komposable.architecture.Effect
 import com.toggl.komposable.architecture.NoEffect
 import com.toggl.komposable.architecture.ReduceResult
-🚧import kotlinx.coroutines.channels.ProducerScope
+import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.flowOf
@@ -11,16 +11,30 @@ import kotlinx.coroutines.flow.map
 import kotlin.experimental.ExperimentalTypeInference
 
 /**
- * Merges multiple Effect instances into a single Effect.
- * This function is useful for combining the emissions of various Effects into one stream.
- * When the resulting Effect is executed, it will emit actions from all the merged Effects in the order they occur.
- *
+ * @param effects A vararg of Effect instances to be merged.
+ * @return A new Effect instance that is a combination of the emissions from the provided Effects.
+ */
+fun <Action> Effect.Companion.merge(vararg effects: Effect<Action>): Effect<Action> =
+    Effect {
+        kotlinx.coroutines.flow.merge(*effects.map { it.invoke() }.toTypedArray())
+    }
+
+/**
  * @param effects A vararg of Effect instances to be merged with the current Effect.
  * @return A new Effect instance that combines the emissions of the current Effect and the provided Effects.
  */
 fun <Action> Effect<Action>.merge(vararg effects: Effect<Action>): Effect<Action> =
     Effect {
         kotlinx.coroutines.flow.merge(invoke(), *effects.map { it.invoke() }.toTypedArray())
+    }
+
+/**
+ * @param effect The Effect instance to be merged with the current Effect.
+ * @return A new Effect instance combining the emissions from both the current and provided Effect.
+ */
+infix fun <Action> Effect<Action>.mergeWith(effect: Effect<Action>): Effect<Action> =
+    Effect {
+        kotlinx.coroutines.flow.merge(invoke(), effect.invoke())
     }
 
 /**

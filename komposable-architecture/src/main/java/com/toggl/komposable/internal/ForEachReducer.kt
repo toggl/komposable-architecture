@@ -3,7 +3,7 @@ package com.toggl.komposable.internal
 import com.toggl.komposable.architecture.ReduceResult
 import com.toggl.komposable.architecture.Reducer
 import com.toggl.komposable.extensions.map
-import com.toggl.komposable.extensions.merge
+import com.toggl.komposable.extensions.mergeWith
 
 internal class ForEachReducer<ElementState, ParentState, ElementAction, ParentAction, ID>(
     private val parentReducer: Reducer<ParentState, ParentAction>,
@@ -26,7 +26,7 @@ internal class ForEachReducer<ElementState, ParentState, ElementAction, ParentAc
 
         return ReduceResult(
             state = parentState,
-            effect = elementEffect.map { mapToParentAction(it, id) }.merge(parentEffect),
+            effect = elementEffect.map { mapToParentAction(it, id) } mergeWith parentEffect,
         )
     }
 }
