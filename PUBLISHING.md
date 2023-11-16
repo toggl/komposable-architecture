@@ -45,7 +45,7 @@ sonatypeStagingProfileId=<PROFILE ID>
 
 PROFILE ID: This value is an ID that Sonatype assigns to you, which the plugin uses to make sure all the artifacts end up in the right place during the upload.
 
-Go to https://oss.sonatype.org/ and log in. In the menu on the left, select Staging profiles, select your profile, and then look for the ID in the URL.
+Go to https://s01.oss.sonatype.org/ and log in. In the menu on the left, select Staging profiles, select your profile, and then look for the ID in the URL.
 
 ![mavencentral_sonatype_staging_profile (1)](https://user-images.githubusercontent.com/535613/206739359-94885338-0f0d-4493-80e8-228dbd3a3875.png)
 
