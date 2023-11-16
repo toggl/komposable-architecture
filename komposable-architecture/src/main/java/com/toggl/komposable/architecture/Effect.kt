@@ -1,7 +1,11 @@
 package com.toggl.komposable.architecture
 
+import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.flowOf
+import kotlin.experimental.ExperimentalTypeInference
 
 /**
  * Effects are returned by reducers when they wish to produce a side effect.
@@ -21,6 +25,18 @@ fun interface Effect<out Action> {
 
     companion object {
         fun none(): Effect<Nothing> = NoEffect
+        fun <Action> of(vararg actions: Action): Effect<Action> =
+            Effect { flowOf(*actions) }
+
+        fun <Action> fromFlow(flow: Flow<Action>): Effect<Action> =
+            Effect { flow }
+
+        fun <Action> fromSuspend(func: suspend () -> Action): Effect<Action> =
+            Effect { func.asFlow() }
+
+        @OptIn(ExperimentalTypeInference::class)
+        fun <Action> fromProducer(@BuilderInference block: suspend ProducerScope<Action>.() -> Unit): Effect<Action> =
+            Effect { kotlinx.coroutines.flow.callbackFlow(block) }
     }
 }
 

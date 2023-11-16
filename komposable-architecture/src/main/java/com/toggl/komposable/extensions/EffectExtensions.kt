@@ -5,8 +5,6 @@ import com.toggl.komposable.architecture.NoEffect
 import com.toggl.komposable.architecture.ReduceResult
 import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.asFlow
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlin.experimental.ExperimentalTypeInference
 
@@ -51,15 +49,6 @@ fun <T, R> Effect<T>.map(mapFn: (T) -> R): Effect<R> =
     }
 
 /**
- * Creates an Effect which emits a sequence of actions.
- *
- * @param actions A vararg of actions to be emitted.
- * @return An Effect instance that, when executed, will emit the provided actions in the order they were given.
- */
-fun <Action> effectOf(vararg actions: Action): Effect<Action> =
-    Effect { flowOf(*actions) }
-
-/**
  * @return ReduceResult containing the current state and 'NoEffect'.
  */
 fun <State, Action> State.withoutEffect(): ReduceResult<State, Action> =
@@ -87,11 +76,24 @@ fun <State, Action> State.withEffect(
     ReduceResult(this, effect.maybeCancellable(id, cancelInFlight))
 
 /**
+ * @param id Optional ID to make the effect cancellable. If null, the effect is not cancellable.
+ * @param cancelInFlight If true, any existing effect with the same ID will be cancelled.
+ * @param effectBuilder The builder function for the effect to be returned.
+ * @return ReduceResult containing the current state and the specified effect.
+ */
+fun <State, Action> State.withEffect(
+    id: Any? = null,
+    cancelInFlight: Boolean = false,
+    effectBuilder: Effect.Companion.() -> Effect<Action>,
+): ReduceResult<State, Action> =
+    ReduceResult(this, Effect.effectBuilder().maybeCancellable(id, cancelInFlight))
+
+/**
  * @param actions Vararg of actions to be returned by the effect.
  * @return ReduceResult containing the current state and the specified effect.
  */
 fun <State, Action> State.withEffect(vararg actions: Action): ReduceResult<State, Action> =
-    ReduceResult(this, effectOf(*actions))
+    ReduceResult(this, Effect.of(*actions))
 
 /**
  * Returns a ReduceResult with the current state and a flow-based effect.
@@ -102,12 +104,12 @@ fun <State, Action> State.withEffect(vararg actions: Action): ReduceResult<State
  * @param cancelInFlight If true, any existing effect with the same ID will be cancelled.
  * @return ReduceResult containing the current state and the defined effect.
  */
-fun <State, Action> State.withEffect(
+fun <State, Action> State.withFlowEffect(
     flow: Flow<Action>,
     id: Any? = null,
     cancelInFlight: Boolean = false,
 ): ReduceResult<State, Action> =
-    ReduceResult(this, Effect { flow }.maybeCancellable(id, cancelInFlight))
+    ReduceResult(this, Effect.fromFlow(flow).maybeCancellable(id, cancelInFlight))
 
 /**
  * Returns a ReduceResult with the current state and a suspend function-based effect.
@@ -123,7 +125,7 @@ fun <State, Action : Any> State.withSuspendEffect(
     cancelInFlight: Boolean = false,
     func: suspend () -> Action,
 ): ReduceResult<State, Action> =
-    ReduceResult(this, Effect { func.asFlow() }.maybeCancellable(id, cancelInFlight))
+    ReduceResult(this, Effect.fromSuspend(func).maybeCancellable(id, cancelInFlight))
 
 /**
  * Returns a ReduceResult with the current state and a callback flow-based effect.
@@ -136,12 +138,12 @@ fun <State, Action : Any> State.withSuspendEffect(
  * @see kotlinx.coroutines.flow.callbackFlow
  */
 @OptIn(ExperimentalTypeInference::class)
-fun <State, Action> State.withCallbackEffect(
+fun <State, Action> State.withProducerEffect(
     id: Any? = null,
     cancelInFlight: Boolean = false,
     @BuilderInference block: suspend ProducerScope<Action>.() -> Unit,
 ): ReduceResult<State, Action> =
-    ReduceResult(this, Effect { kotlinx.coroutines.flow.callbackFlow(block) }.maybeCancellable(id, cancelInFlight))
+    ReduceResult(this, Effect.fromProducer(block).maybeCancellable(id, cancelInFlight))
 
 private fun <Action> Effect<Action>.maybeCancellable(id: Any? = null, cancelInFlight: Boolean = false): Effect<Action> =
     if (id == null) {

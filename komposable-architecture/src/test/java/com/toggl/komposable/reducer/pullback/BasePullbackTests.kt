@@ -1,13 +1,13 @@
 package com.toggl.komposable.reducer.pullback
 
 import app.cash.turbine.test
+import com.toggl.komposable.architecture.Effect
 import com.toggl.komposable.architecture.NoEffect
 import com.toggl.komposable.architecture.Reducer
 import com.toggl.komposable.common.LocalTestAction
 import com.toggl.komposable.common.LocalTestState
 import com.toggl.komposable.common.TestAction
 import com.toggl.komposable.common.TestState
-import com.toggl.komposable.extensions.effectOf
 import com.toggl.komposable.test.testReduce
 import com.toggl.komposable.test.testReduceNoOp
 import io.kotest.matchers.shouldBe
@@ -44,7 +44,7 @@ abstract class BasePullbackTests {
     fun `local reducer effect results should be correctly wrapped`() = runTest {
         val globalState = TestState("", 1)
         val action = TestAction.LocalActionWrapper(
-            LocalTestAction.StartEffectAction(effectOf(LocalTestAction.DoNothingFromEffectAction)),
+            LocalTestAction.StartEffectAction(Effect.of(LocalTestAction.DoNothingFromEffectAction)),
         )
 
         pulledBackReducer.testReduce(
