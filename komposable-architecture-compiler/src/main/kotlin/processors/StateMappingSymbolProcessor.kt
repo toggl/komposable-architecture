@@ -1,7 +1,5 @@
 package com.toggl.komposable.processors
 
-import com.google.devtools.ksp.KspExperimental
-import com.google.devtools.ksp.getAnnotationsByType
 import com.google.devtools.ksp.getClassDeclarationByName
 import com.google.devtools.ksp.getConstructors
 import com.google.devtools.ksp.processing.CodeGenerator
@@ -10,8 +8,10 @@ import com.google.devtools.ksp.processing.Resolver
 import com.google.devtools.ksp.processing.SymbolProcessor
 import com.google.devtools.ksp.processing.SymbolProcessorEnvironment
 import com.google.devtools.ksp.processing.SymbolProcessorProvider
+import com.google.devtools.ksp.symbol.KSAnnotated
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSType
+import com.google.devtools.ksp.symbol.KSValueParameter
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.ksp.toClassName
@@ -20,8 +20,8 @@ import com.toggl.komposable.architecture.ChildStates
 import com.toggl.komposable.architecture.ParentPath
 import com.toggl.komposable.getSymbolsAnnotatedWith
 import com.toggl.komposable.toCamelCase
+import kotlin.reflect.KClass
 
-@OptIn(KspExperimental::class)
 class StateMappingSymbolProcessor(
     codeGenerator: CodeGenerator,
     logger: KSPLogger,
@@ -73,15 +73,6 @@ class StateMappingSymbolProcessor(
                     }.build().run(FileGenerationResult::Success)
             }
 
-    // Yes, we need to do this instead of simply calling getAnnotationsByType<ChildStates>().
-    // Explanation here: https://github.com/google/ksp/issues/888
-    private fun KSClassDeclaration.findChildStateClasses() =
-        annotations
-            .toList()
-            .filter { it.annotationType.resolve().toClassName().canonicalName == ChildStates::class.qualifiedName }
-            .flatMap { it.arguments.toList().single().value as ArrayList<*> }
-            .mapNotNull { it as? KSType }
-
     private fun buildChildStateConstructorParameterList(
         childState: KSClassDeclaration,
         parentStateArgumentName: String,
@@ -92,10 +83,7 @@ class StateMappingSymbolProcessor(
             .parameters
             .fold(StringBuilder()) { builder, parameter ->
                 val name = parameter.name?.getShortName().orEmpty()
-                val path = parameter
-                    .getAnnotationsByType(ParentPath::class)
-                    .firstOrNull()
-                    ?.path ?: name
+                val path = parameter.getParentPath() ?: name
 
                 builder.appendLine("$name = $parentStateArgumentName.$path,")
             }.toString()
@@ -110,12 +98,9 @@ class StateMappingSymbolProcessor(
             .parameters
             .fold(StringBuilder()) { builder, parameter ->
                 val name = parameter.name?.getShortName().orEmpty()
-                val path = parameter
-                    .getAnnotationsByType(ParentPath::class)
-                    .firstOrNull()
-                    ?.path ?: name
+                val path = parameter.getParentPath() ?: name
 
-                builder.appendLine("    $name = $childStateArgumentName.$path,")
+                builder.appendLine("    $path = $childStateArgumentName.$name,")
             }.toString()
 
     private fun KSClassDeclaration.stateMappingFileBuilder(): FileSpec.Builder {
@@ -126,6 +111,24 @@ class StateMappingSymbolProcessor(
             fileName = "${className.simpleName}StateMappings",
         )
     }
+
+    // Yes, we need to do this instead of simply calling getAnnotationsByType<ChildStates>().
+    // Explanation here: https://github.com/google/ksp/issues/888
+    private fun KSClassDeclaration.findChildStateClasses() =
+        annotationsWithType(ChildStates::class)
+            .flatMap { it.arguments.toList().single().value as ArrayList<*> }
+            .mapNotNull { it as? KSType }
+
+
+    private fun KSValueParameter.getParentPath(): String? =
+        annotationsWithType(ParentPath::class)
+            .firstOrNull()
+            ?.arguments?.first()?.value as? String
+
+    private fun KSAnnotated.annotationsWithType(kClass: KClass<*>) =
+        annotations.toList().filter {
+            it.annotationType.resolve().toClassName().canonicalName == kClass.qualifiedName
+        }
 }
 
 class StateMappingSymbolProcessorProvider : SymbolProcessorProvider {
