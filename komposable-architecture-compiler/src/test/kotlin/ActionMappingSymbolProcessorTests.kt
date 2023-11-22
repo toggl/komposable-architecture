@@ -1,7 +1,9 @@
 import com.toggl.komposable.processors.ActionMappingSymbolProcessorProvider
 import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.symbolProcessorProviders
+import io.kotest.matchers.comparables.shouldBeEqualComparingTo
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldBeEqualIgnoringCase
 import kotlin.test.Test
 
 class ActionMappingSymbolProcessorTests {
