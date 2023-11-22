@@ -73,11 +73,14 @@ class ActionMappingSymbolProcessor(
                 }
             }
 
-    private fun KSClassDeclaration.actionMappingFileBuilder() =
-        FileSpec.builder(
-            packageName = packageName.getQualifier(),
-            fileName = "${toClassName().simpleName}ActionMappings",
+    private fun KSClassDeclaration.actionMappingFileBuilder(): FileSpec.Builder {
+        val className = toClassName()
+
+        return FileSpec.builder(
+            packageName = className.packageName,
+            fileName = "${className.simpleName}ActionMappings",
         )
+    }
 }
 
 class ActionMappingSymbolProcessorProvider : SymbolProcessorProvider {
