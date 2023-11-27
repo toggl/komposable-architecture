@@ -18,14 +18,14 @@ class EffectCancellationTests {
         val effect1Flow = MutableStateFlow(0)
         val effect1 = Effect {
             effect1Flow
-        }.cancellable("effect1")
+        }.cancellable("cancelId01")
 
         val effect2Flow = MutableStateFlow(0)
         val effect2 = Effect {
             effect2Flow
-        }.cancellable("effect2")
+        }.cancellable("cancelId02")
 
-        val cancelEffect1 = Effect.cancel("effect1")
+        val cancelEffect1 = Effect.cancel("cancelId01")
 
         turbineScope {
             val effect1Turbine = effect1().testIn(backgroundScope)
@@ -52,14 +52,14 @@ class EffectCancellationTests {
         val effect1Flow = MutableStateFlow(0)
         val effect1 = Effect {
             effect1Flow
-        }.cancellable("effect", cancelInFlight = false)
+        }.cancellable("cancelId03", cancelInFlight = false)
 
         val effect2Flow = MutableStateFlow(0)
         val effect2 = Effect {
             effect2Flow
-        }.cancellable("effect", cancelInFlight = false)
+        }.cancellable("cancelId03", cancelInFlight = false)
 
-        val cancelEffect = Effect.cancel("effect")
+        val cancelEffect = Effect.cancel("cancelId03")
 
         turbineScope {
             val effect1Turbine = effect1().testIn(backgroundScope)
@@ -84,17 +84,17 @@ class EffectCancellationTests {
         val effect1Flow = MutableStateFlow(0)
         val effect1 = Effect {
             effect1Flow
-        }.cancellable("effect1")
+        }.cancellable("cancelId04")
 
         val effect2Flow = MutableStateFlow(0)
         val effect2 = Effect {
             effect2Flow
-        }.cancellable("effect2")
+        }.cancellable("cancelId05")
 
         val mergedEffect = effect1.merge(effect2)
 
-        val cancelEffect1 = Effect.cancel("effect1")
-        val cancelEffect2 = Effect.cancel("effect2")
+        val cancelEffect1 = Effect.cancel("cancelId04")
+        val cancelEffect2 = Effect.cancel("cancelId05")
 
         turbineScope {
             val mergedEffectTurbine = mergedEffect().testIn(backgroundScope)
@@ -126,12 +126,12 @@ class EffectCancellationTests {
         val effect1Flow = MutableStateFlow(0)
         val effect1 = Effect {
             effect1Flow
-        }.cancellable("effect", cancelInFlight = false)
+        }.cancellable("cancelId06", cancelInFlight = false)
 
         val effect2Flow = MutableStateFlow(0)
         val effect2 = Effect {
             effect2Flow
-        }.cancellable("effect", cancelInFlight = false)
+        }.cancellable("cancelId06", cancelInFlight = false)
 
         turbineScope {
             val effect1Turbine = effect1().testIn(backgroundScope)
@@ -152,12 +152,12 @@ class EffectCancellationTests {
         val effect1Flow = MutableStateFlow(0)
         val effect1 = Effect {
             effect1Flow
-        }.cancellable("effect", cancelInFlight = false)
+        }.cancellable("cancelId07", cancelInFlight = false)
 
         val effect2Flow = MutableStateFlow(0)
         val effect2 = Effect {
             effect2Flow
-        }.cancellable("effect", cancelInFlight = true)
+        }.cancellable("cancelId07", cancelInFlight = true)
 
         turbineScope {
             val effect1Turbine = effect1().testIn(backgroundScope)
