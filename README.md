@@ -46,7 +46,7 @@ The latest release is available on [Maven Central](https://search.maven.org/arti
 ```kotlin
 implementation("com.toggl:komposable-architecture:1.0.0-preview01")
 testImplementation("com.toggl:komposable-architecture-test:1.0.0-preview01") // optional testing extensions
-ksp("com.toggl:komposable-architecture-compiler:1.0.0-preview01'")  // optional very early compiler
+ksp("com.toggl:komposable-architecture-compiler:1.0.0-preview01'")  // optional compiler plugin (still experimental)
 ```
 
 ## © Licence
