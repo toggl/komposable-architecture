@@ -6,7 +6,7 @@ object SourceFiles {
     val settingsAction = SourceFile.kotlin(
         "SettingsAction.kt",
         """
-    package com.toggl.komposable.compiler.testing
+    package com.toggl.komposable.compiler
     
     sealed interface SettingsAction {
         data class ChangeSomeSetting(val newValue: Boolean) : SettingsAction
@@ -26,7 +26,7 @@ object SourceFiles {
     val appAction = SourceFile.kotlin(
         "AppAction.kt",
         """
-    package com.toggl.komposable.compiler.testing
+    package com.toggl.komposable.compiler
     
     import com.toggl.komposable.architecture.WrapperAction
     
@@ -56,7 +56,7 @@ object SourceFiles {
     val appActionWithMultipleProperties = SourceFile.kotlin(
         "AppAction.kt",
         """
-    package com.toggl.komposable.compiler.testing
+    package com.toggl.komposable.compiler
     
     import com.toggl.komposable.architecture.WrapperAction
     
@@ -70,25 +70,24 @@ object SourceFiles {
     )
 
     @Language("kotlin")
-    val generatedSettingsFile = """
-    package com.toggl.komposable.compiler.testing
-    
-    import AppAction.Settings
-    
-    public fun mapAppActionToSettingsAction(appAction: AppAction): SettingsAction? = if(appAction is
-        AppAction.Settings) appAction.settingsAction else null
-    
-    public fun mapSettingsActionToAppAction(settingsAction: SettingsAction): AppAction.Settings =
-        AppAction.Settings(settingsAction)
-    """.trimIndent()
+    val generatedActionExtensionsFile = """package com.toggl.komposable.compiler
 
-    @Language("kotlin")
-    val generatedSettingsFileWithoutPackage = """import AppAction.Settings
+import com.toggl.komposable.compiler.AppAction.Settings
 
 public fun mapAppActionToSettingsAction(appAction: AppAction): SettingsAction? = if(appAction is
     AppAction.Settings) appAction.settingsAction else null
 
 public fun mapSettingsActionToAppAction(settingsAction: SettingsAction): AppAction.Settings =
     AppAction.Settings(settingsAction)
-    """.trimIndent()
+"""
+
+    @Language("kotlin")
+    val generatedActionExtensionsFileWithoutPackage = """import AppAction.Settings
+
+public fun mapAppActionToSettingsAction(appAction: AppAction): SettingsAction? = if(appAction is
+    AppAction.Settings) appAction.settingsAction else null
+
+public fun mapSettingsActionToAppAction(settingsAction: SettingsAction): AppAction.Settings =
+    AppAction.Settings(settingsAction)
+"""
 }

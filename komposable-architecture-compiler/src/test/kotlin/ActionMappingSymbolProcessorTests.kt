@@ -23,7 +23,7 @@ class ActionMappingSymbolProcessorTests {
 
         val sources = result.kspGeneratedSources()
         sources.size.shouldBe(1)
-        sources.single().readText().contentEquals(SourceFiles.generatedSettingsFile)
+        sources.single().readText().shouldBe(SourceFiles.generatedActionExtensionsFile)
     }
 
     @Test
@@ -44,7 +44,7 @@ class ActionMappingSymbolProcessorTests {
 
         val sources = result.kspGeneratedSources()
         sources.size.shouldBe(1)
-        sources.single().readText().contentEquals(SourceFiles.generatedSettingsFileWithoutPackage)
+        sources.single().readText().shouldBe(SourceFiles.generatedActionExtensionsFileWithoutPackage)
     }
 
     @Test
