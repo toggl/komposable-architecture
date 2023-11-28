@@ -64,16 +64,32 @@ fun <State, Action> State.withCancellationEffect(id: Any): ReduceResult<State, A
 
 /**
  * @param effect An effect to be part of the ReduceResult.
+ * @return ReduceResult containing the current state and the specified effect.
+ */
+fun <State, Action> State.withEffect(effect: Effect<Action>): ReduceResult<State, Action> =
+    ReduceResult(this, effect)
+
+/**
+ * @param effect An effect to be part of the ReduceResult.
  * @param id Optional ID to make the effect cancellable. If null, the effect is not cancellable.
  * @param cancelInFlight If true, any existing effect with the same ID will be cancelled.
  * @return ReduceResult containing the current state and the specified effect.
  */
 fun <State, Action> State.withEffect(
     effect: Effect<Action>,
-    id: Any? = null,
+    id: Any,
     cancelInFlight: Boolean = false,
 ): ReduceResult<State, Action> =
-    ReduceResult(this, effect.maybeCancellable(id, cancelInFlight))
+    ReduceResult(this, effect.cancellable(id, cancelInFlight))
+
+/**
+ * @param effectBuilder The builder function for the effect to be returned.
+ * @return ReduceResult containing the current state and the specified effect.
+ */
+fun <State, Action> State.withEffect(
+    effectBuilder: Effect.Companion.() -> Effect<Action>,
+): ReduceResult<State, Action> =
+    ReduceResult(this, Effect.effectBuilder())
 
 /**
  * @param id Optional ID to make the effect cancellable. If null, the effect is not cancellable.
@@ -82,11 +98,11 @@ fun <State, Action> State.withEffect(
  * @return ReduceResult containing the current state and the specified effect.
  */
 fun <State, Action> State.withEffect(
-    id: Any? = null,
+    id: Any,
     cancelInFlight: Boolean = false,
     effectBuilder: Effect.Companion.() -> Effect<Action>,
 ): ReduceResult<State, Action> =
-    ReduceResult(this, Effect.effectBuilder().maybeCancellable(id, cancelInFlight))
+    ReduceResult(this, Effect.effectBuilder().cancellable(id, cancelInFlight))
 
 /**
  * @param actions Vararg of actions to be returned by the effect.
@@ -94,6 +110,15 @@ fun <State, Action> State.withEffect(
  */
 fun <State, Action> State.withEffect(vararg actions: Action): ReduceResult<State, Action> =
     ReduceResult(this, Effect.of(*actions))
+
+/**
+ * Returns a ReduceResult with the current state and a flow-based effect.
+ *
+ * @param flow The flow of actions to be executed as an effect.
+ * @return ReduceResult containing the current state and the defined effect.
+ */
+fun <State, Action> State.withFlowEffect(flow: Flow<Action>): ReduceResult<State, Action> =
+    ReduceResult(this, Effect.fromFlow(flow))
 
 /**
  * Returns a ReduceResult with the current state and a flow-based effect.
@@ -106,10 +131,19 @@ fun <State, Action> State.withEffect(vararg actions: Action): ReduceResult<State
  */
 fun <State, Action> State.withFlowEffect(
     flow: Flow<Action>,
-    id: Any? = null,
+    id: Any,
     cancelInFlight: Boolean = false,
 ): ReduceResult<State, Action> =
-    ReduceResult(this, Effect.fromFlow(flow).maybeCancellable(id, cancelInFlight))
+    ReduceResult(this, Effect.fromFlow(flow).cancellable(id, cancelInFlight))
+
+/**
+ * Returns a ReduceResult with the current state and a suspend function-based effect.
+ *
+ * @param func The suspend function that defines the action to be executed as an effect.
+ * @return ReduceResult containing the current state and the defined effect.
+ */
+fun <State, Action : Any> State.withSuspendEffect(func: suspend () -> Action): ReduceResult<State, Action> =
+    ReduceResult(this, Effect.fromSuspend(func))
 
 /**
  * Returns a ReduceResult with the current state and a suspend function-based effect.
@@ -121,11 +155,24 @@ fun <State, Action> State.withFlowEffect(
  * @return ReduceResult containing the current state and the defined effect.
  */
 fun <State, Action : Any> State.withSuspendEffect(
-    id: Any? = null,
+    id: Any,
     cancelInFlight: Boolean = false,
     func: suspend () -> Action,
 ): ReduceResult<State, Action> =
-    ReduceResult(this, Effect.fromSuspend(func).maybeCancellable(id, cancelInFlight))
+    ReduceResult(this, Effect.fromSuspend(func).cancellable(id, cancelInFlight))
+
+/**
+ * Returns a ReduceResult with the current state and a callback flow-based effect.
+ *
+ * @param block The callback block defining the flow of actions.
+ * @return ReduceResult containing the current state and the defined effect.
+ * @see kotlinx.coroutines.flow.callbackFlow
+ */
+@OptIn(ExperimentalTypeInference::class)
+fun <State, Action> State.withProducerEffect(
+    @BuilderInference block: suspend ProducerScope<Action>.() -> Unit,
+): ReduceResult<State, Action> =
+    ReduceResult(this, Effect.fromProducer(block))
 
 /**
  * Returns a ReduceResult with the current state and a callback flow-based effect.
@@ -139,15 +186,8 @@ fun <State, Action : Any> State.withSuspendEffect(
  */
 @OptIn(ExperimentalTypeInference::class)
 fun <State, Action> State.withProducerEffect(
-    id: Any? = null,
+    id: Any,
     cancelInFlight: Boolean = false,
     @BuilderInference block: suspend ProducerScope<Action>.() -> Unit,
 ): ReduceResult<State, Action> =
-    ReduceResult(this, Effect.fromProducer(block).maybeCancellable(id, cancelInFlight))
-
-private fun <Action> Effect<Action>.maybeCancellable(id: Any? = null, cancelInFlight: Boolean = false): Effect<Action> =
-    if (id == null) {
-        this
-    } else {
-        this.cancellable(id, cancelInFlight)
-    }
+    ReduceResult(this, Effect.fromProducer(block).cancellable(id, cancelInFlight))
