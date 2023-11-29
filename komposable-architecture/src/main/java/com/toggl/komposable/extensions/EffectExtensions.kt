@@ -77,7 +77,7 @@ fun <State, Action> State.withEffect(effect: Effect<Action>): ReduceResult<State
 
 /**
  * @param effect An effect to be part of the ReduceResult.
- * @param id Optional ID to make the effect cancellable. If null, the effect is not cancellable.
+ * @param id ID to make the effect cancellable. If null, the effect is not cancellable.
  * @param cancelInFlight If true, any existing effect with the same ID will be cancelled.
  * @return ReduceResult containing the current state and the specified effect.
  */
@@ -98,7 +98,7 @@ fun <State, Action> State.withEffect(
     ReduceResult(this, Effect.effectBuilder())
 
 /**
- * @param id Optional ID to make the effect cancellable. If null, the effect is not cancellable.
+ * @param id ID to make the effect cancellable. If null, the effect is not cancellable.
  * @param cancelInFlight If true, any existing effect with the same ID will be cancelled.
  * @param effectBuilder The builder function for the effect to be returned.
  * @return ReduceResult containing the current state and the specified effect.
@@ -131,7 +131,7 @@ fun <State, Action> State.withFlowEffect(flow: Flow<Action>): ReduceResult<State
  * The effect can be made cancellable using an ID.
  *
  * @param flow The flow of actions to be executed as an effect.
- * @param id Optional ID to make the effect cancellable. If null, the effect is not cancellable.
+ * @param id ID to make the effect cancellable. If null, the effect is not cancellable.
  * @param cancelInFlight If true, any existing effect with the same ID will be cancelled.
  * @return ReduceResult containing the current state and the defined effect.
  */
@@ -155,7 +155,7 @@ fun <State, Action : Any> State.withSuspendEffect(func: suspend () -> Action): R
  * Returns a ReduceResult with the current state and a suspend function-based effect.
  * The effect can be cancellable and is defined by the provided suspend function.
  *
- * @param id Optional ID for making the effect cancellable. If null, effect is not cancellable.
+ * @param id ID for making the effect cancellable. If null, effect is not cancellable.
  * @param cancelInFlight If true, any existing effect with the same ID will be cancelled.
  * @param func The suspend function that defines the action to be executed as an effect.
  * @return ReduceResult containing the current state and the defined effect.
@@ -184,7 +184,7 @@ fun <State, Action> State.withProducerEffect(
  * Returns a ReduceResult with the current state and a callback flow-based effect.
  * The effect can be made cancellable and is defined by a callback block.
  *
- * @param id Optional ID to make the effect cancellable. If null, the effect is not cancellable.
+ * @param id ID to make the effect cancellable. If null, the effect is not cancellable.
  * @param cancelInFlight If true, any existing effect with the same ID will be cancelled.
  * @param block The callback block defining the flow of actions.
  * @return ReduceResult containing the current state and the defined effect.
