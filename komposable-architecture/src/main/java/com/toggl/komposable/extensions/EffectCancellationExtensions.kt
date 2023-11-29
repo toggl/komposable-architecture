@@ -1,6 +1,7 @@
 package com.toggl.komposable.extensions
 
 import com.toggl.komposable.architecture.Effect
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.cancellable
@@ -25,7 +26,9 @@ fun <Action> Effect<Action>.cancellable(id: Any, cancelInFlight: Boolean = false
         this().onStart {
             mutex.withLock {
                 if (cancelInFlight) {
-                    cancellationJobs[id]?.forEach { it.cancel() }
+                    cancellationJobs[id]?.forEach {
+                        it.cancel(EffectCancellationException.InFlightEffectsCancelled(id))
+                    }
                     cancellationJobs.remove(id)
                 }
                 val job = currentCoroutineContext()[Job]
@@ -44,7 +47,9 @@ fun Effect.Companion.cancel(id: Any): Effect<Nothing> =
     Effect {
         flow {
             mutex.withLock {
-                cancellationJobs[id]?.forEach { it.cancel() }
+                cancellationJobs[id]?.forEach {
+                    it.cancel(EffectCancellationException.EffectsCancelledManually(id))
+                }
                 cancellationJobs.remove(id)
             }
         }
@@ -58,8 +63,16 @@ fun Effect.Companion.cancelAll(): Effect<Nothing> =
     Effect {
         flow {
             mutex.withLock {
-                cancellationJobs.values.flatten().forEach { it.cancel() }
+                cancellationJobs.values.flatten().forEach {
+                    it.cancel(EffectCancellationException.AllEffectsCancelledManually)
+                }
                 cancellationJobs.clear()
             }
         }
     }
+
+sealed class EffectCancellationException(message: String) : CancellationException(message) {
+    data class InFlightEffectsCancelled(val id: Any) : EffectCancellationException("Reason:cancelInFlight Id:$id")
+    data class EffectsCancelledManually(val id: Any) : EffectCancellationException("Reason:cancel Id:$id")
+    data object AllEffectsCancelledManually : EffectCancellationException("Reason:cancelAll")
+}

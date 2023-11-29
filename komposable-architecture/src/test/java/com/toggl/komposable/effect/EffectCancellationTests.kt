@@ -2,6 +2,9 @@ package com.toggl.komposable.effect
 
 import app.cash.turbine.turbineScope
 import com.toggl.komposable.architecture.Effect
+import com.toggl.komposable.extensions.EffectCancellationException.AllEffectsCancelledManually
+import com.toggl.komposable.extensions.EffectCancellationException.EffectsCancelledManually
+import com.toggl.komposable.extensions.EffectCancellationException.InFlightEffectsCancelled
 import com.toggl.komposable.extensions.cancel
 import com.toggl.komposable.extensions.cancelAll
 import com.toggl.komposable.extensions.cancellable
@@ -11,7 +14,6 @@ import io.kotest.matchers.types.shouldBeInstanceOf
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Test
-import kotlin.coroutines.cancellation.CancellationException
 
 class EffectCancellationTests {
     @Test
@@ -41,7 +43,11 @@ class EffectCancellationTests {
             effect2Turbine.awaitItem() shouldBe 1
 
             cancelEffect1().testIn(backgroundScope)
-            effect1Turbine.awaitError().shouldBeInstanceOf<CancellationException>()
+            effect1Turbine.awaitError().apply {
+                shouldBeInstanceOf<EffectsCancelledManually>()
+                id shouldBe "cancelId01"
+            }
+
             // effect2 should not be canceled
             effect2Flow.value = 2
             effect2Turbine.awaitItem() shouldBe 2
@@ -75,8 +81,14 @@ class EffectCancellationTests {
             effect2Turbine.awaitItem() shouldBe 1
 
             cancelEffect().testIn(backgroundScope)
-            effect1Turbine.awaitError().shouldBeInstanceOf<CancellationException>()
-            effect2Turbine.awaitError().shouldBeInstanceOf<CancellationException>()
+            effect1Turbine.awaitError().apply {
+                shouldBeInstanceOf<EffectsCancelledManually>()
+                id shouldBe "cancelId03"
+            }
+            effect2Turbine.awaitError().apply {
+                shouldBeInstanceOf<EffectsCancelledManually>()
+                id shouldBe "cancelId03"
+            }
         }
     }
 
@@ -168,7 +180,10 @@ class EffectCancellationTests {
             effect1Turbine.awaitItem() shouldBe 1
 
             val effect2Turbine = effect2().testIn(backgroundScope)
-            effect1Turbine.awaitError().shouldBeInstanceOf<CancellationException>()
+            effect1Turbine.awaitError().apply {
+                shouldBeInstanceOf<InFlightEffectsCancelled>()
+                id shouldBe "cancelId07"
+            }
 
             effect2Turbine.awaitItem() shouldBe 0
             effect2Flow.value = 1
@@ -214,9 +229,9 @@ class EffectCancellationTests {
 
             cancelAllEffect().testIn(backgroundScope)
 
-            effect1Turbine.awaitError().shouldBeInstanceOf<CancellationException>()
-            effect2Turbine.awaitError().shouldBeInstanceOf<CancellationException>()
-            effect3Turbine.awaitError().shouldBeInstanceOf<CancellationException>()
+            effect1Turbine.awaitError().shouldBeInstanceOf<AllEffectsCancelledManually>()
+            effect2Turbine.awaitError().shouldBeInstanceOf<AllEffectsCancelledManually>()
+            effect3Turbine.awaitError().shouldBeInstanceOf<AllEffectsCancelledManually>()
         }
     }
 }
