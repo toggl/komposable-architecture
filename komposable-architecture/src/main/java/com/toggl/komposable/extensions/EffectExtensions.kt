@@ -59,8 +59,14 @@ fun <State, Action> State.withoutEffect(): ReduceResult<State, Action> =
  * @return A ReduceResult containing the current state and a cancellation effect for the specified ID.
  * @see Effect.cancellable
  */
-fun <State, Action> State.withCancellationEffect(id: Any): ReduceResult<State, Action> =
+fun <State, Action> State.withCancelEffect(id: Any): ReduceResult<State, Action> =
     ReduceResult(this, Effect.cancel(id))
+
+/**
+ * @return A ReduceResult containing the current state and a cancellation effect for all ongoing effects.
+ */
+fun <State, Action> State.withCancelAllEffects(): ReduceResult<State, Action> =
+    ReduceResult(this, Effect.cancelAll())
 
 /**
  * @param effect An effect to be part of the ReduceResult.

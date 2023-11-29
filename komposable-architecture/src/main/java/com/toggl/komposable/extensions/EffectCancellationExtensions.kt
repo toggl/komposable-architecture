@@ -37,15 +37,29 @@ fun <Action> Effect<Action>.cancellable(id: Any, cancelInFlight: Boolean = false
 /**
  * Creates an Effect that cancels any ongoing effects associated with the given action ID.
  *
- * @param action The ID of the effects to be cancelled.
+ * @param id The ID of the effects to be cancelled.
  * @return An Effect of Nothing that, when executed, will cancel the specified effects.
  */
-fun Effect.Companion.cancel(action: Any): Effect<Nothing> =
+fun Effect.Companion.cancel(id: Any): Effect<Nothing> =
     Effect {
         flow {
             mutex.withLock {
-                cancellationJobs[action]?.forEach { it.cancel() }
-                cancellationJobs.remove(action)
+                cancellationJobs[id]?.forEach { it.cancel() }
+                cancellationJobs.remove(id)
+            }
+        }
+    }
+
+/**
+ * Creates an Effect that cancels all ongoing effects.
+ * @return An Effect of Nothing that, when executed, will cancel all ongoing effects.
+ */
+fun Effect.Companion.cancelAll(): Effect<Nothing> =
+    Effect {
+        flow {
+            mutex.withLock {
+                cancellationJobs.values.flatten().forEach { it.cancel() }
+                cancellationJobs.clear()
             }
         }
     }
