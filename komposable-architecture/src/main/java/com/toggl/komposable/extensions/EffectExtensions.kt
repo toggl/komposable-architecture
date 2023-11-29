@@ -14,7 +14,7 @@ import kotlin.experimental.ExperimentalTypeInference
  */
 fun <Action> Effect.Companion.merge(vararg effects: Effect<Action>): Effect<Action> =
     Effect {
-        kotlinx.coroutines.flow.merge(*effects.map { it.invoke() }.toTypedArray())
+        kotlinx.coroutines.flow.merge(*effects.map { it.run() }.toTypedArray())
     }
 
 /**
@@ -23,7 +23,7 @@ fun <Action> Effect.Companion.merge(vararg effects: Effect<Action>): Effect<Acti
  */
 fun <Action> Effect<Action>.merge(vararg effects: Effect<Action>): Effect<Action> =
     Effect {
-        kotlinx.coroutines.flow.merge(invoke(), *effects.map { it.invoke() }.toTypedArray())
+        kotlinx.coroutines.flow.merge(run(), *effects.map { it.run() }.toTypedArray())
     }
 
 /**
@@ -32,7 +32,7 @@ fun <Action> Effect<Action>.merge(vararg effects: Effect<Action>): Effect<Action
  */
 infix fun <Action> Effect<Action>.mergeWith(effect: Effect<Action>): Effect<Action> =
     Effect {
-        kotlinx.coroutines.flow.merge(invoke(), effect.invoke())
+        kotlinx.coroutines.flow.merge(run(), effect.run())
     }
 
 /**
@@ -45,7 +45,7 @@ fun <T, R> Effect<T>.map(mapFn: (T) -> R): Effect<R> =
     if (this is NoEffect) {
         NoEffect
     } else {
-        Effect { this().map { mapFn(it) } }
+        Effect { this.run().map { mapFn(it) } }
     }
 
 /**

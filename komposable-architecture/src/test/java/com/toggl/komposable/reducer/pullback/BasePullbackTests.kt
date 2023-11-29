@@ -52,7 +52,7 @@ abstract class BasePullbackTests {
             action,
         ) { state, effect ->
             state shouldBe globalState
-            effect().test {
+            effect.run().test {
                 awaitItem() shouldBe TestAction.LocalActionWrapper(LocalTestAction.DoNothingFromEffectAction)
                 awaitComplete()
             }

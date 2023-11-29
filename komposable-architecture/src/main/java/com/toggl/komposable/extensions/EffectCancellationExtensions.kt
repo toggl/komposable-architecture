@@ -23,7 +23,7 @@ private val cancellationJobs: MutableMap<Any, MutableSet<Job>> = mutableMapOf()
  */
 fun <Action> Effect<Action>.cancellable(id: Any, cancelInFlight: Boolean = false): Effect<Action> =
     Effect {
-        this().onStart {
+        this.run().onStart {
             mutex.withLock {
                 if (cancelInFlight) {
                     cancellationJobs[id]?.forEach {

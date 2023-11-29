@@ -170,8 +170,8 @@ class StoreEffectsTests : StoreCoroutineTest() {
             testReducer.reduce(any(), TestAction.DoNothingAction)
 
             // second: execute effects
-            uselessEffect()
-            clearPropertyEffect()
+            uselessEffect.run()
+            clearPropertyEffect.run()
 
             // third: reduce action returned from testEffect1
             testReducer.reduce(any(), TestAction.ClearTestPropertyFromEffect)

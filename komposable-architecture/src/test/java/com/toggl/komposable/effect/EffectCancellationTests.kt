@@ -31,8 +31,8 @@ class EffectCancellationTests {
         val cancelEffect1 = Effect.cancel("cancelId01")
 
         turbineScope {
-            val effect1Turbine = effect1().testIn(backgroundScope)
-            val effect2Turbine = effect2().testIn(backgroundScope)
+            val effect1Turbine = effect1.run().testIn(backgroundScope)
+            val effect2Turbine = effect2.run().testIn(backgroundScope)
 
             effect1Turbine.awaitItem() shouldBe 0
             effect1Flow.value = 1
@@ -42,7 +42,7 @@ class EffectCancellationTests {
             effect2Flow.value = 1
             effect2Turbine.awaitItem() shouldBe 1
 
-            cancelEffect1().testIn(backgroundScope)
+            cancelEffect1.run().testIn(backgroundScope)
             effect1Turbine.awaitError().apply {
                 shouldBeInstanceOf<EffectsCancelledManually>()
                 id shouldBe "cancelId01"
@@ -69,8 +69,8 @@ class EffectCancellationTests {
         val cancelEffect = Effect.cancel("cancelId03")
 
         turbineScope {
-            val effect1Turbine = effect1().testIn(backgroundScope)
-            val effect2Turbine = effect2().testIn(backgroundScope)
+            val effect1Turbine = effect1.run().testIn(backgroundScope)
+            val effect2Turbine = effect2.run().testIn(backgroundScope)
 
             effect1Turbine.awaitItem() shouldBe 0
             effect1Flow.value = 1
@@ -80,7 +80,7 @@ class EffectCancellationTests {
             effect2Flow.value = 1
             effect2Turbine.awaitItem() shouldBe 1
 
-            cancelEffect().testIn(backgroundScope)
+            cancelEffect.run().testIn(backgroundScope)
             effect1Turbine.awaitError().apply {
                 shouldBeInstanceOf<EffectsCancelledManually>()
                 id shouldBe "cancelId03"
@@ -110,7 +110,7 @@ class EffectCancellationTests {
         val cancelEffect2 = Effect.cancel("cancelId05")
 
         turbineScope {
-            val mergedEffectTurbine = mergedEffect().testIn(backgroundScope)
+            val mergedEffectTurbine = mergedEffect.run().testIn(backgroundScope)
 
             mergedEffectTurbine.awaitItem() shouldBe 0
             mergedEffectTurbine.awaitItem() shouldBe 0
@@ -120,13 +120,13 @@ class EffectCancellationTests {
             effect2Flow.value = 2
             mergedEffectTurbine.awaitItem() shouldBe 2
 
-            cancelEffect1().testIn(backgroundScope)
+            cancelEffect1.run().testIn(backgroundScope)
 
             // mergedEffect should not be canceled because effect2Flow is still alive
             effect2Flow.value = 4
             mergedEffectTurbine.awaitItem() shouldBe 4
 
-            cancelEffect2().testIn(backgroundScope)
+            cancelEffect2.run().testIn(backgroundScope)
 
             // now it should be dead too
             effect2Flow.value = 5
@@ -147,8 +147,8 @@ class EffectCancellationTests {
         }.cancellable("cancelId06", cancelInFlight = false)
 
         turbineScope {
-            val effect1Turbine = effect1().testIn(backgroundScope)
-            val effect2Turbine = effect2().testIn(backgroundScope)
+            val effect1Turbine = effect1.run().testIn(backgroundScope)
+            val effect2Turbine = effect2.run().testIn(backgroundScope)
 
             effect1Turbine.awaitItem() shouldBe 0
             effect1Flow.value = 1
@@ -173,13 +173,13 @@ class EffectCancellationTests {
         }.cancellable("cancelId07", cancelInFlight = true)
 
         turbineScope {
-            val effect1Turbine = effect1().testIn(backgroundScope)
+            val effect1Turbine = effect1.run().testIn(backgroundScope)
 
             effect1Turbine.awaitItem() shouldBe 0
             effect1Flow.value = 1
             effect1Turbine.awaitItem() shouldBe 1
 
-            val effect2Turbine = effect2().testIn(backgroundScope)
+            val effect2Turbine = effect2.run().testIn(backgroundScope)
             effect1Turbine.awaitError().apply {
                 shouldBeInstanceOf<InFlightEffectsCancelled>()
                 id shouldBe "cancelId07"
@@ -211,9 +211,9 @@ class EffectCancellationTests {
         val cancelAllEffect = Effect.cancelAll()
 
         turbineScope {
-            val effect1Turbine = effect1().testIn(backgroundScope)
-            val effect2Turbine = effect2().testIn(backgroundScope)
-            val effect3Turbine = effect3().testIn(backgroundScope)
+            val effect1Turbine = effect1.run().testIn(backgroundScope)
+            val effect2Turbine = effect2.run().testIn(backgroundScope)
+            val effect3Turbine = effect3.run().testIn(backgroundScope)
 
             effect1Turbine.awaitItem() shouldBe 0
             effect1Flow.value = 1
@@ -227,7 +227,7 @@ class EffectCancellationTests {
             effect3Flow.value = 1
             effect3Turbine.awaitItem() shouldBe 1
 
-            cancelAllEffect().testIn(backgroundScope)
+            cancelAllEffect.run().testIn(backgroundScope)
 
             effect1Turbine.awaitError().shouldBeInstanceOf<AllEffectsCancelledManually>()
             effect2Turbine.awaitError().shouldBeInstanceOf<AllEffectsCancelledManually>()

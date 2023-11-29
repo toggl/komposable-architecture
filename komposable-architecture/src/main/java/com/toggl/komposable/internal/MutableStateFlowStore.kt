@@ -75,7 +75,7 @@ internal class MutableStateFlowStore<State, Action : Any> private constructor(
                     state.value = result.state
 
                     try {
-                        result.effect()
+                        result.effect.run()
                             .onEach { action -> send(listOf(action)) }
                             .launchIn(storeScope)
                     } catch (e: Throwable) {

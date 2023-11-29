@@ -7,7 +7,7 @@ import kotlinx.coroutines.flow.flow
 abstract class SuspendEffect<out Action> : Effect<Action> {
     abstract suspend fun execute(): Action?
 
-    final override fun invoke(): Flow<Action> = flow {
+    final override fun run(): Flow<Action> = flow {
         execute()?.let { emit(it) }
     }
 }
