@@ -41,11 +41,11 @@ infix fun <Action> Effect<Action>.mergeWith(effect: Effect<Action>): Effect<Acti
  * @param mapFn The function to transform the returned action.
  * @return An effect whose return action type has been mapped.
  */
-fun <T, R> Effect<T>.map(mapFn: (T) -> R): Effect<R> =
+inline fun <T, R> Effect<T>.map(crossinline transform: suspend (T) -> R): Effect<R> =
     if (this is NoEffect) {
         NoEffect
     } else {
-        Effect { this.run().map { mapFn(it) } }
+        Effect { this.run().map { transform(it) } }
     }
 
 /**
