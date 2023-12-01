@@ -48,23 +48,20 @@ class StoreReducerTests : StoreCoroutineTest() {
     }
 
     @Test
-    fun `all actions are reduced before any effect gets executed`() = runTest {
-        val uselessEffect = spyk(TestEffect(TestAction.DoNothingFromEffectAction))
-        val clearPropertyEffect = spyk(TestEffect(TestAction.ClearTestPropertyFromEffect))
-        val startUselessEffectAction = TestAction.StartEffectAction(uselessEffect)
-        val startClearPropertyEffectAction = TestAction.StartEffectAction(clearPropertyEffect)
-
-        val changeTestPropertyAction = TestAction.ChangeTestProperty("123")
-        val addTestPropertyAction = TestAction.AddToTestProperty("4")
+    fun `effects with multiple actions are processed correctly`() = runTest {
+        val flowEffect = spyk(
+            TestEffect(
+                TestAction.ClearTestPropertyFromEffect,
+                TestAction.ChangeTestProperty("123"),
+                TestAction.AddToTestProperty("4"),
+            ),
+        )
+        val startFlowEffectAction = TestAction.StartEffectAction(flowEffect)
 
         testStore.send(
             listOf(
                 TestAction.DoNothingAction,
-                changeTestPropertyAction,
-                addTestPropertyAction,
-                startUselessEffectAction,
-                startClearPropertyEffectAction,
-                TestAction.DoNothingAction,
+                startFlowEffectAction,
             ),
         )
 
@@ -73,19 +70,12 @@ class StoreReducerTests : StoreCoroutineTest() {
         coVerify(ordering = Ordering.SEQUENCE) {
             // first: reduce sent actions
             testReducer.reduce(any(), TestAction.DoNothingAction)
-            testReducer.reduce(any(), changeTestPropertyAction)
-            testReducer.reduce(any(), addTestPropertyAction)
-            testReducer.reduce(any(), startUselessEffectAction)
-            testReducer.reduce(any(), startClearPropertyEffectAction)
-            testReducer.reduce(any(), TestAction.DoNothingAction)
+            testReducer.reduce(any(), startFlowEffectAction)
 
-            // second: execute effects
-            uselessEffect.execute()
-            clearPropertyEffect.execute()
-
-            // third: reduce action returned from testEffect1
-            testReducer.reduce(any(), TestAction.DoNothingFromEffectAction)
+            // second: reduce action coming from effect
             testReducer.reduce(any(), TestAction.ClearTestPropertyFromEffect)
+            testReducer.reduce(any(), TestAction.ChangeTestProperty("123"))
+            testReducer.reduce(any(), TestAction.AddToTestProperty("4"))
         }
     }
 }

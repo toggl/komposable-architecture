@@ -1,9 +1,9 @@
 package com.toggl.komposable.reducer.forEach
 
+import com.toggl.komposable.architecture.NoEffect
 import com.toggl.komposable.architecture.ReduceResult
 import com.toggl.komposable.architecture.Reducer
 import com.toggl.komposable.extensions.forEachList
-import com.toggl.komposable.extensions.noEffect
 import com.toggl.komposable.test.testReduceState
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.test.runTest
@@ -28,14 +28,14 @@ class ForEachListTests {
         Reducer<ParentListState, ParentAction> { state, action ->
             when (action) {
                 is ParentAction.EditText ->
-                    ReduceResult(state.copy(parentText = action.text), noEffect())
+                    ReduceResult(state.copy(parentText = action.text), NoEffect)
                 is ParentAction.ElementActionWrapper ->
                     ReduceResult(
                         state.copy(
                             lastEditedIndex = action.id,
                             elementsTextLength = state.elements.sumOf { it.elementText.length },
                         ),
-                        noEffect(),
+                        NoEffect,
                     )
             }
         }

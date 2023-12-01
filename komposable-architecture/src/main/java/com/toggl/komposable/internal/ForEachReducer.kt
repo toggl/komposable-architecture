@@ -3,6 +3,7 @@ package com.toggl.komposable.internal
 import com.toggl.komposable.architecture.ReduceResult
 import com.toggl.komposable.architecture.Reducer
 import com.toggl.komposable.extensions.map
+import com.toggl.komposable.extensions.mergeWith
 
 internal class ForEachReducer<ElementState, ParentState, ElementAction, ParentAction, ID>(
     private val parentReducer: Reducer<ParentState, ParentAction>,
@@ -20,14 +21,12 @@ internal class ForEachReducer<ElementState, ParentState, ElementAction, ParentAc
         val mapToLocalState: (ParentState) -> ElementState = { parentState: ParentState -> mapToElementState(parentState, id) }
         val mapToGlobalState: (ParentState, ElementState) -> ParentState = { parentState: ParentState, elementState: ElementState -> mapToParentState(parentState, elementState!!, id) }
 
-        val (elementState, elementEffects) = elementReducer.reduce(mapToLocalState(state), elementAction)
-        val (parentState, parentEffects) = parentReducer.reduce(mapToGlobalState(state, elementState), action)
+        val (elementState, elementEffect) = elementReducer.reduce(mapToLocalState(state), elementAction)
+        val (parentState, parentEffect) = parentReducer.reduce(mapToGlobalState(state, elementState), action)
 
         return ReduceResult(
             state = parentState,
-            effects = elementEffects.map { effect ->
-                effect.map { action -> action?.run { mapToParentAction(this, id) } }
-            } + parentEffects,
+            effect = elementEffect.map { mapToParentAction(it, id) } mergeWith parentEffect,
         )
     }
 }

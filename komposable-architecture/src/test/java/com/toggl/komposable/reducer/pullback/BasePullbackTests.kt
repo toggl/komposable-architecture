@@ -1,14 +1,15 @@
 package com.toggl.komposable.reducer.pullback
 
+import app.cash.turbine.test
+import com.toggl.komposable.architecture.Effect
+import com.toggl.komposable.architecture.NoEffect
 import com.toggl.komposable.architecture.Reducer
 import com.toggl.komposable.common.LocalTestAction
 import com.toggl.komposable.common.LocalTestState
 import com.toggl.komposable.common.TestAction
 import com.toggl.komposable.common.TestState
-import com.toggl.komposable.extensions.effectOf
 import com.toggl.komposable.test.testReduce
-import io.kotest.matchers.collections.shouldBeEmpty
-import io.kotest.matchers.collections.shouldBeSingleton
+import com.toggl.komposable.test.testReduceNoOp
 import io.kotest.matchers.shouldBe
 import io.mockk.Called
 import io.mockk.verify
@@ -27,9 +28,9 @@ abstract class BasePullbackTests {
         pulledBackReducer.testReduce(
             globalState,
             action,
-        ) { state, effects ->
+        ) { state, effect ->
             state shouldBe globalState.copy(testIntProperty = 2)
-            effects.shouldBeEmpty()
+            effect shouldBe NoEffect
         }
         verify {
             localReducer.reduce(
@@ -43,16 +44,18 @@ abstract class BasePullbackTests {
     fun `local reducer effect results should be correctly wrapped`() = runTest {
         val globalState = TestState("", 1)
         val action = TestAction.LocalActionWrapper(
-            LocalTestAction.StartEffectAction(effectOf(LocalTestAction.DoNothingFromEffectAction).single()),
+            LocalTestAction.StartEffectAction(Effect.of(LocalTestAction.DoNothingFromEffectAction)),
         )
 
         pulledBackReducer.testReduce(
             globalState,
             action,
-        ) { state, effects ->
+        ) { state, effect ->
             state shouldBe globalState
-            effects.shouldBeSingleton()
-            effects.single().execute() shouldBe TestAction.LocalActionWrapper(LocalTestAction.DoNothingFromEffectAction)
+            effect.run().test {
+                awaitItem() shouldBe TestAction.LocalActionWrapper(LocalTestAction.DoNothingFromEffectAction)
+                awaitComplete()
+            }
         }
         verify {
             localReducer.reduce(
@@ -67,13 +70,10 @@ abstract class BasePullbackTests {
         val globalState = TestState("", 1)
         val action = TestAction.ChangeTestProperty("")
 
-        pulledBackReducer.testReduce(
+        pulledBackReducer.testReduceNoOp(
             globalState,
             action,
-        ) { state, effects ->
-            state shouldBe globalState
-            effects.shouldBeEmpty()
-        }
+        )
         verify {
             localReducer wasNot Called
         }

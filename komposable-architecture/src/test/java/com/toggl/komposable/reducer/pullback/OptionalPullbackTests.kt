@@ -1,5 +1,6 @@
 package com.toggl.komposable.reducer.pullback
 
+import com.toggl.komposable.architecture.NoEffect
 import com.toggl.komposable.architecture.Reducer
 import com.toggl.komposable.common.LocalTestReducer
 import com.toggl.komposable.common.LocalTestState
@@ -7,7 +8,6 @@ import com.toggl.komposable.common.TestAction
 import com.toggl.komposable.common.TestState
 import com.toggl.komposable.extensions.optionalPullback
 import com.toggl.komposable.test.testReduce
-import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.shouldBe
 import io.mockk.Called
 import io.mockk.spyk
@@ -32,9 +32,9 @@ class OptionalPullbackTests : BasePullbackTests() {
         pulledBackReducer.testReduce(
             globalState,
             action,
-        ) { state, effects ->
+        ) { state, effect ->
             state shouldBe globalState
-            effects.shouldBeEmpty()
+            effect shouldBe NoEffect
         }
         verify {
             localReducer wasNot Called

@@ -71,6 +71,7 @@ dependencies {
     implementation(libs.androidx.compose.foundation.layout)
 
     testImplementation(project(":komposable-architecture-test"))
+    testImplementation(libs.kotestMatchers)
     testImplementation(libs.junit.jupiter.api)
     testRuntimeOnly(libs.junit.jupiter.engine)
     testImplementation(libs.kotlin.test.core)

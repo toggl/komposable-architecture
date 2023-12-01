@@ -1,8 +1,8 @@
 package com.toggl.komposable.reducer.forEach
 
+import com.toggl.komposable.architecture.NoEffect
 import com.toggl.komposable.architecture.ReduceResult
 import com.toggl.komposable.architecture.Reducer
-import com.toggl.komposable.extensions.noEffect
 
 sealed class ParentAction {
     data class EditText(val text: String) : ParentAction()
@@ -19,7 +19,7 @@ internal val elementReducer =
     Reducer<ElementState, ElementAction> { state, action ->
         when (action) {
             is ElementAction.EditText ->
-                ReduceResult(state.copy(elementText = action.text), noEffect())
+                ReduceResult(state.copy(elementText = action.text), NoEffect)
         }
     }
 
