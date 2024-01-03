@@ -28,6 +28,7 @@ dependencies {
     implementation(libs.kotlin.test.core)
     implementation(libs.kotlin.test.junit5)
     implementation(libs.kotlinx.coroutines.test)
+    implementation(libs.kotestMatchers)
 
     testImplementation(libs.junit.jupiter.api)
     testRuntimeOnly(libs.junit.jupiter.engine)

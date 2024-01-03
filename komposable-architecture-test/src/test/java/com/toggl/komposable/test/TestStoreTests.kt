@@ -1,4 +1,4 @@
-package com.toggl.komposable.store
+package com.toggl.komposable.test
 
 import com.toggl.komposable.architecture.Effect
 import com.toggl.komposable.architecture.ReduceResult
@@ -21,6 +21,7 @@ import kotlinx.coroutines.test.setMain
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import kotlin.time.Duration
 
 class TestStoreTests {
     open class BaseTestStoreTest {
@@ -47,7 +48,7 @@ class TestStoreTests {
                     object : Reducer<Any, MergeTestsAction> {
                         override fun reduce(
                             state: Any,
-                            action: MergeTestsAction
+                            action: MergeTestsAction,
                         ): ReduceResult<Any, MergeTestsAction> {
                             return when (action) {
                                 MergeTestsAction.A -> {
@@ -63,7 +64,7 @@ class TestStoreTests {
                                             ),
                                             Effect.fromFlow<MergeTestsAction>(
                                                 flow {
-                                                    delay(kotlin.time.Duration.INFINITE)
+                                                    delay(Duration.INFINITE)
                                                 },
                                             ).cancellable(1, true),
                                         ),
@@ -100,7 +101,7 @@ class TestStoreTests {
 
             store.send(MergeTestsAction.A)
 
-            testScheduler.advanceTimeBy(100)
+            testScheduler.advanceTimeBy(1000)
 
             store.receive(MergeTestsAction.B1)
             store.receive(MergeTestsAction.B2)
@@ -169,9 +170,9 @@ class TestStoreTests {
                                 Effect.of(
                                     StateChangesAction.Changed(
                                         state.count,
-                                        state.count + 1
-                                    )
-                                )
+                                        state.count + 1,
+                                    ),
+                                ),
                             )
 
                             is StateChangesAction.Changed -> {

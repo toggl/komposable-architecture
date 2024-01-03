@@ -76,6 +76,7 @@ dependencies {
     testRuntimeOnly(libs.junit.jupiter.engine)
     testImplementation(libs.kotlin.test.core)
     testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.mockK)
 
     debugImplementation(libs.leak.canary)
 }

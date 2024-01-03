@@ -1,4 +1,4 @@
-package com.toggl.komposable.store
+package com.toggl.komposable.test
 
 import com.toggl.komposable.architecture.Effect
 import com.toggl.komposable.architecture.ReduceResult
@@ -14,7 +14,6 @@ import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
-import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runCurrent
 import java.util.UUID
 
@@ -22,7 +21,7 @@ class TestStore<State, Action : Any?>(
     initialState: () -> State,
     reducer: () -> Reducer<State, Action>,
     dispatcherProvider: DispatcherProvider,
-    val testCoroutineScope: TestScope
+    val testCoroutineScope: TestScope,
 ) {
     private val store: Store<State, TestReducer.TestAction<Action>>
     val reducer: TestReducer<State, Action>
@@ -77,7 +76,6 @@ class TestStore<State, Action : Any?>(
             receiveAction(actionPredicate, assert)
         } else {
             testCoroutineScope.runCurrent()
-            testCoroutineScope.advanceUntilIdle()
             receiveAction(actionPredicate, assert)
             // wait for the in-flight effect to finish
         }
