@@ -29,6 +29,7 @@ dependencies {
     implementation(libs.kotlin.test.junit5)
     implementation(libs.kotlinx.coroutines.test)
     implementation(libs.kotestMatchers)
+    implementation(kotlin("reflect"))
 
     testImplementation(libs.junit.jupiter.api)
     testRuntimeOnly(libs.junit.jupiter.engine)

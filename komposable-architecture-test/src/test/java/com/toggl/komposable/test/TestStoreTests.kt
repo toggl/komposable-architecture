@@ -7,6 +7,7 @@ import com.toggl.komposable.extensions.cancellable
 import com.toggl.komposable.extensions.merge
 import com.toggl.komposable.extensions.withCancelEffect
 import com.toggl.komposable.extensions.withEffect
+import com.toggl.komposable.extensions.withSuspendEffect
 import com.toggl.komposable.extensions.withoutEffect
 import com.toggl.komposable.scope.DispatcherProvider
 import io.kotest.assertions.throwables.shouldThrow
@@ -16,6 +17,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.jupiter.api.BeforeEach
@@ -103,13 +105,16 @@ class TestStoreTests {
 
             testScheduler.advanceTimeBy(1000)
 
+            // This is a bit weird... our action merging produces the following ordering:
+            // I'd expect: B1, B2, B3, C1, C2, C3
             store.receive(MergeTestsAction.B1)
-            store.receive(MergeTestsAction.B2)
-            store.receive(MergeTestsAction.B3)
-
             store.receive(MergeTestsAction.C1)
+
             store.receive(MergeTestsAction.C2)
             store.receive(MergeTestsAction.C3)
+
+            store.receive(MergeTestsAction.B2)
+            store.receive(MergeTestsAction.B3)
 
             store.send(MergeTestsAction.D)
         }
@@ -236,6 +241,7 @@ class TestStoreTests {
                 store.receive(ActionMatchingAction.Noop)
             }
 
+            store.send(ActionMatchingAction.Noop)
             store.receive(ActionMatchingAction.Finished)
             store.send(ActionMatchingAction.Noop)
             shouldThrow<AssertionError> {
@@ -291,6 +297,54 @@ class TestStoreTests {
                 4
             }
             store.state shouldBe 4
+        }
+    }
+
+    data class NonExhaustiveState(
+        val count: Int,
+        private val isEven: Boolean,
+    )
+    enum class NonExhaustiveAction { Increment, IncrementTap }
+
+    @Nested
+    inner class NonExhaustive : BaseTestStoreTest() {
+        val store = TestStore(
+            initialState = { NonExhaustiveState(0, true) },
+            reducer = {
+                Reducer<NonExhaustiveState, NonExhaustiveAction> { state, action ->
+                    when (action) {
+                        NonExhaustiveAction.Increment -> state.copy(
+                            count = state.count + 1,
+                            isEven = (state.count + 1) % 2 == 0,
+                        ).withoutEffect()
+
+                        NonExhaustiveAction.IncrementTap -> state.withSuspendEffect {
+                            delay(1001)
+                            NonExhaustiveAction.Increment
+                        }
+                    }
+                }
+            },
+            dispatcherProvider = dispatcherProvider,
+            testCoroutineScope = testCoroutineScope,
+        ).apply {
+            exhaustivity = Exhaustivity.NonExhaustive()
+        }
+
+        @Test
+        fun `partial changes are verified`() = runTest {
+            store.exhaustivity = Exhaustivity.NonExhaustive()
+            store.send(NonExhaustiveAction.Increment) {
+                it.copy(count = 1) // not verifying isEven
+            }
+
+            store.send(NonExhaustiveAction.Increment) {
+                it.copy(isEven = true) // not verifying count
+            }
+
+            store.send(NonExhaustiveAction.IncrementTap)
+            testCoroutineScope.advanceTimeBy(1001)
+            store.receive(NonExhaustiveAction.Increment) // not verifying either
         }
     }
 }
