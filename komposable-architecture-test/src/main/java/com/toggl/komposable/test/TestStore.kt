@@ -393,9 +393,42 @@ sealed class Exhaustivity {
     ) : Exhaustivity()
 }
 
-class TestStoreScope(val store: TestStore<*, *>)
+class TestStoreScope<State : Any, Action : Any?>(val store: TestStore<State, Action>) {
+    suspend fun send(action: Action, assert: ((state: State) -> State)? = null) =
+        store.send(action, assert)
 
-suspend fun <State : Any, Action : Any?> TestStore<State, Action>.test(testBody: suspend TestStoreScope.() -> Unit) {
+    suspend fun receive(action: Action, assert: ((state: State) -> State)? = null) =
+        store.receive(action, assert)
+
+    suspend fun receive(
+        actionPredicate: (Action) -> Boolean,
+        assert: ((state: State) -> State)? = null,
+    ) = store.receive(actionPredicate, assert)
+
+    suspend fun withExhaustivity(
+        exhaustivity: Exhaustivity,
+        block: suspend TestStoreScope<State, Action>.() -> Unit,
+    ) {
+        val previousExhaustivity = store.exhaustivity
+        store.exhaustivity = exhaustivity
+        try {
+            block()
+        } finally {
+            store.exhaustivity = previousExhaustivity
+        }
+    }
+
+    fun advanceTimeBy(timeInMillis: Long) {
+        store.testCoroutineScope.advanceTimeBy(timeInMillis)
+    }
+}
+
+suspend fun <State : Any, Action : Any?> TestStore<State, Action>.test(
+    exhaustivity: Exhaustivity = Exhaustivity.Exhaustive,
+    testBody: suspend TestStoreScope<State, Action>.() -> Unit,
+) {
+    this.exhaustivity = exhaustivity
     val scope = TestStoreScope(this)
     testBody(scope)
+    finish()
 }
