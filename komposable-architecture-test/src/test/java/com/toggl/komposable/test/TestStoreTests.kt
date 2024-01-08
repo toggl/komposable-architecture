@@ -10,7 +10,9 @@ import com.toggl.komposable.extensions.withEffect
 import com.toggl.komposable.extensions.withSuspendEffect
 import com.toggl.komposable.extensions.withoutEffect
 import com.toggl.komposable.scope.DispatcherProvider
+import io.kotest.assertions.throwables.shouldNotThrow
 import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.assertions.withClue
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -300,27 +302,27 @@ class TestStoreTests {
         }
     }
 
-    data class NonExhaustiveState(
+    data class ExhaustivityTestState(
         val count: Int,
         private val isEven: Boolean,
     )
-    enum class NonExhaustiveAction { Increment, IncrementTap }
+    enum class ExhaustivityTestAction { Increment, IncrementTap }
 
     @Nested
-    inner class NonExhaustive : BaseTestStoreTest() {
-        val store = TestStore(
-            initialState = { NonExhaustiveState(0, true) },
+    inner class ExhaustivityTests : BaseTestStoreTest() {
+        private val store = TestStore(
+            initialState = { ExhaustivityTestState(0, true) },
             reducer = {
-                Reducer<NonExhaustiveState, NonExhaustiveAction> { state, action ->
+                Reducer<ExhaustivityTestState, ExhaustivityTestAction> { state, action ->
                     when (action) {
-                        NonExhaustiveAction.Increment -> state.copy(
+                        ExhaustivityTestAction.Increment -> state.copy(
                             count = state.count + 1,
                             isEven = (state.count + 1) % 2 == 0,
                         ).withoutEffect()
 
-                        NonExhaustiveAction.IncrementTap -> state.withSuspendEffect {
+                        ExhaustivityTestAction.IncrementTap -> state.withSuspendEffect {
                             delay(1001)
-                            NonExhaustiveAction.Increment
+                            ExhaustivityTestAction.Increment
                         }
                     }
                 }
@@ -331,20 +333,69 @@ class TestStoreTests {
             exhaustivity = Exhaustivity.NonExhaustive()
         }
 
-        @Test
-        fun `partial changes are verified`() = runTest {
-            store.exhaustivity = Exhaustivity.NonExhaustive()
-            store.send(NonExhaustiveAction.Increment) {
-                it.copy(count = 1) // not verifying isEven
+        @Nested
+        inner class NonExhaustive {
+            @Test
+            fun `partial changes are verified`() = runTest {
+                store.exhaustivity = Exhaustivity.NonExhaustive()
+                store.send(ExhaustivityTestAction.Increment) {
+                    it.copy(count = 1) // not verifying isEven
+                }
+
+                store.send(ExhaustivityTestAction.Increment) {
+                    it.copy(isEven = true) // not verifying count
+                }
+
+                store.send(ExhaustivityTestAction.IncrementTap)
+                testCoroutineScope.advanceTimeBy(1001)
+                store.receive(ExhaustivityTestAction.Increment) // not verifying either
             }
 
-            store.send(NonExhaustiveAction.Increment) {
-                it.copy(isEven = true) // not verifying count
-            }
+            @Test
+            fun `finish does not wait for effects completion`() = runTest {
+                store.exhaustivity = Exhaustivity.NonExhaustive()
 
-            store.send(NonExhaustiveAction.IncrementTap)
-            testCoroutineScope.advanceTimeBy(1001)
-            store.receive(NonExhaustiveAction.Increment) // not verifying either
+                store.send(ExhaustivityTestAction.IncrementTap)
+                testCoroutineScope.advanceTimeBy(500)
+
+                shouldNotThrow<AssertionError> {
+                    // did not enough for effect but still triggered finish
+                    store.finish()
+                }
+            }
+        }
+
+        @Nested
+        inner class Exhaustive {
+            @Test
+            fun `must assert everything`() = runTest {
+                store.exhaustivity = Exhaustivity.Exhaustive
+                withClue("Did not verify state change") {
+                    shouldThrow<AssertionError> {
+                        // did not verify state change
+                        store.send(ExhaustivityTestAction.Increment)
+                    }
+                }
+
+                store.send(ExhaustivityTestAction.IncrementTap)
+                testCoroutineScope.advanceTimeBy(1001)
+                withClue("Did not receive action") {
+                    shouldThrow<AssertionError> {
+                        // did not receive action
+                        store.send(ExhaustivityTestAction.IncrementTap)
+                    }
+                }
+                store.skipReceivedActions(count = 1)
+
+                withClue("Did not wait for effect") {
+                    shouldThrow<AssertionError> {
+                        // did not verify state change
+                        store.send(ExhaustivityTestAction.IncrementTap)
+                        testCoroutineScope.advanceTimeBy(500)
+                        store.finish()
+                    }
+                }
+            }
         }
     }
 }

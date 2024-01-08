@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.yield
 import java.util.UUID
@@ -56,8 +57,9 @@ class TestStore<State : Any, Action : Any?>(
     }
 
     suspend fun send(action: Action, assert: ((state: State) -> State)? = null) {
+        testCoroutineScope.runCurrent()
         if (reducer.receivedActions.isNotEmpty()) {
-            throw IllegalStateException("Cannot send actions after receiving actions")
+            throw AssertionError("Cannot send actions after receiving actions")
         }
 
         val previousState = reducer.state
@@ -86,7 +88,7 @@ class TestStore<State : Any, Action : Any?>(
         receiveAction({ actionPredicate(it) }, assert)
     }
 
-    private suspend fun receiveAction(
+    private fun receiveAction(
         matching: (Action) -> Boolean,
         assert: ((state: State) -> State)?,
     ) {
@@ -112,7 +114,7 @@ class TestStore<State : Any, Action : Any?>(
                 foundAction = false
             }
 
-            if (exhaustivity.logIgnoredReceivedEvents) {
+            if (exhaustivity.logIgnoredReceivedActions) {
                 if (skippedActions.isNotEmpty()) {
                     val log = StringBuilder().apply {
                         appendLine("⚠️")
@@ -148,7 +150,10 @@ class TestStore<State : Any, Action : Any?>(
         testCoroutineScope.runCurrent()
     }
 
-    private suspend fun waitActionFromEffects(timeoutInMillis: Long, matching: (Action) -> Boolean) {
+    private suspend fun waitActionFromEffects(
+        timeoutInMillis: Long,
+        matching: (Action) -> Boolean,
+    ) {
         testCoroutineScope.runCurrent()
         val start = System.currentTimeMillis()
         while (currentCoroutineContext().isActive) {
@@ -158,6 +163,7 @@ class TestStore<State : Any, Action : Any?>(
                 Exhaustivity.Exhaustive -> if (reducer.receivedActions.isNotEmpty()) {
                     return
                 }
+
                 is Exhaustivity.NonExhaustive -> if (reducer.receivedActions.any { matching(it.first) }) {
                     return
                 }
@@ -191,6 +197,7 @@ class TestStore<State : Any, Action : Any?>(
                     currentState shouldBe previousState
                 }
             }
+
             is Exhaustivity.NonExhaustive -> {
                 if (assert != null) {
                     val fields =
@@ -229,6 +236,73 @@ class TestStore<State : Any, Action : Any?>(
                     }
                 } else {
                     logger.info("No assertion was provided, skipping state assertion (state did ${if (previousState == currentState) "not " else ""}change)")
+                }
+            }
+        }
+    }
+
+    suspend fun skipReceivedActions(count: Int) {
+        val currentExhaustivity = exhaustivity
+        exhaustivity = Exhaustivity.NonExhaustive(
+            logIgnoredReceivedActions = false,
+            logIgnoredStateChanges = false,
+        )
+        repeat(count) {
+            receive({ true }, null)
+        }
+        exhaustivity = currentExhaustivity
+    }
+
+    suspend fun finish() {
+        val timeoutInMillis = timeoutInMillis
+        if (reducer.inFlightEffects.isNotEmpty()) {
+            testCoroutineScope.runCurrent()
+            val start = System.currentTimeMillis()
+            while (currentCoroutineContext().isActive &&
+                (System.currentTimeMillis() - start) < timeoutInMillis &&
+                reducer.inFlightEffects.isNotEmpty()
+            ) {
+                testCoroutineScope.runCurrent()
+                yield()
+            }
+        }
+        val exhaustivity = exhaustivity
+        if (reducer.inFlightEffects.isNotEmpty()) {
+            val error = StringBuilder().apply {
+                if (exhaustivity is Exhaustivity.Exhaustive) {
+                    appendLine("🚨")
+                } else {
+                    appendLine("⚠️")
+                }
+                appendLine("There are still ${reducer.inFlightEffects.size} effects in flight that didn't finish under the ${timeoutInMillis}ms timeout:")
+                reducer.inFlightEffects.forEach {
+                    appendLine("-$it")
+                }
+            }
+            when (exhaustivity) {
+                is Exhaustivity.Exhaustive -> throw AssertionError(error.toString())
+                is Exhaustivity.NonExhaustive -> if (exhaustivity.logIgnoredEffects) {
+                    logger.info(error.toString())
+                }
+            }
+        }
+
+        if (reducer.receivedActions.isNotEmpty()) {
+            val error = StringBuilder().apply {
+                if (exhaustivity is Exhaustivity.Exhaustive) {
+                    appendLine("🚨")
+                } else {
+                    appendLine("⚠️")
+                }
+                appendLine("There are still ${reducer.receivedActions.size} actions in the queue:")
+                reducer.receivedActions.forEach {
+                    appendLine("-$it")
+                }
+            }
+            when (exhaustivity) {
+                is Exhaustivity.Exhaustive -> throw AssertionError(error.toString())
+                is Exhaustivity.NonExhaustive -> if (exhaustivity.logIgnoredReceivedActions) {
+                    logger.info(error.toString())
                 }
             }
         }
@@ -313,8 +387,9 @@ class TestReducer<State, Action>(
 sealed class Exhaustivity {
     data object Exhaustive : Exhaustivity()
     data class NonExhaustive(
-        val logIgnoredReceivedEvents: Boolean = true,
+        val logIgnoredReceivedActions: Boolean = true,
         val logIgnoredStateChanges: Boolean = true,
+        val logIgnoredEffects: Boolean = true,
     ) : Exhaustivity()
 }
 
