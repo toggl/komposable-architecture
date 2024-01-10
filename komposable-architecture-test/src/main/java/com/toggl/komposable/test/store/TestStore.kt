@@ -1,4 +1,4 @@
-package com.toggl.komposable.test
+package com.toggl.komposable.test.store
 
 import com.toggl.komposable.architecture.Effect
 import com.toggl.komposable.architecture.ReduceResult
@@ -19,27 +19,28 @@ import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.yield
-import java.util.UUID
-import java.util.logging.Logger
-import kotlin.reflect.KProperty
-import kotlin.reflect.jvm.isAccessible
+import kotlin.random.Random
+import kotlin.reflect.full.memberProperties
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.TimeSource
 
-class TestStore<State : Any, Action : Any?>(
+open class TestStore<State : Any, Action : Any?>(
     initialState: () -> State,
     reducer: () -> Reducer<State, Action>,
     dispatcherProvider: DispatcherProvider,
+    private val logger: Logger,
+    private val reflectionHandler: ReflectionHandler = PublicPropertiesReflectionHandler(),
     val testCoroutineScope: TestScope,
+    var timeout: Duration = 100.milliseconds,
+    var exhaustivity: Exhaustivity = Exhaustivity.Exhaustive,
 ) {
-    private val logger: Logger = Logger.getLogger(TestStore::class.java.name).apply { }
     private val store: Store<State, TestReducer.TestAction<Action>>
-    val reducer: TestReducer<State, Action>
+    private val reducer: TestReducer<State, Action>
     val state: State
         get() = reducer.state
 
     private val effectSubscriptionChannel = Channel<Unit>(capacity = BUFFERED)
-
-    var exhaustivity: Exhaustivity = Exhaustivity.Exhaustive
-    var timeoutInMillis: Long = 100
 
     init {
         this.reducer = TestReducer(
@@ -83,7 +84,7 @@ class TestStore<State : Any, Action : Any?>(
         assert: ((state: State) -> State)? = null,
     ) {
         if (reducer.inFlightEffects.isNotEmpty()) {
-            waitActionFromEffects(timeoutInMillis, actionPredicate)
+            awaitActionFromEffects(timeout, actionPredicate)
         }
         receiveAction({ actionPredicate(it) }, assert)
     }
@@ -149,13 +150,12 @@ class TestStore<State : Any, Action : Any?>(
         assertStateChange(currentState, reducedState, assert)
         testCoroutineScope.runCurrent()
     }
-
-    private suspend fun waitActionFromEffects(
-        timeoutInMillis: Long,
+    private suspend fun awaitActionFromEffects(
+        timeout: Duration,
         matching: (Action) -> Boolean,
     ) {
         testCoroutineScope.runCurrent()
-        val start = System.currentTimeMillis()
+        val start = TimeSource.Monotonic.markNow()
         while (currentCoroutineContext().isActive) {
             testCoroutineScope.runCurrent()
             yield()
@@ -168,13 +168,13 @@ class TestStore<State : Any, Action : Any?>(
                     return
                 }
             }
-            if (System.currentTimeMillis() - start > timeoutInMillis) {
+            if (start.elapsedNow() > timeout) {
                 if (reducer.inFlightEffects.isEmpty()) {
                     throw AssertionError("No effect in flight was found that could deliver the action, maybe it has been cancelled?")
                 } else {
                     throw AssertionError(
                         """
-                        There are in-flight effects that could deliver the action but they haven't finished under the ${timeoutInMillis}ms timeout.
+                        There are in-flight effects that could deliver the action but they haven't finished under the ${timeout.inWholeMilliseconds}ms timeout.
                         Try moving the scheduler forward with `testCoroutineScope.advanceTimeBy(timeoutInMillis)` or `testCoroutineScope.advanceUntilIdle()`
                         before trying to receive the action.
                         """.trimIndent(),
@@ -200,12 +200,10 @@ class TestStore<State : Any, Action : Any?>(
 
             is Exhaustivity.NonExhaustive -> {
                 if (assert != null) {
-                    val fields =
-                        previousState::class.members.filterIsInstance<KProperty<*>>().toMutableSet()
+                    val fields = previousState::class.memberProperties.toMutableSet()
                     val previousStateModified = assert(previousState)
                     val currentStateModified = assert(currentState)
-                    val assertedFieldChanges = fields.filter {
-                        it.isAccessible = true
+                    val assertedFieldChanges = reflectionHandler.filterAccessibleProperty(fields) {
                         it.getter.call(previousState) != it.getter.call(previousStateModified) ||
                             it.getter.call(currentState) != it.getter.call(currentStateModified)
                     }
@@ -221,8 +219,7 @@ class TestStore<State : Any, Action : Any?>(
                             appendLine("⚠️")
                             appendLine("The following state changes were not asserted:")
                         }
-                        fields.forEach {
-                            it.isAccessible = true
+                        reflectionHandler.forEachAccessibleProperty(fields) {
                             if (it.getter.call(previousStateModified) != it.getter.call(currentState)) {
                                 changesHappened = true
                                 log.appendLine(".${it.name}")
@@ -254,12 +251,12 @@ class TestStore<State : Any, Action : Any?>(
     }
 
     suspend fun finish() {
-        val timeoutInMillis = timeoutInMillis
+        val timeout = timeout
         if (reducer.inFlightEffects.isNotEmpty()) {
             testCoroutineScope.runCurrent()
-            val start = System.currentTimeMillis()
+            val start = TimeSource.Monotonic.markNow()
             while (currentCoroutineContext().isActive &&
-                (System.currentTimeMillis() - start) < timeoutInMillis &&
+                start.elapsedNow() < timeout &&
                 reducer.inFlightEffects.isNotEmpty()
             ) {
                 testCoroutineScope.runCurrent()
@@ -274,7 +271,7 @@ class TestStore<State : Any, Action : Any?>(
                 } else {
                     appendLine("⚠️")
                 }
-                appendLine("There are still ${reducer.inFlightEffects.size} effects in flight that didn't finish under the ${timeoutInMillis}ms timeout:")
+                appendLine("There are still ${reducer.inFlightEffects.size} effects in flight that didn't finish under the ${timeout}ms timeout:")
                 reducer.inFlightEffects.forEach {
                     appendLine("-$it")
                 }
@@ -309,9 +306,9 @@ class TestStore<State : Any, Action : Any?>(
     }
 }
 
-class TestReducer<State, Action>(
+internal class TestReducer<State, Action>(
     private val innerReducer: Reducer<State, Action>,
-    var state: State,
+    internal var state: State,
     private val testCoroutineScope: TestScope,
     private val subChannel: Channel<Unit>,
 ) : Reducer<State, TestReducer.TestAction<Action>> {
@@ -331,7 +328,7 @@ class TestReducer<State, Action>(
     }
 
     data class LongLivingEffect<Action>(
-        val id: UUID = UUID.randomUUID(),
+        val id: Long = Random.nextLong(),
         val action: TestAction<Action>,
     )
 
@@ -418,8 +415,8 @@ class TestStoreScope<State : Any, Action : Any?>(val store: TestStore<State, Act
         }
     }
 
-    fun advanceTimeBy(timeInMillis: Long) {
-        store.testCoroutineScope.advanceTimeBy(timeInMillis)
+    fun advanceTimeBy(duration: Duration) {
+        store.testCoroutineScope.advanceTimeBy(duration)
     }
 }
 

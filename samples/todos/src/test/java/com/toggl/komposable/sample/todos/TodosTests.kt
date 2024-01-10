@@ -2,7 +2,7 @@ package com.toggl.komposable.sample.todos
 
 import com.toggl.komposable.extensions.forEachList
 import com.toggl.komposable.scope.DispatcherProvider
-import com.toggl.komposable.test.TestStore
+import com.toggl.komposable.test.store.createTestStore
 import io.kotest.assertions.throwables.shouldThrow
 import io.mockk.every
 import io.mockk.mockkStatic
@@ -30,7 +30,7 @@ class TodosTests {
     @Nested
     @DisplayName("TodosAction.AddTodoButtonTapped action should")
     inner class AddTodoButtonTappedTests {
-        private val store = TestStore(
+        private val store = createTestStore(
             initialState = { TodosState() },
             reducer = { TodosReducer() },
             dispatcherProvider = dispatcherProvider,
@@ -57,7 +57,7 @@ class TodosTests {
     @Nested
     @DisplayName("TodoAction.DescriptionChanged action should")
     inner class DescriptionChangedTests {
-        private val store = TestStore(
+        private val store = createTestStore(
             initialState = {
                 TodosState(
                     todos = listOf(
@@ -103,7 +103,7 @@ class TodosTests {
     @Nested
     @DisplayName("TodoAction.IsCompleteChanged action should")
     inner class IsCompleteChangedTests {
-        private val store = TestStore(
+        private val store = createTestStore(
             initialState = {
                 TodosState(
                     todos = listOf(
@@ -172,7 +172,7 @@ class TodosTests {
     @Nested
     @DisplayName("TodosAction.ClearCompletedButtonTapped action should")
     inner class ClearCompletedButtonTappedTests {
-        private val store = TestStore(
+        private val store = createTestStore(
             initialState = {
                 TodosState(
                     todos = listOf(
@@ -201,7 +201,7 @@ class TodosTests {
     @Nested
     @DisplayName("TodosAction.Delete action should")
     inner class DeleteTests {
-        private val store = TestStore(
+        private val store = createTestStore(
             initialState = {
                 TodosState(
                     todos = listOf(
@@ -234,7 +234,7 @@ class TodosTests {
     @Nested
     @DisplayName("TodosAction.FilterChanged action should")
     inner class FilterChangedTests {
-        private val store = TestStore(
+        private val store = createTestStore(
             initialState = {
                 TodosState(
                     todos = listOf(

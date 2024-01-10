@@ -10,6 +10,8 @@ import com.toggl.komposable.extensions.withEffect
 import com.toggl.komposable.extensions.withSuspendEffect
 import com.toggl.komposable.extensions.withoutEffect
 import com.toggl.komposable.scope.DispatcherProvider
+import com.toggl.komposable.test.store.Exhaustivity
+import com.toggl.komposable.test.store.createTestStore
 import io.kotest.assertions.throwables.shouldNotThrow
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.assertions.withClue
@@ -46,7 +48,7 @@ class TestStoreTests {
     inner class MergeTests : BaseTestStoreTest() {
         @Test
         fun `merging working`() = runTest {
-            val store = TestStore(
+            val store = createTestStore(
                 initialState = { Any() },
                 reducer = {
                     object : Reducer<Any, MergeTestsAction> {
@@ -131,7 +133,7 @@ class TestStoreTests {
     inner class AsyncEffects : BaseTestStoreTest() {
         @Test
         fun `async effects are received`() = runTest {
-            val store = TestStore(
+            val store = createTestStore(
                 initialState = { 0 },
                 reducer = {
                     Reducer<Int, AsyncEffectsAction> { state, action ->
@@ -166,7 +168,7 @@ class TestStoreTests {
     inner class StateChanges : BaseTestStoreTest() {
         @Test
         fun `state changes must be verified`() = runTest {
-            val store = TestStore(
+            val store = createTestStore(
                 initialState = { StateChangesState(0, false) },
                 reducer = {
                     Reducer<StateChangesState, StateChangesAction> { state, action ->
@@ -222,7 +224,7 @@ class TestStoreTests {
     inner class ActionMatching : BaseTestStoreTest() {
         @Test
         fun `matching predicates are executed`() = runTest {
-            val store = TestStore(
+            val store = createTestStore(
                 initialState = { },
                 reducer = {
                     Reducer<Unit, ActionMatchingAction> { state, action ->
@@ -258,7 +260,7 @@ class TestStoreTests {
     inner class StateAccess : BaseTestStoreTest() {
         @Test
         fun `test store state is updated after assertion`() = runTest {
-            val store = TestStore(
+            val store = createTestStore(
                 initialState = { 0 },
                 reducer = {
                     Reducer<Int, StateAccessAction> { state, action ->
@@ -310,7 +312,7 @@ class TestStoreTests {
 
     @Nested
     inner class ExhaustivityTests : BaseTestStoreTest() {
-        private val store = TestStore(
+        private val store = createTestStore(
             initialState = { ExhaustivityTestState(0, true) },
             reducer = {
                 Reducer<ExhaustivityTestState, ExhaustivityTestAction> { state, action ->
