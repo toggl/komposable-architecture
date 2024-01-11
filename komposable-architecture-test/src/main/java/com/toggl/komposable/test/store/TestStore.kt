@@ -76,8 +76,8 @@ open class TestStore<State : Any, Action : Any?>(
             assert: ((state: State) -> State)?,
         )
 
-        fun hasReceivedActionToHandle(matcher: (Action) -> Boolean): Boolean
-        fun skipNotMatchingActions(matcher: (Action) -> Boolean)
+        fun hasReceivedActionToHandle(match: (Action) -> Boolean): Boolean
+        fun skipNotMatchingActions(match: (Action) -> Boolean)
         fun assertEffectsAreDone()
         fun assertActionsWereReceived()
     }
@@ -95,10 +95,10 @@ open class TestStore<State : Any, Action : Any?>(
             }
         }
 
-        override fun hasReceivedActionToHandle(matcher: (Action) -> Boolean): Boolean =
+        override fun hasReceivedActionToHandle(match: (Action) -> Boolean): Boolean =
             reducer.receivedActions.isNotEmpty()
 
-        override fun skipNotMatchingActions(matcher: (Action) -> Boolean) {
+        override fun skipNotMatchingActions(match: (Action) -> Boolean) {
             // no-op: exhaustive assertion runner doesn't skip ignored received actions
         }
 
@@ -147,7 +147,7 @@ open class TestStore<State : Any, Action : Any?>(
                 val currentStateModified = assert(currentState)
                 val assertedFieldChanges = reflectionHandler.filterAccessibleProperty(fields) {
                     it.getter.call(previousState) != it.getter.call(previousStateModified) ||
-                            it.getter.call(currentState) != it.getter.call(currentStateModified)
+                        it.getter.call(currentState) != it.getter.call(currentStateModified)
                 }
                 if (assertedFieldChanges.isEmpty()) {
                     throw AssertionError("No state changes were detected but assertion was provided")
@@ -176,18 +176,18 @@ open class TestStore<State : Any, Action : Any?>(
             }
         }
 
-        override fun hasReceivedActionToHandle(matcher: (Action) -> Boolean): Boolean =
-            reducer.receivedActions.any { matcher(it.first) }
+        override fun hasReceivedActionToHandle(match: (Action) -> Boolean): Boolean =
+            reducer.receivedActions.any { match(it.first) }
 
-        override fun skipNotMatchingActions(matcher: (Action) -> Boolean) {
-            if (reducer.receivedActions.none { matcher(it.first) }) {
+        override fun skipNotMatchingActions(match: (Action) -> Boolean) {
+            if (reducer.receivedActions.none { match(it.first) }) {
                 throw AssertionError("No action matching the predicate was found")
             }
 
             val skippedActions = mutableListOf<Action>()
             var foundAction = true
             try {
-                while (!matcher(reducer.receivedActions.first().first)) {
+                while (!match(reducer.receivedActions.first().first)) {
                     val (action, reducedState) = reducer.receivedActions.removeFirst()
                     skippedActions.add(action)
                     reducer.state = reducedState
