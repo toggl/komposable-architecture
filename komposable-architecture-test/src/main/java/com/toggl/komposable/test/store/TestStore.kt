@@ -57,56 +57,137 @@ open class TestStore<State : Any, Action : Any?>(
         )
     }
 
-    suspend fun send(action: Action, assert: ((state: State) -> State)? = null) {
-        testCoroutineScope.runCurrent()
-        if (reducer.receivedActions.isNotEmpty()) {
-            throw AssertionError("Cannot send actions after receiving actions")
+    private val assertionRunner: AssertionRunner<State, Action>
+        get() = exhaustivity.let {
+            when (it) {
+                is Exhaustivity.Exhaustive -> ExhaustiveAssertionRunner()
+                is Exhaustivity.NonExhaustive -> NonExhaustiveAssertionRunner(
+                    it.logIgnoredStateChanges,
+                    it.logIgnoredReceivedActions,
+                    it.logIgnoredEffects,
+                )
+            }
         }
 
-        val previousState = reducer.state
-        store.send(TestReducer.TestAction(TestReducer.TestAction.Origin.Send(action)))
-        effectSubscriptionChannel.receiveCatching()
-        testCoroutineScope.runCurrent()
-        val currentState = reducer.state
+    private interface AssertionRunner<State : Any, Action> {
+        fun assertStateChange(
+            previousState: State,
+            currentState: State,
+            assert: ((state: State) -> State)?,
+        )
 
-        assertStateChange(previousState, currentState, assert)
+        fun hasReceivedActionToHandle(matcher: (Action) -> Boolean): Boolean
+        fun skipNotMatchingActions(matcher: (Action) -> Boolean)
+        fun assertEffectsAreDone()
+        fun assertActionsWereReceived()
     }
 
-    suspend fun receive(
-        action: Action,
-        assert: ((state: State) -> State)? = null,
-    ) {
-        receive({ it == action }, assert)
-    }
-
-    suspend fun receive(
-        actionPredicate: (Action) -> Boolean,
-        assert: ((state: State) -> State)? = null,
-    ) {
-        if (reducer.inFlightEffects.isNotEmpty()) {
-            awaitActionFromEffects(timeout, actionPredicate)
+    internal inner class ExhaustiveAssertionRunner : AssertionRunner<State, Action> {
+        override fun assertStateChange(
+            previousState: State,
+            currentState: State,
+            assert: ((state: State) -> State)?,
+        ) {
+            if (assert != null) {
+                currentState shouldBe assert(previousState)
+            } else {
+                currentState shouldBe previousState
+            }
         }
-        receiveAction({ actionPredicate(it) }, assert)
+
+        override fun hasReceivedActionToHandle(matcher: (Action) -> Boolean): Boolean =
+            reducer.receivedActions.isNotEmpty()
+
+        override fun skipNotMatchingActions(matcher: (Action) -> Boolean) {
+            // no-op: exhaustive assertion runner doesn't skip ignored received actions
+        }
+
+        override fun assertEffectsAreDone() {
+            if (reducer.inFlightEffects.isNotEmpty()) {
+                val error = StringBuilder().apply {
+                    appendLine("🚨")
+                    appendLine("There are still ${reducer.inFlightEffects.size} effects in flight that didn't finish under the ${timeout}ms timeout:")
+                    reducer.inFlightEffects.forEach {
+                        appendLine("-$it")
+                    }
+                }
+                throw AssertionError(error.toString())
+            }
+        }
+
+        override fun assertActionsWereReceived() {
+            if (reducer.receivedActions.isNotEmpty()) {
+                val error = StringBuilder().apply {
+                    appendLine("🚨")
+                    appendLine("There are still ${reducer.receivedActions.size} actions in the queue:")
+                    reducer.receivedActions.forEach {
+                        appendLine("-$it")
+                    }
+                }
+                throw AssertionError(error.toString())
+            }
+        }
     }
 
-    private fun receiveAction(
-        matching: (Action) -> Boolean,
-        assert: ((state: State) -> State)?,
-    ) {
-        testCoroutineScope.runCurrent()
-        if (reducer.receivedActions.isEmpty()) {
-            throw AssertionError("No action has been received")
+    internal inner class NonExhaustiveAssertionRunner(
+        private val logIgnoredStateChanges: Boolean,
+        private val logIgnoredReceivedActions: Boolean,
+        private val logIgnoredEffects: Boolean,
+    ) : AssertionRunner<State, Action> {
+        override fun assertStateChange(
+            previousState: State,
+            currentState: State,
+            assert: ((state: State) -> State)?,
+        ) {
+            if (assert == null) {
+                logger.info("No assertion was provided, skipping state assertion (state did ${if (previousState == currentState) "not " else ""}change)")
+            } else {
+                val fields = previousState::class.memberProperties.toMutableSet()
+                val previousStateModified = assert(previousState)
+                val currentStateModified = assert(currentState)
+                val assertedFieldChanges = reflectionHandler.filterAccessibleProperty(fields) {
+                    it.getter.call(previousState) != it.getter.call(previousStateModified) ||
+                            it.getter.call(currentState) != it.getter.call(currentStateModified)
+                }
+                if (assertedFieldChanges.isEmpty()) {
+                    throw AssertionError("No state changes were detected but assertion was provided")
+                }
+                assertedFieldChanges.forEach {
+                    it.getter.call(currentState) shouldBe it.getter.call(previousStateModified)
+                }
+                if (logIgnoredStateChanges) {
+                    var changesHappened = false
+                    val log = StringBuilder().apply {
+                        appendLine("⚠️")
+                        appendLine("The following state changes were not asserted:")
+                    }
+                    reflectionHandler.forEachAccessibleProperty(fields) {
+                        if (it.getter.call(previousStateModified) != it.getter.call(currentState)) {
+                            changesHappened = true
+                            log.appendLine(".${it.name}")
+                            log.appendLine("-Before: ${it.getter.call(previousStateModified)}")
+                            log.appendLine("-After: ${it.getter.call(currentState)}")
+                        }
+                    }
+                    if (changesHappened) {
+                        logger.info(log.toString())
+                    }
+                }
+            }
         }
-        val exhaustivity = exhaustivity
-        if (exhaustivity is Exhaustivity.NonExhaustive) {
-            if (reducer.receivedActions.none { matching(it.first) }) {
+
+        override fun hasReceivedActionToHandle(matcher: (Action) -> Boolean): Boolean =
+            reducer.receivedActions.any { matcher(it.first) }
+
+        override fun skipNotMatchingActions(matcher: (Action) -> Boolean) {
+            if (reducer.receivedActions.none { matcher(it.first) }) {
                 throw AssertionError("No action matching the predicate was found")
             }
 
             val skippedActions = mutableListOf<Action>()
             var foundAction = true
             try {
-                while (!matching(reducer.receivedActions.first().first)) {
+                while (!matcher(reducer.receivedActions.first().first)) {
                     val (action, reducedState) = reducer.receivedActions.removeFirst()
                     skippedActions.add(action)
                     reducer.state = reducedState
@@ -115,7 +196,7 @@ open class TestStore<State : Any, Action : Any?>(
                 foundAction = false
             }
 
-            if (exhaustivity.logIgnoredReceivedActions) {
+            if (logIgnoredReceivedActions) {
                 if (skippedActions.isNotEmpty()) {
                     val log = StringBuilder().apply {
                         appendLine("⚠️")
@@ -134,109 +215,124 @@ open class TestStore<State : Any, Action : Any?>(
             }
         }
 
-        // handle actual expected action
+        override fun assertEffectsAreDone() {
+            if (reducer.inFlightEffects.isNotEmpty()) {
+                val warning = StringBuilder().apply {
+                    appendLine("⚠️")
+                    appendLine("There are still ${reducer.inFlightEffects.size} effects in flight that didn't finish under the ${timeout}ms timeout:")
+                    reducer.inFlightEffects.forEach {
+                        appendLine("-$it")
+                    }
+                }
+                if (logIgnoredEffects) {
+                    logger.info(warning.toString())
+                }
+            }
+        }
+
+        override fun assertActionsWereReceived() {
+            if (reducer.receivedActions.isNotEmpty() && logIgnoredReceivedActions) {
+                val warning = StringBuilder().apply {
+                    appendLine("⚠️")
+                    appendLine("There are still ${reducer.receivedActions.size} actions in the queue:")
+                    reducer.receivedActions.forEach {
+                        appendLine("-$it")
+                    }
+                }
+                logger.info(warning.toString())
+            }
+        }
+    }
+
+    suspend fun send(action: Action, assert: ((state: State) -> State)? = null) {
+        testCoroutineScope.runCurrent()
+        if (reducer.receivedActions.isNotEmpty()) {
+            throw AssertionError("Cannot send actions after receiving actions")
+        }
+
+        val previousState = reducer.state
+        store.send(TestReducer.TestAction(TestReducer.TestAction.Origin.Send(action)))
+        effectSubscriptionChannel.receiveCatching()
+        testCoroutineScope.runCurrent()
+        val currentState = reducer.state
+
+        assertionRunner.assertStateChange(previousState, currentState, assert)
+    }
+
+    suspend fun receive(action: Action, assert: ((state: State) -> State)? = null) {
+        receive({ it == action }, assert)
+    }
+
+    suspend fun receive(
+        actionPredicate: (Action) -> Boolean,
+        assert: ((state: State) -> State)? = null,
+    ) {
+        if (reducer.inFlightEffects.isNotEmpty()) {
+            awaitActionFromEffects(timeout, actionPredicate)
+        }
+        receiveAction({ actionPredicate(it) }, assert)
+    }
+
+    private fun receiveAction(match: (Action) -> Boolean, assert: ((state: State) -> State)?) {
+        testCoroutineScope.runCurrent()
+        if (reducer.receivedActions.isEmpty()) {
+            throw AssertionError("No action has been received")
+        }
+
+        assertionRunner.skipNotMatchingActions(match)
+
         val (action, reducedState) = reducer.receivedActions.removeFirst()
-        if (!matching(action)) {
-            throw AssertionError(
-                """
-                Next action($action) in the queue doesn't match the predicate.
-                """.trimIndent(),
-            )
+        if (!match(action)) {
+            throw AssertionError("Next action($action) in the queue doesn't match the predicate")
         }
 
         val currentState = reducer.state
         reducer.state = reducedState
 
-        assertStateChange(currentState, reducedState, assert)
+        assertionRunner.assertStateChange(currentState, reducedState, assert)
         testCoroutineScope.runCurrent()
     }
-    private suspend fun awaitActionFromEffects(
+
+    private suspend fun awaitMatch(
         timeout: Duration,
-        matching: (Action) -> Boolean,
+        match: () -> Boolean,
+        onTimeout: () -> Unit,
     ) {
         testCoroutineScope.runCurrent()
         val start = TimeSource.Monotonic.markNow()
         while (currentCoroutineContext().isActive) {
             testCoroutineScope.runCurrent()
             yield()
-            when (exhaustivity) {
-                Exhaustivity.Exhaustive -> if (reducer.receivedActions.isNotEmpty()) {
-                    return
-                }
-
-                is Exhaustivity.NonExhaustive -> if (reducer.receivedActions.any { matching(it.first) }) {
-                    return
-                }
+            if (match()) {
+                return
             }
             if (start.elapsedNow() > timeout) {
-                if (reducer.inFlightEffects.isEmpty()) {
-                    throw AssertionError("No effect in flight was found that could deliver the action, maybe it has been cancelled?")
-                } else {
-                    throw AssertionError(
-                        """
-                        There are in-flight effects that could deliver the action but they haven't finished under the ${timeout.inWholeMilliseconds}ms timeout.
-                        Try moving the scheduler forward with `testCoroutineScope.advanceTimeBy(timeoutInMillis)` or `testCoroutineScope.advanceUntilIdle()`
-                        before trying to receive the action.
-                        """.trimIndent(),
-                    )
-                }
+                onTimeout()
+                return
             }
         }
     }
 
-    private fun assertStateChange(
-        previousState: State,
-        currentState: State,
-        assert: ((state: State) -> State)?,
-    ) {
-        when (val currentExhaustivity = exhaustivity) {
-            is Exhaustivity.Exhaustive -> {
-                if (assert != null) {
-                    currentState shouldBe assert(previousState)
-                } else {
-                    currentState shouldBe previousState
-                }
+    private suspend fun awaitActionFromEffects(
+        timeout: Duration,
+        match: (Action) -> Boolean,
+    ) = awaitMatch(
+        timeout = timeout,
+        match = { assertionRunner.hasReceivedActionToHandle(match) },
+        onTimeout = {
+            if (reducer.inFlightEffects.isEmpty()) {
+                throw AssertionError("No effect in flight was found that could deliver the action, maybe it has been cancelled?")
+            } else {
+                throw AssertionError(
+                    """
+                There are in-flight effects that could deliver the action but they haven't finished under the ${timeout.inWholeMilliseconds}ms timeout.
+                Try moving the scheduler forward with `testCoroutineScope.advanceTimeBy(timeoutInMillis)` or `testCoroutineScope.advanceUntilIdle()`
+                before trying to receive the action.
+                    """.trimIndent(),
+                )
             }
-
-            is Exhaustivity.NonExhaustive -> {
-                if (assert != null) {
-                    val fields = previousState::class.memberProperties.toMutableSet()
-                    val previousStateModified = assert(previousState)
-                    val currentStateModified = assert(currentState)
-                    val assertedFieldChanges = reflectionHandler.filterAccessibleProperty(fields) {
-                        it.getter.call(previousState) != it.getter.call(previousStateModified) ||
-                            it.getter.call(currentState) != it.getter.call(currentStateModified)
-                    }
-                    if (assertedFieldChanges.isEmpty()) {
-                        throw AssertionError("No state changes were detected but assertion was provided")
-                    }
-                    assertedFieldChanges.forEach {
-                        it.getter.call(currentState) shouldBe it.getter.call(previousStateModified)
-                    }
-                    if (currentExhaustivity.logIgnoredStateChanges) {
-                        var changesHappened = false
-                        val log = StringBuilder().apply {
-                            appendLine("⚠️")
-                            appendLine("The following state changes were not asserted:")
-                        }
-                        reflectionHandler.forEachAccessibleProperty(fields) {
-                            if (it.getter.call(previousStateModified) != it.getter.call(currentState)) {
-                                changesHappened = true
-                                log.appendLine(".${it.name}")
-                                log.appendLine("-Before: ${it.getter.call(previousStateModified)}")
-                                log.appendLine("-After: ${it.getter.call(currentState)}")
-                            }
-                        }
-                        if (changesHappened) {
-                            logger.info(log.toString())
-                        }
-                    }
-                } else {
-                    logger.info("No assertion was provided, skipping state assertion (state did ${if (previousState == currentState) "not " else ""}change)")
-                }
-            }
-        }
-    }
+        },
+    )
 
     suspend fun skipReceivedActions(count: Int) {
         val currentExhaustivity = exhaustivity
@@ -251,58 +347,15 @@ open class TestStore<State : Any, Action : Any?>(
     }
 
     suspend fun finish() {
-        val timeout = timeout
         if (reducer.inFlightEffects.isNotEmpty()) {
-            testCoroutineScope.runCurrent()
-            val start = TimeSource.Monotonic.markNow()
-            while (currentCoroutineContext().isActive &&
-                start.elapsedNow() < timeout &&
-                reducer.inFlightEffects.isNotEmpty()
-            ) {
-                testCoroutineScope.runCurrent()
-                yield()
-            }
+            awaitMatch(
+                timeout = timeout,
+                match = { reducer.inFlightEffects.isEmpty() },
+                onTimeout = { },
+            )
         }
-        val exhaustivity = exhaustivity
-        if (reducer.inFlightEffects.isNotEmpty()) {
-            val error = StringBuilder().apply {
-                if (exhaustivity is Exhaustivity.Exhaustive) {
-                    appendLine("🚨")
-                } else {
-                    appendLine("⚠️")
-                }
-                appendLine("There are still ${reducer.inFlightEffects.size} effects in flight that didn't finish under the ${timeout}ms timeout:")
-                reducer.inFlightEffects.forEach {
-                    appendLine("-$it")
-                }
-            }
-            when (exhaustivity) {
-                is Exhaustivity.Exhaustive -> throw AssertionError(error.toString())
-                is Exhaustivity.NonExhaustive -> if (exhaustivity.logIgnoredEffects) {
-                    logger.info(error.toString())
-                }
-            }
-        }
-
-        if (reducer.receivedActions.isNotEmpty()) {
-            val error = StringBuilder().apply {
-                if (exhaustivity is Exhaustivity.Exhaustive) {
-                    appendLine("🚨")
-                } else {
-                    appendLine("⚠️")
-                }
-                appendLine("There are still ${reducer.receivedActions.size} actions in the queue:")
-                reducer.receivedActions.forEach {
-                    appendLine("-$it")
-                }
-            }
-            when (exhaustivity) {
-                is Exhaustivity.Exhaustive -> throw AssertionError(error.toString())
-                is Exhaustivity.NonExhaustive -> if (exhaustivity.logIgnoredReceivedActions) {
-                    logger.info(error.toString())
-                }
-            }
-        }
+        assertionRunner.assertEffectsAreDone()
+        assertionRunner.assertActionsWereReceived()
     }
 }
 
@@ -360,15 +413,13 @@ internal class TestReducer<State, Action>(
         } else {
             val longLivingEffect = LongLivingEffect(action = action)
             Effect.fromFlow(
-                effect.run()
-                    .onStart {
-                        subChannel.send(Unit)
-                        inFlightEffects.add(longLivingEffect)
-                    }
-                    .onCompletion {
-                        // Completion might mean completion or cancellation
-                        inFlightEffects.remove(longLivingEffect)
-                    },
+                effect.run().onStart {
+                    subChannel.send(Unit)
+                    inFlightEffects.add(longLivingEffect)
+                }.onCompletion {
+                    // Completion might mean completion or cancellation
+                    inFlightEffects.remove(longLivingEffect)
+                },
             )
         }
 
