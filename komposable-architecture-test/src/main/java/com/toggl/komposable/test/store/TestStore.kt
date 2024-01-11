@@ -24,7 +24,7 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.TimeSource
 
-open class TestStore<State : Any, Action : Any?>(
+class TestStore<State : Any, Action : Any?>(
     initialState: () -> State,
     reducer: () -> Reducer<State, Action>,
     dispatcherProvider: DispatcherProvider,
