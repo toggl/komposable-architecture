@@ -2,6 +2,8 @@ package com.toggl.komposable.test.store
 
 import com.toggl.komposable.architecture.Reducer
 import com.toggl.komposable.scope.DispatcherProvider
+import com.toggl.komposable.test.utils.JavaLogger
+import com.toggl.komposable.test.utils.JvmReflectionHandler
 import kotlinx.coroutines.test.TestScope
 import java.util.logging.Logger
 

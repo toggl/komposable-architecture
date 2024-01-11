@@ -10,7 +10,7 @@ import com.toggl.komposable.extensions.withEffect
 import com.toggl.komposable.extensions.withSuspendEffect
 import com.toggl.komposable.extensions.withoutEffect
 import com.toggl.komposable.scope.DispatcherProvider
-import com.toggl.komposable.test.store.Exhaustivity
+import com.toggl.komposable.test.store.TestStore.Exhaustivity
 import com.toggl.komposable.test.store.createTestStore
 import io.kotest.assertions.throwables.shouldNotThrow
 import io.kotest.assertions.throwables.shouldThrow

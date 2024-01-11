@@ -1,5 +1,6 @@
-package com.toggl.komposable.test.store
+package com.toggl.komposable.test.utils
 
+import com.toggl.komposable.test.store.ReflectionHandler
 import kotlin.reflect.KProperty
 import kotlin.reflect.jvm.isAccessible
 

@@ -1,4 +1,4 @@
-package com.toggl.komposable.test.store
+package com.toggl.komposable.test.utils
 
 enum class LogLevel {
     Info,

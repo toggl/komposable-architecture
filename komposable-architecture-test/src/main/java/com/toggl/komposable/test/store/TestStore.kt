@@ -7,7 +7,7 @@ import com.toggl.komposable.architecture.Store
 import com.toggl.komposable.extensions.createStore
 import com.toggl.komposable.extensions.map
 import com.toggl.komposable.scope.DispatcherProvider
-import io.kotest.matchers.shouldBe
+import com.toggl.komposable.test.utils.Logger
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.Channel.Factory.BUFFERED
 import kotlinx.coroutines.currentCoroutineContext
@@ -20,7 +20,6 @@ import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.yield
 import kotlin.random.Random
-import kotlin.reflect.full.memberProperties
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.TimeSource
@@ -29,14 +28,14 @@ open class TestStore<State : Any, Action : Any?>(
     initialState: () -> State,
     reducer: () -> Reducer<State, Action>,
     dispatcherProvider: DispatcherProvider,
-    private val logger: Logger,
-    private val reflectionHandler: ReflectionHandler = PublicPropertiesReflectionHandler(),
+    internal val logger: Logger,
+    internal val reflectionHandler: ReflectionHandler = PublicPropertiesReflectionHandler(),
     val testCoroutineScope: TestScope,
     var timeout: Duration = 100.milliseconds,
     var exhaustivity: Exhaustivity = Exhaustivity.Exhaustive,
 ) {
     private val store: Store<State, TestReducer.TestAction<Action>>
-    private val reducer: TestReducer<State, Action>
+    internal val reducer: TestReducer<State, Action>
     val state: State
         get() = reducer.state
 
@@ -58,18 +57,14 @@ open class TestStore<State : Any, Action : Any?>(
     }
 
     private val assertionRunner: AssertionRunner<State, Action>
-        get() = exhaustivity.let {
-            when (it) {
-                is Exhaustivity.Exhaustive -> ExhaustiveAssertionRunner()
-                is Exhaustivity.NonExhaustive -> NonExhaustiveAssertionRunner(
-                    it.logIgnoredStateChanges,
-                    it.logIgnoredReceivedActions,
-                    it.logIgnoredEffects,
-                )
-            }
-        }
+        get() = exhaustivity.createAssertionRunner(
+            this,
+            logIgnoredStateChanges = true,
+            logIgnoredReceivedActions = true,
+            logIgnoredEffects = true,
+        )
 
-    private interface AssertionRunner<State : Any, Action> {
+    internal interface AssertionRunner<State : Any, Action> {
         fun assertStateChange(
             previousState: State,
             currentState: State,
@@ -82,166 +77,13 @@ open class TestStore<State : Any, Action : Any?>(
         fun assertActionsWereReceived()
     }
 
-    internal inner class ExhaustiveAssertionRunner : AssertionRunner<State, Action> {
-        override fun assertStateChange(
-            previousState: State,
-            currentState: State,
-            assert: ((state: State) -> State)?,
-        ) {
-            if (assert != null) {
-                currentState shouldBe assert(previousState)
-            } else {
-                currentState shouldBe previousState
-            }
-        }
-
-        override fun hasReceivedActionToHandle(match: (Action) -> Boolean): Boolean =
-            reducer.receivedActions.isNotEmpty()
-
-        override fun skipNotMatchingActions(match: (Action) -> Boolean) {
-            // no-op: exhaustive assertion runner doesn't skip ignored received actions
-        }
-
-        override fun assertEffectsAreDone() {
-            if (reducer.inFlightEffects.isNotEmpty()) {
-                val error = StringBuilder().apply {
-                    appendLine("🚨")
-                    appendLine("There are still ${reducer.inFlightEffects.size} effects in flight that didn't finish under the ${timeout}ms timeout:")
-                    reducer.inFlightEffects.forEach {
-                        appendLine("-$it")
-                    }
-                }
-                throw AssertionError(error.toString())
-            }
-        }
-
-        override fun assertActionsWereReceived() {
-            if (reducer.receivedActions.isNotEmpty()) {
-                val error = StringBuilder().apply {
-                    appendLine("🚨")
-                    appendLine("There are still ${reducer.receivedActions.size} actions in the queue:")
-                    reducer.receivedActions.forEach {
-                        appendLine("-$it")
-                    }
-                }
-                throw AssertionError(error.toString())
-            }
-        }
-    }
-
-    internal inner class NonExhaustiveAssertionRunner(
-        private val logIgnoredStateChanges: Boolean,
-        private val logIgnoredReceivedActions: Boolean,
-        private val logIgnoredEffects: Boolean,
-    ) : AssertionRunner<State, Action> {
-        override fun assertStateChange(
-            previousState: State,
-            currentState: State,
-            assert: ((state: State) -> State)?,
-        ) {
-            if (assert == null) {
-                logger.info("No assertion was provided, skipping state assertion (state did ${if (previousState == currentState) "not " else ""}change)")
-            } else {
-                val fields = previousState::class.memberProperties.toMutableSet()
-                val previousStateModified = assert(previousState)
-                val currentStateModified = assert(currentState)
-                val assertedFieldChanges = reflectionHandler.filterAccessibleProperty(fields) {
-                    it.getter.call(previousState) != it.getter.call(previousStateModified) ||
-                        it.getter.call(currentState) != it.getter.call(currentStateModified)
-                }
-                if (assertedFieldChanges.isEmpty()) {
-                    throw AssertionError("No state changes were detected but assertion was provided")
-                }
-                assertedFieldChanges.forEach {
-                    it.getter.call(currentState) shouldBe it.getter.call(previousStateModified)
-                }
-                if (logIgnoredStateChanges) {
-                    var changesHappened = false
-                    val log = StringBuilder().apply {
-                        appendLine("⚠️")
-                        appendLine("The following state changes were not asserted:")
-                    }
-                    reflectionHandler.forEachAccessibleProperty(fields) {
-                        if (it.getter.call(previousStateModified) != it.getter.call(currentState)) {
-                            changesHappened = true
-                            log.appendLine(".${it.name}")
-                            log.appendLine("-Before: ${it.getter.call(previousStateModified)}")
-                            log.appendLine("-After: ${it.getter.call(currentState)}")
-                        }
-                    }
-                    if (changesHappened) {
-                        logger.info(log.toString())
-                    }
-                }
-            }
-        }
-
-        override fun hasReceivedActionToHandle(match: (Action) -> Boolean): Boolean =
-            reducer.receivedActions.any { match(it.first) }
-
-        override fun skipNotMatchingActions(match: (Action) -> Boolean) {
-            if (reducer.receivedActions.none { match(it.first) }) {
-                throw AssertionError("No action matching the predicate was found")
-            }
-
-            val skippedActions = mutableListOf<Action>()
-            var foundAction = true
-            try {
-                while (!match(reducer.receivedActions.first().first)) {
-                    val (action, reducedState) = reducer.receivedActions.removeFirst()
-                    skippedActions.add(action)
-                    reducer.state = reducedState
-                }
-            } catch (ex: NoSuchElementException) {
-                foundAction = false
-            }
-
-            if (logIgnoredReceivedActions) {
-                if (skippedActions.isNotEmpty()) {
-                    val log = StringBuilder().apply {
-                        appendLine("⚠️")
-                        appendLine("The following received actions were skipped:")
-                        skippedActions.forEach {
-                            appendLine("-$it")
-                        }
-                        appendLine("Total: ${skippedActions.size}")
-                    }
-                    logger.info(log.toString())
-                }
-            }
-
-            if (!foundAction) {
-                throw AssertionError("No action matching the predicate was found")
-            }
-        }
-
-        override fun assertEffectsAreDone() {
-            if (reducer.inFlightEffects.isNotEmpty()) {
-                val warning = StringBuilder().apply {
-                    appendLine("⚠️")
-                    appendLine("There are still ${reducer.inFlightEffects.size} effects in flight that didn't finish under the ${timeout}ms timeout:")
-                    reducer.inFlightEffects.forEach {
-                        appendLine("-$it")
-                    }
-                }
-                if (logIgnoredEffects) {
-                    logger.info(warning.toString())
-                }
-            }
-        }
-
-        override fun assertActionsWereReceived() {
-            if (reducer.receivedActions.isNotEmpty() && logIgnoredReceivedActions) {
-                val warning = StringBuilder().apply {
-                    appendLine("⚠️")
-                    appendLine("There are still ${reducer.receivedActions.size} actions in the queue:")
-                    reducer.receivedActions.forEach {
-                        appendLine("-$it")
-                    }
-                }
-                logger.info(warning.toString())
-            }
-        }
+    sealed class Exhaustivity {
+        data object Exhaustive : Exhaustivity()
+        data class NonExhaustive(
+            val logIgnoredReceivedActions: Boolean = true,
+            val logIgnoredStateChanges: Boolean = true,
+            val logIgnoredEffects: Boolean = true,
+        ) : Exhaustivity()
     }
 
     suspend fun send(action: Action, assert: ((state: State) -> State)? = null) {
@@ -432,15 +274,6 @@ internal class TestReducer<State, Action>(
     }
 }
 
-sealed class Exhaustivity {
-    data object Exhaustive : Exhaustivity()
-    data class NonExhaustive(
-        val logIgnoredReceivedActions: Boolean = true,
-        val logIgnoredStateChanges: Boolean = true,
-        val logIgnoredEffects: Boolean = true,
-    ) : Exhaustivity()
-}
-
 class TestStoreScope<State : Any, Action : Any?>(val store: TestStore<State, Action>) {
     suspend fun send(action: Action, assert: ((state: State) -> State)? = null) =
         store.send(action, assert)
@@ -454,7 +287,7 @@ class TestStoreScope<State : Any, Action : Any?>(val store: TestStore<State, Act
     ) = store.receive(actionPredicate, assert)
 
     suspend fun withExhaustivity(
-        exhaustivity: Exhaustivity,
+        exhaustivity: TestStore.Exhaustivity,
         block: suspend TestStoreScope<State, Action>.() -> Unit,
     ) {
         val previousExhaustivity = store.exhaustivity
@@ -472,7 +305,7 @@ class TestStoreScope<State : Any, Action : Any?>(val store: TestStore<State, Act
 }
 
 suspend fun <State : Any, Action : Any?> TestStore<State, Action>.test(
-    exhaustivity: Exhaustivity = Exhaustivity.Exhaustive,
+    exhaustivity: TestStore.Exhaustivity = TestStore.Exhaustivity.Exhaustive,
     testBody: suspend TestStoreScope<State, Action>.() -> Unit,
 ) {
     this.exhaustivity = exhaustivity
