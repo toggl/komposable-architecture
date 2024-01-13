@@ -1,7 +1,6 @@
 package com.toggl.komposable.test
 
 import com.toggl.komposable.architecture.Effect
-import com.toggl.komposable.architecture.ReduceResult
 import com.toggl.komposable.architecture.Reducer
 import com.toggl.komposable.extensions.cancellable
 import com.toggl.komposable.extensions.merge
@@ -40,67 +39,62 @@ class TestStoreTests {
             Dispatchers.setMain(testDispatcher)
         }
     }
+
     private enum class MergeTestsAction {
         A, B1, B2, B3, C1, C2, C3, D
     }
 
     @Nested
     inner class MergeTests : BaseTestStoreTest() {
+
+        private val reducer = Reducer<Any, MergeTestsAction> { state, action ->
+            when (action) {
+                MergeTestsAction.A -> state.withEffect(
+                    Effect.merge(
+                        Effect.fromFlow(
+                            flow {
+                                delay(1000)
+                                emit(MergeTestsAction.B1)
+                                emit(MergeTestsAction.C1)
+                            },
+                        ),
+                        Effect.fromFlow<MergeTestsAction>(
+                            flow {
+                                delay(Duration.INFINITE)
+                            },
+                        ).cancellable(1, true),
+                    ),
+                )
+
+                MergeTestsAction.B1 -> state.withEffect(
+                    Effect.merge(
+                        Effect.fromFlow(flow { emit(MergeTestsAction.B2) }),
+                        Effect.fromFlow(flow { emit(MergeTestsAction.B3) }),
+                    ),
+                )
+
+                MergeTestsAction.C1 -> state.withEffect(
+                    Effect.merge(
+                        Effect.fromFlow(flow { emit(MergeTestsAction.C2) }),
+                        Effect.fromFlow(flow { emit(MergeTestsAction.C3) }),
+                    ),
+                )
+
+                MergeTestsAction.B2,
+                MergeTestsAction.B3,
+                MergeTestsAction.C2,
+                MergeTestsAction.C3,
+                -> state.withoutEffect()
+
+                MergeTestsAction.D -> state.withCancelEffect(1)
+            }
+        }
+
         @Test
-        fun `merging working`() = runTest {
+        fun `merged flows are merged together as they are reduced`() = runTest {
             val store = createTestStore(
                 initialState = { Any() },
-                reducer = {
-                    object : Reducer<Any, MergeTestsAction> {
-                        override fun reduce(
-                            state: Any,
-                            action: MergeTestsAction,
-                        ): ReduceResult<Any, MergeTestsAction> {
-                            return when (action) {
-                                MergeTestsAction.A -> {
-                                    return ReduceResult(
-                                        state,
-                                        Effect.merge(
-                                            Effect.fromFlow(
-                                                flow {
-                                                    delay(1000)
-                                                    emit(MergeTestsAction.B1)
-                                                    emit(MergeTestsAction.C1)
-                                                },
-                                            ),
-                                            Effect.fromFlow<MergeTestsAction>(
-                                                flow {
-                                                    delay(Duration.INFINITE)
-                                                },
-                                            ).cancellable(1, true),
-                                        ),
-                                    )
-                                }
-
-                                MergeTestsAction.B1 -> state.withEffect(
-                                    Effect.merge(
-                                        Effect.fromFlow(flow { emit(MergeTestsAction.B2) }),
-                                        Effect.fromFlow(flow { emit(MergeTestsAction.B3) }),
-                                    ),
-                                )
-
-                                MergeTestsAction.C1 -> {
-                                    state.withEffect(
-                                        Effect.of(MergeTestsAction.C2, MergeTestsAction.C3),
-                                    )
-                                }
-
-                                MergeTestsAction.B2,
-                                MergeTestsAction.B3,
-                                MergeTestsAction.C2,
-                                MergeTestsAction.C3,
-                                -> state.withoutEffect()
-
-                                MergeTestsAction.D -> state.withCancelEffect(1)
-                            }
-                        }
-                    }
-                },
+                reducer = { reducer },
                 dispatcherProvider = dispatcherProvider,
                 testCoroutineScope = testCoroutineScope,
             )
@@ -109,16 +103,19 @@ class TestStoreTests {
 
             testScheduler.advanceTimeBy(1000)
 
-            // This is a bit weird... our action merging produces the following ordering:
-            // I'd expect: B1, B2, B3, C1, C2, C3
+            // B1 and C1 are emitted at the same time
+            // KA's implementation does not guarantee that an action's effect will be handled right after they've been emitted
             store.receive(MergeTestsAction.B1)
+            // Note that B1's effect has started emitting yet, so C1 has time to be received
             store.receive(MergeTestsAction.C1)
 
-            store.receive(MergeTestsAction.C2)
-            store.receive(MergeTestsAction.C3)
-
+            // B2 and B3 are merged into a single flow
             store.receive(MergeTestsAction.B2)
             store.receive(MergeTestsAction.B3)
+
+            // C2 and C3 are merged into a single flow
+            store.receive(MergeTestsAction.C2)
+            store.receive(MergeTestsAction.C3)
 
             store.send(MergeTestsAction.D)
         }
@@ -308,6 +305,7 @@ class TestStoreTests {
         val count: Int,
         private val isEven: Boolean,
     )
+
     enum class ExhaustivityTestAction { Increment, IncrementTap }
 
     @Nested

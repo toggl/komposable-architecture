@@ -170,6 +170,7 @@ class TestStore<State : Any, Action : Any?>(
                 There are in-flight effects that could deliver the action but they haven't finished under the ${timeout.inWholeMilliseconds}ms timeout.
                 Try moving the scheduler forward with `testCoroutineScope.advanceTimeBy(timeoutInMillis)` or `testCoroutineScope.advanceUntilIdle()`
                 before trying to receive the action.
+                # In-flight effects: ${reducer.inFlightEffects}
                     """.trimIndent(),
                 )
             }
