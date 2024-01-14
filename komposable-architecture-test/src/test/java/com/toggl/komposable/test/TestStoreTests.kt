@@ -11,6 +11,7 @@ import com.toggl.komposable.extensions.withoutEffect
 import com.toggl.komposable.scope.DispatcherProvider
 import com.toggl.komposable.test.store.TestStore.Exhaustivity
 import com.toggl.komposable.test.store.createTestStore
+import com.toggl.komposable.test.store.test
 import io.kotest.assertions.throwables.shouldNotThrow
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.assertions.withClue
@@ -349,6 +350,24 @@ class TestStoreTests {
                 store.send(ExhaustivityTestAction.IncrementTap)
                 testCoroutineScope.advanceTimeBy(1001)
                 store.receive(ExhaustivityTestAction.Increment) // not verifying either
+            }
+
+            @Test
+            fun `cumulative changes can be verified at the end`() = runTest {
+                store.test(
+                    exhaustivity = Exhaustivity.NonExhaustive(
+                        logIgnoredStateChanges = false,
+                        logIgnoredReceivedActions = false,
+                    ),
+                ) {
+                    repeat(10) {
+                        send(ExhaustivityTestAction.IncrementTap)
+                    }
+                    advanceTimeBy(1001)
+                }
+                store.assert { state ->
+                    state.copy(count = 10)
+                }
             }
 
             @Test
