@@ -4,21 +4,18 @@ import com.toggl.komposable.test.utils.info
 import io.kotest.matchers.shouldBe
 import kotlin.reflect.full.memberProperties
 
-internal fun<State : Any, Action> TestStore.Exhaustivity.createAssertionRunner(
+internal fun <State : Any, Action> TestStore.Exhaustivity.createAssertionRunner(
     testStore: TestStore<State, Action>,
-    logIgnoredStateChanges: Boolean,
-    logIgnoredReceivedActions: Boolean,
-    logIgnoredEffects: Boolean,
 ): TestStore.AssertionRunner<State, Action> =
-    if (this is TestStore.Exhaustivity.Exhaustive) {
-        ExhaustiveAssertionRunner(testStore)
-    } else {
+    if (this is TestStore.Exhaustivity.NonExhaustive) {
         NonExhaustiveAssertionRunner(
             testStore,
-            logIgnoredStateChanges,
-            logIgnoredReceivedActions,
-            logIgnoredEffects,
+            this.logIgnoredStateChanges,
+            this.logIgnoredReceivedActions,
+            this.logIgnoredEffects,
         )
+    } else {
+        ExhaustiveAssertionRunner(testStore)
     }
 
 internal class ExhaustiveAssertionRunner<State : Any, Action>(
@@ -58,7 +55,7 @@ internal class ExhaustiveAssertionRunner<State : Any, Action>(
         }
     }
 
-    override fun assertActionsWereReceived() {
+    override suspend fun assertActionsWereReceived() {
         if (reducer.receivedActions.isNotEmpty()) {
             val error = StringBuilder().apply {
                 appendLine("🚨")
@@ -73,7 +70,7 @@ internal class ExhaustiveAssertionRunner<State : Any, Action>(
 }
 
 internal class NonExhaustiveAssertionRunner<State : Any, Action>(
-    store: TestStore<State, Action>,
+    private val store: TestStore<State, Action>,
     private val logIgnoredStateChanges: Boolean,
     private val logIgnoredReceivedActions: Boolean,
     private val logIgnoredEffects: Boolean,
@@ -89,7 +86,9 @@ internal class NonExhaustiveAssertionRunner<State : Any, Action>(
         assert: ((state: State) -> State)?,
     ) {
         if (assert == null) {
-            logger.info("No assertion was provided, skipping state assertion (state did ${if (previousState == currentState) "not " else ""}change)")
+            if (logIgnoredStateChanges) {
+                logger.info("No assertion was provided, skipping state assertion (state did ${if (previousState == currentState) "not " else ""}change)")
+            }
         } else {
             val fields = previousState::class.memberProperties.toMutableSet()
             val previousStateModified = assert(previousState)
@@ -97,9 +96,6 @@ internal class NonExhaustiveAssertionRunner<State : Any, Action>(
             val assertedFieldChanges = reflectionHandler.filterAccessibleProperty(fields) {
                 it.getter.call(previousState) != it.getter.call(previousStateModified) ||
                     it.getter.call(currentState) != it.getter.call(currentStateModified)
-            }
-            if (assertedFieldChanges.isEmpty()) {
-                throw AssertionError("No state changes were detected but assertion was provided")
             }
             assertedFieldChanges.forEach {
                 it.getter.call(currentState) shouldBe it.getter.call(previousStateModified)
