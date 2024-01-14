@@ -24,6 +24,18 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.TimeSource
 
+/**
+ * A testing utility for managing and testing state changes in a Redux-like architecture.
+ *
+ * @param initialState A lambda function providing the initial state of the store.
+ * @param reducer A lambda function providing the reducer that will power the store.
+ * @param dispatcherProvider Provides the dispatcher for executing actions.
+ * @param logger A logger for handling log messages during testing.
+ * @param reflectionHandler Handles reflection for asserting state changes.
+ * @param testCoroutineScope The coroutine scope for running tests.
+ * @param timeout Timeout duration for waiting effects to complete.
+ * @param exhaustivity The level of exhaustiveness for testing.
+ */
 class TestStore<State : Any, Action : Any?>(
     initialState: () -> State,
     reducer: () -> Reducer<State, Action>,
@@ -57,12 +69,7 @@ class TestStore<State : Any, Action : Any?>(
     }
 
     private val assertionRunner: AssertionRunner<State, Action>
-        get() = exhaustivity.createAssertionRunner(
-            this,
-            logIgnoredStateChanges = true,
-            logIgnoredReceivedActions = true,
-            logIgnoredEffects = true,
-        )
+        get() = exhaustivity.createAssertionRunner(this)
 
     internal interface AssertionRunner<State : Any, Action> {
         fun assertStateChange(
@@ -74,11 +81,24 @@ class TestStore<State : Any, Action : Any?>(
         fun hasReceivedActionToHandle(match: (Action) -> Boolean): Boolean
         fun skipNotMatchingActions(match: (Action) -> Boolean)
         fun assertEffectsAreDone()
-        fun assertActionsWereReceived()
+        suspend fun assertActionsWereReceived()
     }
 
+    /**
+     * Controls the level of exhaustiveness for state change and action receipt assertions in [TestStore].
+     */
     sealed class Exhaustivity {
+        /**
+         * Represents an exhaustive level where all state changes and received actions must be asserted and
+         * all effects must be done when finishing the test.
+         */
         data object Exhaustive : Exhaustivity()
+
+        /**
+         * Represents a non-exhaustive level where state changes and received actions can be skipped.
+         * Note that actions fired by effects must still be received or skipped before new actions can be sent.
+         * The final state of the store can be asserted using [TestStore.assert] after calling [TestStore.finish]
+         */
         data class NonExhaustive(
             val logIgnoredReceivedActions: Boolean = true,
             val logIgnoredStateChanges: Boolean = true,
@@ -86,6 +106,13 @@ class TestStore<State : Any, Action : Any?>(
         ) : Exhaustivity()
     }
 
+    /**
+     * Sends an action to the store and asserts the resulting state change.
+     * Don't provide an assert function if you don't expect a state change.
+     *
+     * @param action The action to be sent to the store.
+     * @param assert A lambda function for asserting the resulting state.
+     */
     suspend fun send(action: Action, assert: ((state: State) -> State)? = null) {
         testCoroutineScope.runCurrent()
         if (reducer.receivedActions.isNotEmpty()) {
@@ -101,10 +128,26 @@ class TestStore<State : Any, Action : Any?>(
         assertionRunner.assertStateChange(previousState, currentState, assert)
     }
 
+    /**
+     * Receives an action that has been fired by some Effect running in the store and
+     * asserts the resulting state change.
+     * Don't provide an assert function if you don't expect a state change.
+     *
+     * @param action The action expected to be received.
+     * @param assert A lambda function for asserting the resulting state.
+     */
     suspend fun receive(action: Action, assert: ((state: State) -> State)? = null) {
         receive({ it == action }, assert)
     }
 
+    /**
+     * Receives an action that has been fired by some Effect running in the store
+     * based on a predicate and asserts the resulting state change.
+     * Don't provide an assert function if you don't expect a state change.
+     *
+     * @param actionPredicate A predicate function for selecting the received action.
+     * @param assert A lambda function for asserting the resulting state.
+     */
     suspend fun receive(
         actionPredicate: (Action) -> Boolean,
         assert: ((state: State) -> State)? = null,
@@ -177,11 +220,18 @@ class TestStore<State : Any, Action : Any?>(
         },
     )
 
+    /**
+     * Skips a specified number of received actions without asserting state changes.
+     * Note that skipped received actions still incur in state changes.
+     *
+     * @param count The number of received actions to skip.
+     */
     suspend fun skipReceivedActions(count: Int) {
         val currentExhaustivity = exhaustivity
         exhaustivity = Exhaustivity.NonExhaustive(
             logIgnoredReceivedActions = false,
             logIgnoredStateChanges = false,
+            logIgnoredEffects = false,
         )
         repeat(count) {
             receive({ true }, null)
@@ -189,6 +239,14 @@ class TestStore<State : Any, Action : Any?>(
         exhaustivity = currentExhaustivity
     }
 
+    /**
+     * Finishes the testing process by ensuring all effects are done and all fired actions have been
+     * received and their state changes asserted.
+     *
+     * When running tests with [Exhaustivity.NonExhaustive], this method may be called to wait for all effects
+     * to finish under the [TestStore.timeout] duration. All ignored received actions will be skipped and their state changes
+     * integrated into the final state of the store. The final state of the store can be asserted using [TestStore.assert].
+     */
     suspend fun finish() {
         if (reducer.inFlightEffects.isNotEmpty()) {
             awaitMatch(
@@ -199,6 +257,14 @@ class TestStore<State : Any, Action : Any?>(
         }
         assertionRunner.assertEffectsAreDone()
         assertionRunner.assertActionsWereReceived()
+    }
+
+    /**
+     * Asserts the final state of the store. Only useful when running tests with [Exhaustivity.NonExhaustive].
+     * See [TestStore.finish].
+     */
+    fun assert(assert: (state: State) -> State) {
+        assertionRunner.assertStateChange(reducer.state, reducer.state, assert)
     }
 }
 
@@ -275,18 +341,38 @@ internal class TestReducer<State, Action>(
     }
 }
 
+/**
+ * A scope for interacting with the TestStore during testing.
+ *
+ * @param store The TestStore instance to be scoped.
+ */
 class TestStoreScope<State : Any, Action : Any?>(val store: TestStore<State, Action>) {
+    /**
+     * See [TestStore.send]
+     */
     suspend fun send(action: Action, assert: ((state: State) -> State)? = null) =
         store.send(action, assert)
 
+    /**
+     * See [TestStore.receive]
+     */
     suspend fun receive(action: Action, assert: ((state: State) -> State)? = null) =
         store.receive(action, assert)
 
+    /**
+     * See [TestStore.receive]
+     */
     suspend fun receive(
         actionPredicate: (Action) -> Boolean,
         assert: ((state: State) -> State)? = null,
     ) = store.receive(actionPredicate, assert)
 
+    /**
+     * Executes a test block with a specific exhaustivity level.
+     *
+     * @param exhaustivity The exhaustivity level for the block of code.
+     * @param block The test block to be executed within the specified exhaustivity level.
+     */
     suspend fun withExhaustivity(
         exhaustivity: TestStore.Exhaustivity,
         block: suspend TestStoreScope<State, Action>.() -> Unit,
@@ -300,11 +386,24 @@ class TestStoreScope<State : Any, Action : Any?>(val store: TestStore<State, Act
         }
     }
 
+    /**
+     * Advances the time in the associated TestStore's coroutine scope.
+     *
+     * @param duration The duration by which to advance the time.
+     */
     fun advanceTimeBy(duration: Duration) {
         store.testCoroutineScope.advanceTimeBy(duration)
     }
 }
 
+/**
+ * Extension function for simplifying the testing process of a TestStore.
+ * Automatically finishes the test after the test body has been executed, asserting that all effects
+ * are done all actions have been received.
+ *
+ * @param exhaustivity The default exhaustivity level where the test body will be executed.
+ * @param testBody The test body to be executed.
+ */
 suspend fun <State : Any, Action : Any?> TestStore<State, Action>.test(
     exhaustivity: TestStore.Exhaustivity = TestStore.Exhaustivity.Exhaustive,
     testBody: suspend TestStoreScope<State, Action>.() -> Unit,
