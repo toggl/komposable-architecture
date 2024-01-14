@@ -179,8 +179,9 @@ internal class NonExhaustiveAssertionRunner<State : Any, Action>(
         }
     }
 
-    override fun assertActionsWereReceived() {
-        if (reducer.receivedActions.isNotEmpty() && logIgnoredReceivedActions) {
+    override suspend fun assertActionsWereReceived() {
+        val hasReceivedActions = reducer.receivedActions.isNotEmpty()
+        if (hasReceivedActions && logIgnoredReceivedActions) {
             val warning = StringBuilder().apply {
                 appendLine("⚠️")
                 appendLine("There are still ${reducer.receivedActions.size} actions in the queue:")
@@ -190,5 +191,6 @@ internal class NonExhaustiveAssertionRunner<State : Any, Action>(
             }
             logger.info(warning.toString())
         }
+        store.skipReceivedActions(reducer.receivedActions.size)
     }
 }
