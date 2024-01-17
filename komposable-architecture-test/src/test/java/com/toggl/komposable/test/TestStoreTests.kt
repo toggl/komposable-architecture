@@ -107,7 +107,7 @@ class TestStoreTests {
             // B1 and C1 are emitted at the same time
             // KA's implementation does not guarantee that an action's effect will be handled right after they've been emitted
             store.receive(MergeTestsAction.B1)
-            // Note that B1's effect has started emitting yet, so C1 has time to be received
+            // Note that B1's effect hasn't started emitting yet, so C1 has time to be received
             store.receive(MergeTestsAction.C1)
 
             // B2 and B3 are merged into a single flow
