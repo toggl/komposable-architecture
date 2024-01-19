@@ -11,7 +11,7 @@ import com.toggl.komposable.extensions.withoutEffect
 import com.toggl.komposable.scope.DispatcherProvider
 import com.toggl.komposable.test.store.TestStore.Exhaustivity
 import com.toggl.komposable.test.store.createTestStore
-import com.toggl.komposable.test.store.test
+import com.toggl.komposable.test.store.freeTest
 import io.kotest.assertions.throwables.shouldNotThrow
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.assertions.withClue
@@ -28,6 +28,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 
 class TestStoreTests {
     open class BaseTestStoreTest {
@@ -354,7 +355,7 @@ class TestStoreTests {
 
             @Test
             fun `cumulative changes can be verified at the end`() = runTest {
-                store.test(
+                store.freeTest(
                     exhaustivity = Exhaustivity.NonExhaustive(
                         logIgnoredStateChanges = false,
                         logIgnoredReceivedActions = false,
@@ -363,7 +364,8 @@ class TestStoreTests {
                     repeat(10) {
                         send(ExhaustivityTestAction.IncrementTap)
                     }
-                    advanceTimeBy(1001)
+                    advanceTestStoreTimeBy(1001.milliseconds)
+                    awaitEffectsConsumption()
                 }
                 store.assert { state ->
                     state.copy(count = 10)
