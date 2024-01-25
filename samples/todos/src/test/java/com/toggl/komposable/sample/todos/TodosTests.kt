@@ -2,8 +2,10 @@ package com.toggl.komposable.sample.todos
 
 import com.toggl.komposable.extensions.forEachList
 import com.toggl.komposable.scope.DispatcherProvider
-import com.toggl.komposable.test.store.createTestStore
+import com.toggl.komposable.test.store.ExhaustiveTestConfig
 import com.toggl.komposable.test.store.test
+import com.toggl.komposable.test.utils.JavaLogger
+import com.toggl.komposable.test.utils.JvmReflectionHandler
 import io.kotest.assertions.throwables.shouldThrow
 import io.mockk.every
 import io.mockk.mockkStatic
@@ -17,12 +19,20 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import java.util.UUID
+import java.util.logging.Logger
 import kotlin.time.Duration.Companion.milliseconds
 
 class TodosTests {
     private val testDispatcher = StandardTestDispatcher()
-    val dispatcherProvider = DispatcherProvider(testDispatcher, testDispatcher, testDispatcher)
-    val testCoroutineScope = TestScope(testDispatcher)
+    private val dispatcherProvider =
+        DispatcherProvider(testDispatcher, testDispatcher, testDispatcher)
+    private val testCoroutineScope = TestScope(testDispatcher)
+    private val testConfig = ExhaustiveTestConfig(
+        dispatcherProvider,
+        testCoroutineScope,
+        JavaLogger(Logger.getLogger("TodoTestsLogger")),
+        reflectionHandler = JvmReflectionHandler(),
+    )
 
     @BeforeEach
     fun setup() {
@@ -32,12 +42,8 @@ class TodosTests {
     @Nested
     @DisplayName("TodosAction.AddTodoButtonTapped action should")
     inner class AddTodoButtonTappedTests {
-        private val store = createTestStore(
-            initialState = { TodosState() },
-            reducer = { TodosReducer() },
-            dispatcherProvider = dispatcherProvider,
-            testCoroutineScope = testCoroutineScope,
-        )
+        private val initialState = TodosState()
+        private val todosReducer = TodosReducer()
 
         @Test
         fun `add items`() = runTest {
@@ -46,7 +52,7 @@ class TodosTests {
                 UUID.randomUUID()
             }.returnsMany(UUID(0, 1), UUID(0, 2))
 
-            store.test {
+            todosReducer.test(initialState, testConfig) {
                 send(TodosAction.AddTodoButtonTapped) {
                     it.copy(todos = it.todos + TodoState(UUID(0, 1), "", false))
                 }
@@ -61,31 +67,24 @@ class TodosTests {
     @Nested
     @DisplayName("TodoAction.DescriptionChanged action should")
     inner class DescriptionChangedTests {
-        private val store = createTestStore(
-            initialState = {
-                TodosState(
-                    todos = listOf(
-                        TodoState(UUID(0, 1), "", false),
-                        TodoState(UUID(0, 2), "something", false),
-                    ),
-                )
-            },
-            reducer = {
-                TodosReducer().forEachList(
-                    elementReducer = TodoReducer(),
-                    mapToElementAction = { action -> if (action is TodosAction.Todo) action.index to action.action else null },
-                    mapToElementList = { state -> state.todos },
-                    mapToParentAction = { action, index -> TodosAction.Todo(index, action) },
-                    mapToParentState = { state, todosMap -> state.copy(todos = todosMap) },
-                )
-            },
-            dispatcherProvider = dispatcherProvider,
-            testCoroutineScope = testCoroutineScope,
+        private val initialState =
+            TodosState(
+                todos = listOf(
+                    TodoState(UUID(0, 1), "", false),
+                    TodoState(UUID(0, 2), "something", false),
+                ),
+            )
+        private val reducer = TodosReducer().forEachList(
+            elementReducer = TodoReducer(),
+            mapToElementAction = { action -> if (action is TodosAction.Todo) action.index to action.action else null },
+            mapToElementList = { state -> state.todos },
+            mapToParentAction = { action, index -> TodosAction.Todo(index, action) },
+            mapToParentState = { state, todosMap -> state.copy(todos = todosMap) },
         )
 
         @Test
         fun `edit descriptions`() = runTest {
-            store.test {
+            reducer.test(initialState, testConfig) {
                 send(TodosAction.Todo(0, TodoAction.DescriptionChanged("edited"))) {
                     it.copy(
                         todos = listOf(
@@ -109,31 +108,26 @@ class TodosTests {
     @Nested
     @DisplayName("TodoAction.IsCompleteChanged action should")
     inner class IsCompleteChangedTests {
-        private val store = createTestStore(
-            initialState = {
-                TodosState(
-                    todos = listOf(
-                        TodoState(UUID(0, 1), "xx", false),
-                        TodoState(UUID(0, 2), "aa", false),
-                    ),
-                )
-            },
-            reducer = {
-                TodosReducer().forEachList(
-                    elementReducer = TodoReducer(),
-                    mapToElementAction = { action -> if (action is TodosAction.Todo) action.index to action.action else null },
-                    mapToElementList = { state -> state.todos },
-                    mapToParentAction = { action, index -> TodosAction.Todo(index, action) },
-                    mapToParentState = { state, todosMap -> state.copy(todos = todosMap) },
-                )
-            },
-            dispatcherProvider = dispatcherProvider,
-            testCoroutineScope = testCoroutineScope,
-        )
+        private val initialState =
+            TodosState(
+                todos = listOf(
+                    TodoState(UUID(0, 1), "xx", false),
+                    TodoState(UUID(0, 2), "aa", false),
+                ),
+            )
+
+        private val reducer =
+            TodosReducer().forEachList(
+                elementReducer = TodoReducer(),
+                mapToElementAction = { action -> if (action is TodosAction.Todo) action.index to action.action else null },
+                mapToElementList = { state -> state.todos },
+                mapToParentAction = { action, index -> TodosAction.Todo(index, action) },
+                mapToParentState = { state, todosMap -> state.copy(todos = todosMap) },
+            )
 
         @Test
         fun `modify the isCompleted flag`() = runTest {
-            store.test {
+            reducer.test(initialState, testConfig) {
                 send(TodosAction.Todo(0, TodoAction.IsCompleteChanged(true))) {
                     it.copy(
                         todos = listOf(
@@ -180,23 +174,18 @@ class TodosTests {
     @Nested
     @DisplayName("TodosAction.ClearCompletedButtonTapped action should")
     inner class ClearCompletedButtonTappedTests {
-        private val store = createTestStore(
-            initialState = {
-                TodosState(
-                    todos = listOf(
-                        TodoState(UUID(0, 1), "forEach", true),
-                        TodoState(UUID(0, 2), "testStore", false),
-                    ),
-                )
-            },
-            reducer = { TodosReducer() },
-            dispatcherProvider = dispatcherProvider,
-            testCoroutineScope = testCoroutineScope,
-        )
+        private val reducer = TodosReducer()
+        private val initialState =
+            TodosState(
+                todos = listOf(
+                    TodoState(UUID(0, 1), "forEach", true),
+                    TodoState(UUID(0, 2), "testStore", false),
+                ),
+            )
 
         @Test
         fun `remove completed todos from state`() = runTest {
-            store.test {
+            reducer.test(initialState, testConfig) {
                 send(TodosAction.ClearCompletedButtonTapped) {
                     it.copy(
                         todos = listOf(
@@ -211,25 +200,20 @@ class TodosTests {
     @Nested
     @DisplayName("TodosAction.Delete action should")
     inner class DeleteTests {
-        private val store = createTestStore(
-            initialState = {
-                TodosState(
-                    todos = listOf(
-                        TodoState(UUID(0, 1), "top", false),
-                        TodoState(UUID(0, 2), "middle 1", false),
-                        TodoState(UUID(0, 3), "middle 2", false),
-                        TodoState(UUID(0, 4), "bottom", false),
-                    ),
-                )
-            },
-            reducer = { TodosReducer() },
-            dispatcherProvider = dispatcherProvider,
-            testCoroutineScope = testCoroutineScope,
-        )
+        private val initialState =
+            TodosState(
+                todos = listOf(
+                    TodoState(UUID(0, 1), "top", false),
+                    TodoState(UUID(0, 2), "middle 1", false),
+                    TodoState(UUID(0, 3), "middle 2", false),
+                    TodoState(UUID(0, 4), "bottom", false),
+                ),
+            )
+        private val reducer = TodosReducer()
 
         @Test
         fun `remove todo items with the expected uuids`() = runTest {
-            store.test {
+            reducer.test(initialState, testConfig) {
                 send(
                     TodosAction.Delete(
                         setOf(UUID(0, 2), UUID(0, 3)),
@@ -246,25 +230,19 @@ class TodosTests {
     @Nested
     @DisplayName("TodosAction.FilterChanged action should")
     inner class FilterChangedTests {
-        private val store = createTestStore(
-            initialState = {
-                TodosState(
-                    todos = listOf(
-                        TodoState(UUID(0, 1), "top", true),
-                        TodoState(UUID(0, 2), "middle 1", false),
-                        TodoState(UUID(0, 3), "middle 2", false),
-                        TodoState(UUID(0, 4), "bottom", true),
-                    ),
-                )
-            },
-            reducer = { TodosReducer() },
-            dispatcherProvider = dispatcherProvider,
-            testCoroutineScope = testCoroutineScope,
+        private val initialState = TodosState(
+            todos = listOf(
+                TodoState(UUID(0, 1), "top", true),
+                TodoState(UUID(0, 2), "middle 1", false),
+                TodoState(UUID(0, 3), "middle 2", false),
+                TodoState(UUID(0, 4), "bottom", true),
+            ),
         )
+        private val reducer = TodosReducer()
 
         @Test
         fun `set the filter`() = runTest {
-            store.test {
+            reducer.test(initialState, testConfig) {
                 send(TodosAction.FilterChanged(Filter.Active)) {
                     it.copy(filter = Filter.Active)
                 }

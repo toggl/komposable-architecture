@@ -9,9 +9,11 @@ import com.toggl.komposable.extensions.withEffect
 import com.toggl.komposable.extensions.withSuspendEffect
 import com.toggl.komposable.extensions.withoutEffect
 import com.toggl.komposable.scope.DispatcherProvider
-import com.toggl.komposable.test.store.TestStore.Exhaustivity
-import com.toggl.komposable.test.store.createTestStore
-import com.toggl.komposable.test.store.freeTest
+import com.toggl.komposable.test.store.ExhaustiveTestConfig
+import com.toggl.komposable.test.store.NonExhaustiveTestConfig
+import com.toggl.komposable.test.store.test
+import com.toggl.komposable.test.utils.JavaLogger
+import com.toggl.komposable.test.utils.JvmReflectionHandler
 import io.kotest.assertions.throwables.shouldNotThrow
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.assertions.withClue
@@ -27,6 +29,7 @@ import kotlinx.coroutines.test.setMain
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import java.util.logging.Logger
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -35,6 +38,21 @@ class TestStoreTests {
         private val testDispatcher = StandardTestDispatcher()
         val dispatcherProvider = DispatcherProvider(testDispatcher, testDispatcher, testDispatcher)
         val testCoroutineScope = TestScope(testDispatcher)
+        val exhaustiveConfig = ExhaustiveTestConfig(
+            dispatcherProvider,
+            testCoroutineScope,
+            JavaLogger(Logger.getLogger("TestStore")),
+            reflectionHandler = JvmReflectionHandler(),
+        )
+        val nonExhaustiveTestConfig = NonExhaustiveTestConfig(
+            dispatcherProvider,
+            testCoroutineScope,
+            JavaLogger(Logger.getLogger("TestStore")),
+            reflectionHandler = JvmReflectionHandler(),
+            logIgnoredReceivedActions = true,
+            logIgnoredStateChanges = true,
+            logIgnoredEffects = true,
+        )
 
         @BeforeEach
         fun beforeTest() {
@@ -94,32 +112,27 @@ class TestStoreTests {
 
         @Test
         fun `merged flows are merged together as they are reduced`() = runTest {
-            val store = createTestStore(
-                initialState = { Any() },
-                reducer = { reducer },
-                dispatcherProvider = dispatcherProvider,
-                testCoroutineScope = testCoroutineScope,
-            )
+            reducer.test(Any(), exhaustiveConfig) {
+                send(MergeTestsAction.A)
 
-            store.send(MergeTestsAction.A)
+                testScheduler.advanceTimeBy(1000)
 
-            testScheduler.advanceTimeBy(1000)
+                // B1 and C1 are emitted at the same time
+                // KA's implementation does not guarantee that an action's effect will be handled right after they've been emitted
+                receive(MergeTestsAction.B1)
+                // Note that B1's effect hasn't started emitting yet, so C1 has time to be received
+                receive(MergeTestsAction.C1)
 
-            // B1 and C1 are emitted at the same time
-            // KA's implementation does not guarantee that an action's effect will be handled right after they've been emitted
-            store.receive(MergeTestsAction.B1)
-            // Note that B1's effect hasn't started emitting yet, so C1 has time to be received
-            store.receive(MergeTestsAction.C1)
+                // B2 and B3 are merged into a single flow
+                receive(MergeTestsAction.B2)
+                receive(MergeTestsAction.B3)
 
-            // B2 and B3 are merged into a single flow
-            store.receive(MergeTestsAction.B2)
-            store.receive(MergeTestsAction.B3)
+                // C2 and C3 are merged into a single flow
+                receive(MergeTestsAction.C2)
+                receive(MergeTestsAction.C3)
 
-            // C2 and C3 are merged into a single flow
-            store.receive(MergeTestsAction.C2)
-            store.receive(MergeTestsAction.C3)
-
-            store.send(MergeTestsAction.D)
+                send(MergeTestsAction.D)
+            }
         }
     }
 
@@ -132,26 +145,19 @@ class TestStoreTests {
     inner class AsyncEffects : BaseTestStoreTest() {
         @Test
         fun `async effects are received`() = runTest {
-            val store = createTestStore(
-                initialState = { 0 },
-                reducer = {
-                    Reducer<Int, AsyncEffectsAction> { state, action ->
-                        when (action) {
-                            is AsyncEffectsAction.Tap -> state.withEffect(
-                                Effect.fromSuspend { AsyncEffectsAction.Set(69) },
-                            )
+            val reducer = Reducer<Int, AsyncEffectsAction> { state, action ->
+                when (action) {
+                    is AsyncEffectsAction.Tap -> state.withEffect(
+                        Effect.fromSuspend { AsyncEffectsAction.Set(69) },
+                    )
 
-                            is AsyncEffectsAction.Set -> action.value.withoutEffect()
-                        }
-                    }
-                },
-                dispatcherProvider = dispatcherProvider,
-                testCoroutineScope = testCoroutineScope,
-            )
+                    is AsyncEffectsAction.Set -> action.value.withoutEffect()
+                }
+            }
 
-            store.send(AsyncEffectsAction.Tap)
-            store.receive(AsyncEffectsAction.Set(69)) {
-                69
+            reducer.test(0, exhaustiveConfig) {
+                send(AsyncEffectsAction.Tap)
+                receive(AsyncEffectsAction.Set(69)) { 69 }
             }
         }
     }
@@ -167,51 +173,47 @@ class TestStoreTests {
     inner class StateChanges : BaseTestStoreTest() {
         @Test
         fun `state changes must be verified`() = runTest {
-            val store = createTestStore(
-                initialState = { StateChangesState(0, false) },
-                reducer = {
-                    Reducer<StateChangesState, StateChangesAction> { state, action ->
-                        when (action) {
-                            StateChangesAction.Increment -> state.copy(
-                                isChanging = true,
-                            ).withEffect(
-                                Effect.of(
-                                    StateChangesAction.Changed(
-                                        state.count,
-                                        state.count + 1,
-                                    ),
-                                ),
-                            )
+            val initialState = StateChangesState(0, false)
+            val reducer = Reducer<StateChangesState, StateChangesAction> { state, action ->
+                when (action) {
+                    StateChangesAction.Increment -> state.copy(
+                        isChanging = true,
+                    ).withEffect(
+                        Effect.of(
+                            StateChangesAction.Changed(
+                                state.count,
+                                state.count + 1,
+                            ),
+                        ),
+                    )
 
-                            is StateChangesAction.Changed -> {
-                                state.copy(
-                                    isChanging = false,
-                                    count = if (action.from == state.count) action.to else state.count,
-                                ).withoutEffect()
-                            }
-                        }
+                    is StateChangesAction.Changed -> {
+                        state.copy(
+                            isChanging = false,
+                            count = if (action.from == state.count) action.to else state.count,
+                        ).withoutEffect()
                     }
-                },
-                dispatcherProvider = dispatcherProvider,
-                testCoroutineScope = testCoroutineScope,
-            )
-
-            store.send(StateChangesAction.Increment) {
-                it.copy(isChanging = true)
-            }
-            store.receive(StateChangesAction.Changed(0, 1)) {
-                it.copy(count = 1, isChanging = false)
-            }
-
-            shouldThrow<AssertionError> {
-                store.send(StateChangesAction.Increment) {
-                    it.copy(isChanging = false)
                 }
             }
 
-            shouldThrow<AssertionError> {
-                store.receive(StateChangesAction.Changed(1, 2)) {
-                    it.copy(count = 1000, isChanging = true)
+            reducer.test(initialState, exhaustiveConfig) {
+                send(StateChangesAction.Increment) {
+                    it.copy(isChanging = true)
+                }
+                receive(StateChangesAction.Changed(0, 1)) {
+                    it.copy(count = 1, isChanging = false)
+                }
+
+                shouldThrow<AssertionError> {
+                    send(StateChangesAction.Increment) {
+                        it.copy(isChanging = false)
+                    }
+                }
+
+                shouldThrow<AssertionError> {
+                    receive(StateChangesAction.Changed(1, 2)) {
+                        it.copy(count = 1000, isChanging = true)
+                    }
                 }
             }
         }
@@ -223,32 +225,28 @@ class TestStoreTests {
     inner class ActionMatching : BaseTestStoreTest() {
         @Test
         fun `matching predicates are executed`() = runTest {
-            val store = createTestStore(
-                initialState = { },
-                reducer = {
-                    Reducer<Unit, ActionMatchingAction> { state, action ->
-                        when (action) {
-                            ActionMatchingAction.Noop -> state.withEffect(ActionMatchingAction.Finished)
-                            ActionMatchingAction.Finished -> state.withoutEffect()
-                        }
-                    }
-                },
-                dispatcherProvider = dispatcherProvider,
-                testCoroutineScope = testCoroutineScope,
-            )
-            store.send(ActionMatchingAction.Noop)
-            store.receive({ action -> action == ActionMatchingAction.Finished })
-
-            store.send(ActionMatchingAction.Noop)
-            shouldThrow<AssertionError> {
-                store.receive(ActionMatchingAction.Noop)
+            val reducer = Reducer<Unit, ActionMatchingAction> { state, action ->
+                when (action) {
+                    ActionMatchingAction.Noop -> state.withEffect(ActionMatchingAction.Finished)
+                    ActionMatchingAction.Finished -> state.withoutEffect()
+                }
             }
 
-            store.send(ActionMatchingAction.Noop)
-            store.receive(ActionMatchingAction.Finished)
-            store.send(ActionMatchingAction.Noop)
-            shouldThrow<AssertionError> {
-                store.receive({ action -> action == ActionMatchingAction.Noop })
+            reducer.test(Unit, exhaustiveConfig) {
+                send(ActionMatchingAction.Noop)
+                receive({ action -> action == ActionMatchingAction.Finished })
+
+                send(ActionMatchingAction.Noop)
+                shouldThrow<AssertionError> {
+                    receive(ActionMatchingAction.Noop)
+                }
+
+                send(ActionMatchingAction.Noop)
+                receive(ActionMatchingAction.Finished)
+                send(ActionMatchingAction.Noop)
+                shouldThrow<AssertionError> {
+                    receive({ action -> action == ActionMatchingAction.Noop })
+                }
             }
         }
     }
@@ -259,47 +257,43 @@ class TestStoreTests {
     inner class StateAccess : BaseTestStoreTest() {
         @Test
         fun `test store state is updated after assertion`() = runTest {
-            val store = createTestStore(
-                initialState = { 0 },
-                reducer = {
-                    Reducer<Int, StateAccessAction> { state, action ->
-                        when (action) {
-                            StateAccessAction.A -> (state + 1).withEffect(
-                                StateAccessAction.B,
-                                StateAccessAction.C,
-                                StateAccessAction.D,
-                            )
+            val initialState = 0
+            val reducer = Reducer<Int, StateAccessAction> { state, action ->
+                when (action) {
+                    StateAccessAction.A -> (state + 1).withEffect(
+                        StateAccessAction.B,
+                        StateAccessAction.C,
+                        StateAccessAction.D,
+                    )
 
-                            StateAccessAction.B,
-                            StateAccessAction.C,
-                            StateAccessAction.D,
-                            -> (state + 1).withoutEffect()
-                        }
-                    }
-                },
-                dispatcherProvider = dispatcherProvider,
-                testCoroutineScope = testCoroutineScope,
-            )
+                    StateAccessAction.B,
+                    StateAccessAction.C,
+                    StateAccessAction.D,
+                    -> (state + 1).withoutEffect()
+                }
+            }
 
-            store.send(StateAccessAction.A) {
-                it shouldBe 0
-                1
+            reducer.test(initialState, exhaustiveConfig) {
+                send(StateAccessAction.A) {
+                    it shouldBe 0
+                    1
+                }
+                state shouldBe 1
+                receive(StateAccessAction.B) {
+                    it shouldBe 1
+                    2
+                }
+                state shouldBe 2
+                receive(StateAccessAction.C) {
+                    it shouldBe 2
+                    3
+                }
+                receive(StateAccessAction.D) {
+                    it shouldBe 3
+                    4
+                }
+                state shouldBe 4
             }
-            store.state shouldBe 1
-            store.receive(StateAccessAction.B) {
-                it shouldBe 1
-                2
-            }
-            store.state shouldBe 2
-            store.receive(StateAccessAction.C) {
-                it shouldBe 2
-                3
-            }
-            store.receive(StateAccessAction.D) {
-                it shouldBe 3
-                4
-            }
-            store.state shouldBe 4
         }
     }
 
@@ -312,51 +306,47 @@ class TestStoreTests {
 
     @Nested
     inner class ExhaustivityTests : BaseTestStoreTest() {
-        private val store = createTestStore(
-            initialState = { ExhaustivityTestState(0, true) },
-            reducer = {
-                Reducer<ExhaustivityTestState, ExhaustivityTestAction> { state, action ->
-                    when (action) {
-                        ExhaustivityTestAction.Increment -> state.copy(
-                            count = state.count + 1,
-                            isEven = (state.count + 1) % 2 == 0,
-                        ).withoutEffect()
 
-                        ExhaustivityTestAction.IncrementTap -> state.withSuspendEffect {
-                            delay(1001)
-                            ExhaustivityTestAction.Increment
-                        }
+        private val initialState = ExhaustivityTestState(0, true)
+        private val reducer =
+            Reducer<ExhaustivityTestState, ExhaustivityTestAction> { state, action ->
+                when (action) {
+                    ExhaustivityTestAction.Increment -> state.copy(
+                        count = state.count + 1,
+                        isEven = (state.count + 1) % 2 == 0,
+                    ).withoutEffect()
+
+                    ExhaustivityTestAction.IncrementTap -> state.withSuspendEffect {
+                        delay(1001)
+                        ExhaustivityTestAction.Increment
                     }
                 }
-            },
-            dispatcherProvider = dispatcherProvider,
-            testCoroutineScope = testCoroutineScope,
-        ).apply {
-            exhaustivity = Exhaustivity.NonExhaustive()
-        }
+            }
 
         @Nested
         inner class NonExhaustive {
             @Test
             fun `partial changes are verified`() = runTest {
-                store.exhaustivity = Exhaustivity.NonExhaustive()
-                store.send(ExhaustivityTestAction.Increment) {
-                    it.copy(count = 1) // not verifying isEven
-                }
+                reducer.test(initialState, nonExhaustiveTestConfig) {
+                    send(ExhaustivityTestAction.Increment) {
+                        it.copy(count = 1) // not verifying isEven
+                    }
 
-                store.send(ExhaustivityTestAction.Increment) {
-                    it.copy(isEven = true) // not verifying count
-                }
+                    send(ExhaustivityTestAction.Increment) {
+                        it.copy(isEven = true) // not verifying count
+                    }
 
-                store.send(ExhaustivityTestAction.IncrementTap)
-                testCoroutineScope.advanceTimeBy(1001)
-                store.receive(ExhaustivityTestAction.Increment) // not verifying either
+                    send(ExhaustivityTestAction.IncrementTap)
+                    testCoroutineScope.advanceTimeBy(1001)
+                    receive(ExhaustivityTestAction.Increment) // not verifying either
+                }
             }
 
             @Test
             fun `cumulative changes can be verified at the end`() = runTest {
-                store.freeTest(
-                    exhaustivity = Exhaustivity.NonExhaustive(
+                reducer.test(
+                    initialState,
+                    nonExhaustiveTestConfig.copy(
                         logIgnoredStateChanges = false,
                         logIgnoredReceivedActions = false,
                     ),
@@ -366,22 +356,22 @@ class TestStoreTests {
                     }
                     advanceTestStoreTimeBy(1001.milliseconds)
                     awaitEffectsConsumption()
-                }
-                store.assert { state ->
-                    state.copy(count = 10)
+                    assert { state ->
+                        state.copy(count = 10)
+                    }
                 }
             }
 
             @Test
             fun `finish does not wait for effects completion`() = runTest {
-                store.exhaustivity = Exhaustivity.NonExhaustive()
+                reducer.test(initialState, nonExhaustiveTestConfig) {
+                    send(ExhaustivityTestAction.IncrementTap)
+                    advanceTestStoreTimeBy(500.milliseconds)
 
-                store.send(ExhaustivityTestAction.IncrementTap)
-                testCoroutineScope.advanceTimeBy(500)
-
-                shouldNotThrow<AssertionError> {
-                    // did not enough for effect but still triggered finish
-                    store.finish()
+                    shouldNotThrow<AssertionError> {
+                        // did not advance time enough for effect to finish but still tried to wait for it
+                        awaitEffectsConsumption()
+                    }
                 }
             }
         }
@@ -390,30 +380,29 @@ class TestStoreTests {
         inner class Exhaustive {
             @Test
             fun `must assert everything`() = runTest {
-                store.exhaustivity = Exhaustivity.Exhaustive
-                withClue("Did not verify state change") {
-                    shouldThrow<AssertionError> {
-                        // did not verify state change
-                        store.send(ExhaustivityTestAction.Increment)
-                    }
-                }
+                shouldThrow<AssertionError> { // did not wait for effects to finish
+                    reducer.test(initialState, exhaustiveConfig) {
+                        withClue("Did not verify state change") {
+                            shouldThrow<AssertionError> {
+                                // did not verify state change
+                                send(ExhaustivityTestAction.Increment)
+                            }
+                        }
 
-                store.send(ExhaustivityTestAction.IncrementTap)
-                testCoroutineScope.advanceTimeBy(1001)
-                withClue("Did not receive action") {
-                    shouldThrow<AssertionError> {
-                        // did not receive action
-                        store.send(ExhaustivityTestAction.IncrementTap)
-                    }
-                }
-                store.skipReceivedActions(count = 1)
+                        send(ExhaustivityTestAction.IncrementTap)
+                        advanceTestStoreTimeBy(1001.milliseconds)
+                        withClue("Did not receive action") {
+                            shouldThrow<AssertionError> {
+                                // did not receive action
+                                send(ExhaustivityTestAction.IncrementTap)
+                            }
+                        }
+                        receive(ExhaustivityTestAction.Increment) {
+                            it.copy(count = 2, isEven = true)
+                        }
 
-                withClue("Did not wait for effect") {
-                    shouldThrow<AssertionError> {
-                        // did not verify state change
-                        store.send(ExhaustivityTestAction.IncrementTap)
-                        testCoroutineScope.advanceTimeBy(500)
-                        store.finish()
+                        send(ExhaustivityTestAction.IncrementTap)
+                        advanceTestStoreTimeBy(500.milliseconds)
                     }
                 }
             }
