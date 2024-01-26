@@ -3,6 +3,9 @@ package com.toggl.komposable.test.store
 import kotlin.reflect.KProperty
 import kotlin.reflect.KVisibility
 
+/**
+ * Utility interface for filtering and iterating over properties of a class.
+ */
 interface ReflectionHandler {
     fun filterAccessibleProperty(
         properties: Collection<KProperty<*>>,
@@ -12,6 +15,9 @@ interface ReflectionHandler {
     fun forEachAccessibleProperty(properties: Collection<KProperty<*>>, predicate: (KProperty<*>) -> Unit)
 }
 
+/**
+ * A [ReflectionHandler] that filters and iterates over public properties of a class.
+ */
 class PublicPropertiesReflectionHandler : ReflectionHandler {
     override fun filterAccessibleProperty(
         properties: Collection<KProperty<*>>,
