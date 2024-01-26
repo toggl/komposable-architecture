@@ -6,7 +6,6 @@ import com.toggl.komposable.architecture.Reducer
 import com.toggl.komposable.architecture.Store
 import com.toggl.komposable.extensions.createStore
 import com.toggl.komposable.extensions.map
-import com.toggl.komposable.scope.DispatcherProvider
 import com.toggl.komposable.test.utils.Logger
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.Channel.Factory.BUFFERED
@@ -16,38 +15,32 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
-import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.yield
 import kotlin.random.Random
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.TimeSource
 
 /**
- * A testing utility for managing and testing state changes in a Redux-like architecture.
+ * Internal utility for managing and testing state changes in the Komposable architecture.
  *
  * @param initialState A lambda function providing the initial state of the store.
- * @param reducer A lambda function providing the reducer that will power the store.
- * @param dispatcherProvider Provides the dispatcher for executing actions.
- * @param logger A logger for handling log messages during testing.
- * @param reflectionHandler Handles reflection for asserting state changes.
- * @param testCoroutineScope The coroutine scope for running tests.
- * @param timeout Timeout duration for waiting effects to complete.
- * @param exhaustivity The level of exhaustiveness for testing.
+ * @param reducer A lambda function providing the reducer that will power the test store.
+ * @param config A [TestConfig] object that configures the testing process.
  */
-class TestStore<State : Any, Action : Any?>(
+class TestStore<State : Any, Action : Any?> internal constructor(
     initialState: () -> State,
     reducer: () -> Reducer<State, Action>,
-    dispatcherProvider: DispatcherProvider,
-    internal val logger: Logger,
-    internal val reflectionHandler: ReflectionHandler = PublicPropertiesReflectionHandler(),
-    val testCoroutineScope: TestScope,
-    var timeout: Duration = 100.milliseconds,
-    var exhaustivity: Exhaustivity = Exhaustivity.Exhaustive,
+    config: TestConfig,
 ) {
-    private val store: Store<State, TestReducer.TestAction<Action>>
+    internal val testCoroutineScope: TestScope = config.testCoroutineScope
+    internal val logger: Logger = config.logger
+    internal val reflectionHandler: ReflectionHandler = config.reflectionHandler
+    internal var timeout: Duration = config.timeout
+    private val exhaustivity: TestExhaustivity = config.exhaustivity
+    private var tempExhaustivity: TestExhaustivity? = null
     internal val reducer: TestReducer<State, Action>
+    private val store: Store<State, TestReducer.TestAction<Action>>
     val state: State
         get() = reducer.state
 
@@ -63,13 +56,22 @@ class TestStore<State : Any, Action : Any?>(
         this.store = createStore(
             initialState = this.state,
             reducer = this.reducer,
-            dispatcherProvider = dispatcherProvider,
+            dispatcherProvider = config.dispatcherProvider,
             storeScopeProvider = { testCoroutineScope },
         )
     }
 
     private val assertionRunner: AssertionRunner<State, Action>
-        get() = exhaustivity.createAssertionRunner(this)
+        get() = (tempExhaustivity ?: exhaustivity).createAssertionRunner(this)
+
+    private suspend fun withTempExhaustivity(
+        exhaustivity: TestExhaustivity,
+        block: suspend () -> Unit,
+    ) {
+        tempExhaustivity = exhaustivity
+        block()
+        tempExhaustivity = null
+    }
 
     internal interface AssertionRunner<State : Any, Action> {
         fun assertStateChange(
@@ -84,36 +86,7 @@ class TestStore<State : Any, Action : Any?>(
         suspend fun assertActionsWereReceived()
     }
 
-    /**
-     * Controls the level of exhaustiveness for state change and action receipt assertions in [TestStore].
-     */
-    sealed class Exhaustivity {
-        /**
-         * Represents an exhaustive level where all state changes and received actions must be asserted and
-         * all effects must be done when finishing the test.
-         */
-        data object Exhaustive : Exhaustivity()
-
-        /**
-         * Represents a non-exhaustive level where state changes and received actions can be skipped.
-         * Note that actions fired by effects must still be received or skipped before new actions can be sent.
-         * The final state of the store can be asserted using [TestStore.assert] after calling [TestStore.finish]
-         */
-        data class NonExhaustive(
-            val logIgnoredReceivedActions: Boolean = true,
-            val logIgnoredStateChanges: Boolean = true,
-            val logIgnoredEffects: Boolean = true,
-        ) : Exhaustivity()
-    }
-
-    /**
-     * Sends an action to the store and asserts the resulting state change.
-     * Don't provide an assert function if you don't expect a state change.
-     *
-     * @param action The action to be sent to the store.
-     * @param assert A lambda function for asserting the resulting state.
-     */
-    suspend fun send(action: Action, assert: ((state: State) -> State)? = null) {
+    internal suspend fun send(action: Action, assert: ((state: State) -> State)? = null) {
         testCoroutineScope.runCurrent()
         if (reducer.receivedActions.isNotEmpty()) {
             throw AssertionError("Cannot send actions after receiving actions")
@@ -128,27 +101,11 @@ class TestStore<State : Any, Action : Any?>(
         assertionRunner.assertStateChange(previousState, currentState, assert)
     }
 
-    /**
-     * Receives an action that has been fired by some Effect running in the store and
-     * asserts the resulting state change.
-     * Don't provide an assert function if you don't expect a state change.
-     *
-     * @param action The action expected to be received.
-     * @param assert A lambda function for asserting the resulting state.
-     */
-    suspend fun receive(action: Action, assert: ((state: State) -> State)? = null) {
+    internal suspend fun receive(action: Action, assert: ((state: State) -> State)? = null) {
         receive({ it == action }, assert)
     }
 
-    /**
-     * Receives an action that has been fired by some Effect running in the store
-     * based on a predicate and asserts the resulting state change.
-     * Don't provide an assert function if you don't expect a state change.
-     *
-     * @param actionPredicate A predicate function for selecting the received action.
-     * @param assert A lambda function for asserting the resulting state.
-     */
-    suspend fun receive(
+    internal suspend fun receive(
         actionPredicate: (Action) -> Boolean,
         assert: ((state: State) -> State)? = null,
     ) {
@@ -220,34 +177,29 @@ class TestStore<State : Any, Action : Any?>(
         },
     )
 
-    /**
-     * Skips a specified number of received actions without asserting state changes.
-     * Note that skipped received actions still incur in state changes.
-     *
-     * @param count The number of received actions to skip.
-     */
-    suspend fun skipReceivedActions(count: Int) {
-        val currentExhaustivity = exhaustivity
-        exhaustivity = Exhaustivity.NonExhaustive(
-            logIgnoredReceivedActions = false,
-            logIgnoredStateChanges = false,
-            logIgnoredEffects = false,
-        )
-        repeat(count) {
-            receive({ true }, null)
+    internal suspend fun skipReceivedActions(count: Int) {
+        withTempExhaustivity(
+            TestExhaustivity.NonExhaustive(
+                logIgnoredReceivedActions = false,
+                logIgnoredStateChanges = false,
+                logIgnoredEffects = false,
+            ),
+        ) {
+            repeat(count) {
+                receive({ true }, null)
+            }
         }
-        exhaustivity = currentExhaustivity
     }
 
     /**
      * Finishes the testing process by ensuring all effects are done and all fired actions have been
      * received and their state changes asserted.
      *
-     * When running tests with [Exhaustivity.NonExhaustive], this method may be called to wait for all effects
+     * When running tests with [TestExhaustivity.NonExhaustive], this method may be called to wait for all effects
      * to finish under the [TestStore.timeout] duration. All ignored received actions will be skipped and their state changes
      * integrated into the final state of the store. The final state of the store can be asserted using [TestStore.assert].
      */
-    suspend fun finish() {
+    internal suspend fun finish() {
         if (reducer.inFlightEffects.isNotEmpty()) {
             awaitMatch(
                 timeout = timeout,
@@ -260,156 +212,90 @@ class TestStore<State : Any, Action : Any?>(
     }
 
     /**
-     * Asserts the final state of the store. Only useful when running tests with [Exhaustivity.NonExhaustive].
+     * Asserts the current state of the store. Only useful when running tests with [TestExhaustivity.NonExhaustive].
      * See [TestStore.finish].
      */
-    fun assert(assert: (state: State) -> State) {
+    internal fun assert(assert: (state: State) -> State) {
         assertionRunner.assertStateChange(reducer.state, reducer.state, assert)
     }
-}
 
-internal class TestReducer<State, Action>(
-    private val innerReducer: Reducer<State, Action>,
-    internal var state: State,
-    private val testCoroutineScope: TestScope,
-    private val subChannel: Channel<Unit>,
-) : Reducer<State, TestReducer.TestAction<Action>> {
-    val receivedActions: MutableList<Pair<Action, State>> = mutableListOf()
-    val inFlightEffects: MutableList<LongLivingEffect<Action>> = mutableListOf()
+    /**
+     * A reducer that wraps the original reducer and keeps track of the state and actions received.
+     * @param innerReducer The original reducer.
+     * @param state The initial state of the store.
+     * @param testCoroutineScope The coroutine scope of the test.
+     * @param subChannel A channel used to signal that an effect has been subscribed to.
+     */
+    internal class TestReducer<State, Action>(
+        private val innerReducer: Reducer<State, Action>,
+        internal var state: State,
+        private val testCoroutineScope: TestScope,
+        private val subChannel: Channel<Unit>,
+    ) : Reducer<State, TestReducer.TestAction<Action>> {
+        val receivedActions: MutableList<Pair<Action, State>> = mutableListOf()
+        val inFlightEffects: MutableList<LongLivingEffect<Action>> = mutableListOf()
 
-    data class TestAction<Action>(val origin: Origin<Action>) {
-        val action: Action
-            get() = origin.action
+        data class TestAction<Action>(val origin: Origin<Action>) {
+            val action: Action
+                get() = origin.action
 
-        sealed class Origin<Action> {
-            abstract val action: Action
+            sealed class Origin<Action> {
+                abstract val action: Action
 
-            data class Send<Action>(override val action: Action) : Origin<Action>()
-            data class Receive<Action>(override val action: Action) : Origin<Action>()
-        }
-    }
-
-    data class LongLivingEffect<Action>(
-        val id: Long = Random.nextLong(),
-        val action: TestAction<Action>,
-    )
-
-    override fun reduce(
-        state: State,
-        action: TestAction<Action>,
-    ): ReduceResult<State, TestAction<Action>> {
-        val updatedState: State
-        val effect: Effect<Action>
-        when (action.origin) {
-            is TestAction.Origin.Send -> {
-                val (newState, sentEffect) = innerReducer.reduce(state, action.action)
-                effect = sentEffect
-                updatedState = newState
-                this.state = newState
-            }
-
-            is TestAction.Origin.Receive -> {
-                val (newState, receivedEffect) = innerReducer.reduce(state, action.action)
-                effect = receivedEffect
-                updatedState = newState
-                receivedActions.add(action.action to newState)
+                data class Send<Action>(override val action: Action) : Origin<Action>()
+                data class Receive<Action>(override val action: Action) : Origin<Action>()
             }
         }
 
-        val mappedEffect = if (effect == Effect.none()) {
-            testCoroutineScope.launch { subChannel.send(Unit) }
-            Effect.none()
-        } else {
-            val longLivingEffect = LongLivingEffect(action = action)
-            Effect.fromFlow(
-                effect.run().onStart {
-                    subChannel.send(Unit)
-                    inFlightEffects.add(longLivingEffect)
-                }.onCompletion {
-                    // Completion might mean completion or cancellation
-                    inFlightEffects.remove(longLivingEffect)
+        data class LongLivingEffect<Action>(
+            val id: Long = Random.nextLong(),
+            val action: TestAction<Action>,
+        )
+
+        override fun reduce(
+            state: State,
+            action: TestAction<Action>,
+        ): ReduceResult<State, TestAction<Action>> {
+            val updatedState: State
+            val effect: Effect<Action>
+            when (action.origin) {
+                is TestAction.Origin.Send -> {
+                    val (newState, sentEffect) = innerReducer.reduce(state, action.action)
+                    effect = sentEffect
+                    updatedState = newState
+                    this.state = newState
+                }
+
+                is TestAction.Origin.Receive -> {
+                    val (newState, receivedEffect) = innerReducer.reduce(state, action.action)
+                    effect = receivedEffect
+                    updatedState = newState
+                    receivedActions.add(action.action to newState)
+                }
+            }
+
+            val mappedEffect = if (effect == Effect.none()) {
+                testCoroutineScope.launch { subChannel.send(Unit) }
+                Effect.none()
+            } else {
+                val longLivingEffect = LongLivingEffect(action = action)
+                Effect.fromFlow(
+                    effect.run().onStart {
+                        subChannel.send(Unit)
+                        inFlightEffects.add(longLivingEffect)
+                    }.onCompletion {
+                        // Completion might mean completion or cancellation
+                        inFlightEffects.remove(longLivingEffect)
+                    },
+                )
+            }
+
+            return ReduceResult(
+                updatedState,
+                mappedEffect.map {
+                    TestAction(TestAction.Origin.Receive(it))
                 },
             )
         }
-
-        return ReduceResult(
-            updatedState,
-            mappedEffect.map {
-                TestAction(TestAction.Origin.Receive(it))
-            },
-        )
     }
-}
-
-/**
- * A scope for interacting with the TestStore during testing.
- *
- * @param store The TestStore instance to be scoped.
- */
-class TestStoreScope<State : Any, Action : Any?>(val store: TestStore<State, Action>) {
-    /**
-     * See [TestStore.send]
-     */
-    suspend fun send(action: Action, assert: ((state: State) -> State)? = null) =
-        store.send(action, assert)
-
-    /**
-     * See [TestStore.receive]
-     */
-    suspend fun receive(action: Action, assert: ((state: State) -> State)? = null) =
-        store.receive(action, assert)
-
-    /**
-     * See [TestStore.receive]
-     */
-    suspend fun receive(
-        actionPredicate: (Action) -> Boolean,
-        assert: ((state: State) -> State)? = null,
-    ) = store.receive(actionPredicate, assert)
-
-    /**
-     * Executes a test block with a specific exhaustivity level.
-     *
-     * @param exhaustivity The exhaustivity level for the block of code.
-     * @param block The test block to be executed within the specified exhaustivity level.
-     */
-    suspend fun withExhaustivity(
-        exhaustivity: TestStore.Exhaustivity,
-        block: suspend TestStoreScope<State, Action>.() -> Unit,
-    ) {
-        val previousExhaustivity = store.exhaustivity
-        store.exhaustivity = exhaustivity
-        try {
-            block()
-        } finally {
-            store.exhaustivity = previousExhaustivity
-        }
-    }
-
-    /**
-     * Advances the time in the associated TestStore's coroutine scope.
-     *
-     * @param duration The duration by which to advance the time.
-     */
-    fun advanceTimeBy(duration: Duration) {
-        store.testCoroutineScope.advanceTimeBy(duration)
-    }
-}
-
-/**
- * Extension function for simplifying the testing process of a TestStore.
- * Automatically finishes the test after the test body has been executed, asserting that all effects
- * are done all actions have been received.
- *
- * @param exhaustivity The default exhaustivity level where the test body will be executed.
- * @param testBody The test body to be executed.
- */
-suspend fun <State : Any, Action : Any?> TestStore<State, Action>.test(
-    exhaustivity: TestStore.Exhaustivity = TestStore.Exhaustivity.Exhaustive,
-    testBody: suspend TestStoreScope<State, Action>.() -> Unit,
-) {
-    this.exhaustivity = exhaustivity
-    val scope = TestStoreScope(this)
-    testBody(scope)
-    finish()
 }

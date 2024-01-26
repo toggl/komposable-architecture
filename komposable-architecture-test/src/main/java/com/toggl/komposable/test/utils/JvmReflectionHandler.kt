@@ -4,6 +4,10 @@ import com.toggl.komposable.test.store.ReflectionHandler
 import kotlin.reflect.KProperty
 import kotlin.reflect.jvm.isAccessible
 
+/**
+ * A [ReflectionHandler] that filters and iterates over public properties of a class.
+ * Works on JVM only.
+ */
 class JvmReflectionHandler : ReflectionHandler {
     override fun filterAccessibleProperty(
         properties: Collection<KProperty<*>>,

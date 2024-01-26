@@ -4,10 +4,10 @@ import com.toggl.komposable.test.utils.info
 import io.kotest.matchers.shouldBe
 import kotlin.reflect.full.memberProperties
 
-internal fun <State : Any, Action> TestStore.Exhaustivity.createAssertionRunner(
+internal fun <State : Any, Action> TestExhaustivity.createAssertionRunner(
     testStore: TestStore<State, Action>,
 ): TestStore.AssertionRunner<State, Action> =
-    if (this is TestStore.Exhaustivity.NonExhaustive) {
+    if (this is TestExhaustivity.NonExhaustive) {
         NonExhaustiveAssertionRunner(
             testStore,
             this.logIgnoredStateChanges,
