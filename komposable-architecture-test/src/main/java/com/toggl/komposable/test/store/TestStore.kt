@@ -37,7 +37,7 @@ import kotlin.time.TimeSource
  * @param timeout Timeout duration for waiting effects to complete.
  * @param exhaustivity The level of exhaustiveness for testing.
  */
-class TestStore<State : Any, Action : Any?>(
+class TestStore<State : Any, Action : Any?> internal constructor(
     initialState: () -> State,
     reducer: () -> Reducer<State, Action>,
     config: TestConfig,
@@ -46,7 +46,8 @@ class TestStore<State : Any, Action : Any?>(
     internal val logger: Logger = config.logger
     internal val reflectionHandler: ReflectionHandler = config.reflectionHandler
     internal var timeout: Duration = config.timeout
-    internal var exhaustivity: Exhaustivity = config.exhaustivity
+    private val exhaustivity: Exhaustivity = config.exhaustivity
+    private var tempExhaustivity: Exhaustivity? = null
     internal val reducer: TestReducer<State, Action>
     private val store: Store<State, TestReducer.TestAction<Action>>
     val state: State
@@ -70,7 +71,14 @@ class TestStore<State : Any, Action : Any?>(
     }
 
     private val assertionRunner: AssertionRunner<State, Action>
-        get() = exhaustivity.createAssertionRunner(this)
+        get() = (tempExhaustivity ?: exhaustivity).createAssertionRunner(this)
+
+
+    private suspend fun withTempExhaustivity(exhaustivity: Exhaustivity, block: suspend () -> Unit) {
+        tempExhaustivity = exhaustivity
+        block()
+        tempExhaustivity = null
+    }
 
     internal interface AssertionRunner<State : Any, Action> {
         fun assertStateChange(
@@ -228,16 +236,15 @@ class TestStore<State : Any, Action : Any?>(
      * @param count The number of received actions to skip.
      */
     internal suspend fun skipReceivedActions(count: Int) {
-        val currentExhaustivity = exhaustivity
-        exhaustivity = Exhaustivity.NonExhaustive(
+        withTempExhaustivity(Exhaustivity.NonExhaustive(
             logIgnoredReceivedActions = false,
             logIgnoredStateChanges = false,
             logIgnoredEffects = false,
-        )
-        repeat(count) {
-            receive({ true }, null)
+        )) {
+            repeat(count) {
+                receive({ true }, null)
+            }
         }
-        exhaustivity = currentExhaustivity
     }
 
     /**
@@ -342,28 +349,52 @@ class TestStore<State : Any, Action : Any?>(
     }
 }
 
-open class BaseTestStoreScope<State : Any, Action : Any?>(private val store: TestStore<State, Action>) {
+interface ExhaustiveTestStoreScope<State : Any, Action : Any?> {
+
     val state: State
+
+    suspend fun send(action: Action, assert: ((state: State) -> State)? = null)
+
+    suspend fun receive(action: Action, assert: ((state: State) -> State)? = null)
+
+    suspend fun receive(
+        actionPredicate: (Action) -> Boolean,
+        assert: ((state: State) -> State)? = null,
+    )
+
+    fun advanceTestStoreTimeBy(duration: Duration)
+}
+
+interface NonExhaustiveTestStoreScope<State : Any, Action : Any?> : ExhaustiveTestStoreScope<State, Action> {
+
+    val defaultDuration: Duration
+    suspend fun skipReceivedActions(count: Int)
+    suspend fun awaitEffectsConsumption(timeout: Duration = defaultDuration)
+    fun assert(assert: (state: State) -> State)
+}
+
+private open class BaseTestStoreScopeImpl<State : Any, Action : Any?>(private val store: TestStore<State, Action>): ExhaustiveTestStoreScope<State, Action> {
+    override val state: State
         get() = store.state
 
     /**
      * See [TestStore.send]
      */
-    suspend fun send(action: Action, assert: ((state: State) -> State)? = null) =
+    override suspend fun send(action: Action, assert: ((state: State) -> State)?) =
         store.send(action, assert)
 
     /**
      * See [TestStore.receive]
      */
-    suspend fun receive(action: Action, assert: ((state: State) -> State)? = null) =
+    override suspend fun receive(action: Action, assert: ((state: State) -> State)?) =
         store.receive(action, assert)
 
     /**
      * See [TestStore.receive]
      */
-    suspend fun receive(
+    override suspend fun receive(
         actionPredicate: (Action) -> Boolean,
-        assert: ((state: State) -> State)? = null,
+        assert: ((state: State) -> State)?,
     ) = store.receive(actionPredicate, assert)
 
     /**
@@ -371,7 +402,7 @@ open class BaseTestStoreScope<State : Any, Action : Any?>(private val store: Tes
      *
      * @param duration The duration by which to advance the time.
      */
-    fun advanceTestStoreTimeBy(duration: Duration) {
+    override fun advanceTestStoreTimeBy(duration: Duration) {
         store.testCoroutineScope.advanceTimeBy(duration)
     }
 }
@@ -380,12 +411,13 @@ open class BaseTestStoreScope<State : Any, Action : Any?>(private val store: Tes
  * A scope for interacting with the TestStore during testing.
  * See [TestStore.test].
  */
-class ExhaustiveTestStoreScope<State : Any, Action : Any?>(store: TestStore<State, Action>) :
-    BaseTestStoreScope<State, Action>(store)
+private class ExhaustiveTestStoreScopeImpl<State : Any, Action : Any?>(store: TestStore<State, Action>) :
+    ExhaustiveTestStoreScope<State, Action>, BaseTestStoreScopeImpl<State, Action>(store)
 
-class NonExhaustiveTestStoreScope<State : Any, Action : Any?>(private val store: TestStore<State, Action>) :
-    BaseTestStoreScope<State, Action>(store) {
-    private val defaultDuration: Duration
+private class NonExhaustiveTestStoreScopeImpl<State : Any, Action : Any?>(private val store: TestStore<State, Action>) :
+    NonExhaustiveTestStoreScope<State, Action>, BaseTestStoreScopeImpl<State, Action>(store) {
+
+    override val defaultDuration: Duration
         get() = store.timeout
 
     /**
@@ -394,7 +426,7 @@ class NonExhaustiveTestStoreScope<State : Any, Action : Any?>(private val store:
      *
      * @param count The number of received actions to skip.
      */
-    suspend fun skipReceivedActions(count: Int) {
+    override suspend fun skipReceivedActions(count: Int) {
         store.skipReceivedActions(count)
     }
 
@@ -405,14 +437,14 @@ class NonExhaustiveTestStoreScope<State : Any, Action : Any?>(private val store:
      * The final state of the store can be asserted using [assert].
      * See [TestStore.finish]
      */
-    suspend fun awaitEffectsConsumption(timeout: Duration = defaultDuration) {
+    override suspend fun awaitEffectsConsumption(timeout: Duration) {
         val previousTimeout = store.timeout
         store.timeout = timeout
         store.finish()
         store.timeout = previousTimeout
     }
 
-    fun assert(assert: (state: State) -> State) {
+    override fun assert(assert: (state: State) -> State) {
         store.assert(assert)
     }
 }
@@ -471,7 +503,7 @@ suspend fun <State : Any, Action : Any?> Reducer<State, Action>.test(
         reducer = { this },
         config = config,
     )
-    val scope = ExhaustiveTestStoreScope(testStore)
+    val scope = ExhaustiveTestStoreScopeImpl(testStore)
     testBody(scope)
     testStore.finish()
 }
@@ -492,6 +524,6 @@ suspend fun <State : Any, Action : Any?> Reducer<State, Action>.test(
         reducer = { this },
         config = config,
     )
-    val scope = NonExhaustiveTestStoreScope(testStore)
+    val scope = NonExhaustiveTestStoreScopeImpl(testStore)
     testBody(scope)
 }
