@@ -10,8 +10,8 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
-private val mutex = Mutex()
-private val cancellationJobs: MutableMap<Any, MutableSet<Job>> = mutableMapOf()
+internal val mutex = Mutex()
+internal val cancellationJobs: MutableMap<Any, MutableSet<Job>> = mutableMapOf()
 
 /**
  * Makes an Effect cancellable by associating it with a given ID.
