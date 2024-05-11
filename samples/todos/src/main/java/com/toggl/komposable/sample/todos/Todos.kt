@@ -8,9 +8,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.toggl.komposable.architecture.ReduceResult
 import com.toggl.komposable.architecture.Reducer
-import com.toggl.komposable.extensions.withSuspendEffect
+import com.toggl.komposable.extensions.debounce
+import com.toggl.komposable.extensions.withEffect
 import com.toggl.komposable.extensions.withoutEffect
-import kotlinx.coroutines.delay
 import java.util.UUID
 
 sealed class TodosAction {
@@ -52,10 +52,7 @@ class TodosReducer : Reducer<TodosState, TodosAction> {
             TodosAction.SortCompletedTodos ->
                 state.copy(todos = state.todos.sortedBy { it.isComplete }).withoutEffect()
             is TodosAction.Todo -> if (action.action is TodoAction.IsCompleteChanged) {
-                state.withSuspendEffect(id = "sort", cancelInFlight = true) {
-                    delay(1000)
-                    TodosAction.SortCompletedTodos
-                }
+                state.withEffect { of(TodosAction.SortCompletedTodos).debounce("sort", 1000) }
             } else {
                 state.withoutEffect()
             }
