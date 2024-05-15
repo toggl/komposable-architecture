@@ -32,7 +32,6 @@ class StateMappingSymbolProcessor(
             .map { parentState ->
                 val parentStateClassName = parentState.toClassName()
                 val parentStateTypeName = parentStateClassName.simpleName
-
                 val parentStateArgumentName = parentStateTypeName.toCamelCase()
 
                 parentState
@@ -64,7 +63,7 @@ class StateMappingSymbolProcessor(
                                     .returns(parentStateClassName)
                                     .addCode(
                                         """return $parentStateArgumentName.copy(
-    ${buildParentStateConstructorParameterList(childState, childStateArgumentName)}    )""",
+${buildParentStateConstructorParameterList(childState, parentStateArgumentName, childStateArgumentName)}    )""",
                                     )
                                     .build(),
                             )
@@ -88,20 +87,78 @@ class StateMappingSymbolProcessor(
                 builder.appendLine("$name = $parentStateArgumentName.$path,")
             }.toString()
 
+    private data class Node(
+        val pathInParent: String,
+        val pathInChild: String,
+        val fullPathInParent: String,
+        val children: List<Node>
+    )
+
     private fun buildParentStateConstructorParameterList(
         childState: KSClassDeclaration,
+        parentStateArgumentName: String,
         childStateArgumentName: String,
     ): String =
         childState
             .getConstructors()
             .first()
             .parameters
-            .fold(StringBuilder()) { builder, parameter ->
-                val name = parameter.name?.getShortName().orEmpty()
-                val path = parameter.getParentPath() ?: name
+            .fold(Node("", "", "", emptyList())) { node, parameter ->
+                val pathInChild = parameter.name?.getShortName().orEmpty()
+                val pathInParent = parameter.getParentPath() ?: pathInChild
 
-                builder.appendLine("    $path = $childStateArgumentName.$name,")
-            }.toString()
+                fun createOrEditNode(node: Node, fullPath: List<String>, depth: Int): Node {
+                    val currentFullPath = fullPath.drop(depth)
+                    if (currentFullPath.isEmpty())
+                        return node
+
+                    val currentPath = currentFullPath.first()
+                    val existingNode = node.children.firstOrNull { it.pathInParent == currentPath }
+                    val nodeToEditNext = existingNode ?: Node(currentPath, pathInChild, currentFullPath.dropLast(1).joinToString("."), emptyList())
+                    val newNode = createOrEditNode(nodeToEditNext, fullPath, depth + 1)
+                    val newChildren = node.children.filter { it.pathInParent == currentPath } + listOf(newNode)
+                    return node.copy(children = newChildren)
+                }
+
+                var nodeToReturn = node
+                val rawPathComponents = pathInParent.split(".")
+                val pathComponents = List(rawPathComponents.size) { i -> rawPathComponents.take(i + 1) }
+                for (component in pathComponents) {
+                    nodeToReturn = createOrEditNode(node, component, 0)
+                }
+
+                nodeToReturn
+
+            }.run {
+
+                fun traverseDepthFirst(node: Node, stringBuilder: StringBuilder, depth: Int) {
+
+                    val tabulation = "    ".repeat(depth + 1)
+
+                    if (node.children.isEmpty()) {
+                        stringBuilder.appendLine("$tabulation${node.pathInParent} = $childStateArgumentName.${node.pathInChild},")
+                    } else {
+                        val includeCopyLine = depth > 0;
+
+                        // Skip the copy line for the first depth.
+                        if (includeCopyLine) {
+                            stringBuilder.appendLine("$tabulation${node.pathInParent} = $parentStateArgumentName.${node.fullPathInParent}.copy(")
+                        }
+                        for (child in node.children) {
+                            traverseDepthFirst(child, stringBuilder, depth + 1)
+                        }
+
+                        // Skip closing the parenthesis we did not open above.
+                        if (includeCopyLine) {
+                            stringBuilder.appendLine("$tabulation)")
+                        }
+                    }
+                }
+
+                val builder = StringBuilder()
+                traverseDepthFirst(this, builder, 0)
+                builder.toString()
+            }
 
     private fun KSClassDeclaration.stateMappingFileBuilder(): FileSpec.Builder {
         val className = toClassName()

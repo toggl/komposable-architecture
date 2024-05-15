@@ -28,6 +28,20 @@ object StateSources {
         """.trimIndent(),
     )
 
+    val settingsStateWithNestedMapping = SourceFile.kotlin(
+        "SettingsState.kt",
+        """
+        package com.toggl.komposable.compiler
+        
+        import com.toggl.komposable.architecture.ParentPath
+        
+        data class SettingsState(
+            @ParentPath("nested.booleanValue")
+            val value: Boolean
+        )
+        """.trimIndent(),
+    )
+
     val appState = SourceFile.kotlin(
         "AppState.kt",
         """
@@ -40,6 +54,26 @@ object StateSources {
         data class AppState(
             val someList: List<String>,
             val booleanValue: Boolean
+        )
+        """.trimIndent(),
+    )
+
+    val appStateWithNestedValue = SourceFile.kotlin(
+        "AppState.kt",
+        """
+        package com.toggl.komposable.compiler
+        
+        import com.toggl.komposable.architecture.ChildStates
+        import com.toggl.komposable.compiler.SettingsState
+    
+        data class NestedValue(
+            val booleanValue: Boolean
+        )
+        
+        @ChildStates(SettingsState::class)
+        data class AppState(
+            val someList: List<String>,
+            val nested: NestedValue
         )
         """.trimIndent(),
     )
@@ -67,6 +101,21 @@ public fun mapAppStateToSettingsState(appState: AppState): SettingsState = Setti
 public fun mapSettingsStateToAppState(appState: AppState, settingsState: SettingsState): AppState =
     appState.copy(
         booleanValue = settingsState.value,
+    )
+"""
+
+    @Language("kotlin")
+    val generatedStateExtensionsFileWithPathNestedMapping = """package com.toggl.komposable.compiler
+
+public fun mapAppStateToSettingsState(appState: AppState): SettingsState = SettingsState(
+    value = appState.nested.booleanValue,
+)
+
+public fun mapSettingsStateToAppState(appState: AppState, settingsState: SettingsState): AppState =
+    appState.copy(
+        nested = appState.nested.copy(
+            booleanValue = settingsState.value,
+        )
     )
 """
 }
