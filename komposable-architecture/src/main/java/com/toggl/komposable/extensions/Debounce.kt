@@ -20,7 +20,6 @@ fun <Action> Effect<Action>.debounce(
     id: Any,
     delayMillis: Long,
 ): Effect<Action> = Effect {
-    this.run().debounce(delayMillis).onStart {
     this.run().onStart {
         delay(delayMillis)
     }
