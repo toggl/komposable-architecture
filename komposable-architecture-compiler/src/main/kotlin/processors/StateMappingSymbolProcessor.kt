@@ -50,7 +50,7 @@ class StateMappingSymbolProcessor(
                                     // .trimIndent does not behave the way we expect here, hence the weird format.
                                     .addCode(
                                         """return $childStateTypeName(
-    ${buildChildStateConstructorParameterList(childState, parentStateArgumentName)})""",
+${buildChildStateConstructorParameterList(childState, parentStateArgumentName)})""",
                                     )
                                     .build(),
                             )
@@ -83,7 +83,7 @@ ${buildParentStateConstructorParameterList(childState, parentStateArgumentName, 
                 val name = parameter.name?.getShortName().orEmpty()
                 val path = parameter.getParentPath() ?: name
 
-                builder.appendLine("$name = $parentStateArgumentName.$path,")
+                builder.appendLine("    $name = $parentStateArgumentName.$path,")
             }.toString()
 
     private fun buildParentStateConstructorParameterList(
