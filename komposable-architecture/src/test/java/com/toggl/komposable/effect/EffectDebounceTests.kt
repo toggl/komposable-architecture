@@ -13,6 +13,7 @@ import com.toggl.komposable.test.utils.JvmReflectionHandler
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
@@ -102,6 +103,56 @@ class EffectDebounceTests {
             effect3.awaitItem() shouldBe setOf(3)
             effect3.awaitComplete()
             someState.value shouldBe setOf(3)
+        }
+    }
+
+    @Test
+    fun `effects do not affect their internal flows`() = runTest {
+        val someState = MutableStateFlow(emptySet<Int>())
+        fun emitThings(list: List<Int>): Effect<Int> {
+            return Effect.fromFlow(
+                flow {
+                    for (item in list) {
+                        delay(50)
+                        emit(item)
+                    }
+                },
+            ).debounce("debouncer", 100)
+        }
+
+        turbineScope {
+            val effect1 = emitThings(listOf(1, 2, 3)).run()
+                .onEach { someState.value += it }
+                .testIn(this)
+
+            // effect is being debounced for 100ms
+            delay(100)
+            effect1.expectNoEvents()
+
+            delay(50)
+            // internal flow took 50ms to emit (1)
+            effect1.awaitItem() shouldBe 1
+            someState.value shouldBe setOf(1)
+
+            val effect2 = emitThings(listOf(4, 5, 6, 7)).run()
+                .onEach { someState.value += it }
+                .testIn(this)
+            // effect1 got cancelled in favor of effect1
+            effect1.awaitError()
+            delay(100)
+            effect2.expectNoEvents()
+
+            // internal flow took 50ms to emit (4)
+            delay(50)
+            effect2.awaitItem() shouldBe 4
+            delay(50)
+            effect2.awaitItem() shouldBe 5
+            delay(50)
+            effect2.awaitItem() shouldBe 6
+            delay(50)
+            effect2.awaitItem() shouldBe 7
+            effect2.awaitComplete()
+            someState.value shouldBe setOf(1, 4, 5, 6, 7)
         }
     }
 }
