@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.onStart
  *  start emitting their actions.
  *  It does not affect the internal execution of the effect, but a debounced effect can be cancelled,
  *  cancelling it's internal execution.
- *  
+ *
  * @param id The identifier for this debounced effect. Used to manage cancellation.
  * @param delayMillis The amount of time to delay the execution of the effect.
  * @return A new Effect instance that is debounced.
