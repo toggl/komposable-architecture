@@ -30,10 +30,10 @@ fun <Action> Effect<Action>.merge(vararg effects: Effect<Action>): Effect<Action
  * @param effect The Effect instance to be merged with the current Effect.
  * @return A new Effect instance combining the emissions from both the current and provided Effect.
  */
-infix fun <Action> Effect<Action>.mergeWith(effect: Effect<Action>): Effect<Action> =
-    Effect {
-        kotlinx.coroutines.flow.merge(run(), effect.run())
-    }
+infix fun <Action> Effect<Action>.mergeWith(effect: Effect<Action>): Effect<Action> {
+    if (this is NoEffect) return effect
+    return Effect { kotlinx.coroutines.flow.merge(run(), effect.run()) }
+}
 
 fun <Action> Effect<Action>.named(name: String): Effect<Action> =
     NamedEffect(name, this)
