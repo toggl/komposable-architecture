@@ -35,6 +35,18 @@ infix fun <Action> Effect<Action>.mergeWith(effect: Effect<Action>): Effect<Acti
         kotlinx.coroutines.flow.merge(run(), effect.run())
     }
 
+fun <Action> Effect<Action>.named(name: String): Effect<Action> =
+    NamedEffect(name, this)
+
+class NamedEffect<Action>(
+    internal val name: String,
+    private val effect: Effect<Action>,
+) : Effect<Action> {
+    override fun run(): Flow<Action> = effect.run()
+
+    override fun toString(): String = name
+}
+
 /**
  * Transforms and effect by mapping the resulting action into a different type.
  *
