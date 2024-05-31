@@ -1,5 +1,6 @@
 package com.toggl.komposable.sample.todos
 
+import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -22,7 +23,6 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -31,6 +31,7 @@ import com.toggl.komposable.extensions.createStore
 import com.toggl.komposable.extensions.forEachList
 import com.toggl.komposable.scope.DispatcherProvider
 import com.toggl.komposable.scope.StoreScopeProvider
+import com.toggl.komposable.utils.DebugReducer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlin.coroutines.CoroutineContext
@@ -41,7 +42,7 @@ val todosAppReducer: Reducer<TodosState, TodosAction> = TodosReducer().forEachLi
     mapToElementList = { state -> state.todos },
     mapToParentAction = { action, index -> TodosAction.Todo(index, action) },
     mapToParentState = { state, todosMap -> state.copy(todos = todosMap) },
-)
+).run { DebugReducer(this, logger = { Log.d("debug", it) }) }
 
 val dispatcherProvider = DispatcherProvider(
     io = Dispatchers.IO,
