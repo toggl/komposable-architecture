@@ -174,8 +174,8 @@ class StoreEffectsTests : StoreCoroutineTest() {
             clearPropertyEffect.run()
 
             // third: reduce action returned from testEffect1
-            testReducer.reduce(any(), TestAction.ClearTestPropertyFromEffect)
             testReducer.reduce(any(), TestAction.DoNothingFromEffectAction)
+            testReducer.reduce(any(), TestAction.ClearTestPropertyFromEffect)
         }
     }
 }
