@@ -33,7 +33,12 @@ class DebugReducer<State, Action>(
     }
 }
 
-fun<Action> Effect<Action>.name(): String = when (this) {
+fun <State, Action> Reducer<State, Action>.debugChanges(
+    printer: DebugPrinter<State, Action> = simplePrinter("DebugReducer"),
+    logger: (String) -> Unit = { },
+): Reducer<State, Action> = DebugReducer(this, printer, logger)
+
+fun <Action> Effect<Action>.name(): String = when (this) {
     is NamedEffect -> name
     else -> this::class.simpleName ?: "UnnamedEffect"
 }

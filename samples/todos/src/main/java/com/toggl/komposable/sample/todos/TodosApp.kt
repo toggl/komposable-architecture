@@ -31,7 +31,10 @@ import com.toggl.komposable.extensions.createStore
 import com.toggl.komposable.extensions.forEachList
 import com.toggl.komposable.scope.DispatcherProvider
 import com.toggl.komposable.scope.StoreScopeProvider
+import com.toggl.komposable.test.utils.JvmDebugPrinter
 import com.toggl.komposable.utils.DebugReducer
+import com.toggl.komposable.utils.debugChanges
+import com.toggl.komposable.utils.simplePrinter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlin.coroutines.CoroutineContext
@@ -42,7 +45,10 @@ val todosAppReducer: Reducer<TodosState, TodosAction> = TodosReducer().forEachLi
     mapToElementList = { state -> state.todos },
     mapToParentAction = { action, index -> TodosAction.Todo(index, action) },
     mapToParentState = { state, todosMap -> state.copy(todos = todosMap) },
-).run { DebugReducer(this, logger = { Log.d("debug", it) }) }
+).debugChanges(
+    logger = { Log.d("debug", it) },
+    printer = simplePrinter("TodosAppReducer"),
+)
 
 val dispatcherProvider = DispatcherProvider(
     io = Dispatchers.IO,
