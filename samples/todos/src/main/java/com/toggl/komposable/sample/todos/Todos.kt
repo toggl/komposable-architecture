@@ -9,6 +9,7 @@ import androidx.compose.ui.unit.dp
 import com.toggl.komposable.architecture.ReduceResult
 import com.toggl.komposable.architecture.Reducer
 import com.toggl.komposable.extensions.debounce
+import com.toggl.komposable.extensions.named
 import com.toggl.komposable.extensions.withEffect
 import com.toggl.komposable.extensions.withoutEffect
 import java.util.UUID
@@ -52,7 +53,7 @@ class TodosReducer : Reducer<TodosState, TodosAction> {
             TodosAction.SortCompletedTodos ->
                 state.copy(todos = state.todos.sortedBy { it.isComplete }).withoutEffect()
             is TodosAction.Todo -> if (action.action is TodoAction.IsCompleteChanged) {
-                state.withEffect { of(TodosAction.SortCompletedTodos).debounce("sort", 1000) }
+                state.withEffect { of(TodosAction.SortCompletedTodos).debounce("sort", 1000).named("sort") }
             } else {
                 state.withoutEffect()
             }

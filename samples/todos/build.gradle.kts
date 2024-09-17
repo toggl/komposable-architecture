@@ -60,6 +60,7 @@ android {
 dependencies {
     implementation(project(":komposable-architecture"))
     ksp(project(":komposable-architecture-compiler"))
+    debugImplementation(project(":komposable-architecture-test"))
     implementation(libs.androidx.activity)
     implementation(libs.androidx.activity.ktx)
     implementation(libs.androidx.activity.compose)
