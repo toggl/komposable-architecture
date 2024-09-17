@@ -41,11 +41,10 @@ tasks.withType<Test>().configureEach {
 }
 
 tasks.withType<KotlinCompile>().configureEach {
-    kotlinOptions {
-        @Suppress("SuspiciousCollectionReassignment")
-        freeCompilerArgs += listOf(
+    compilerOptions {
+        freeCompilerArgs.addAll(listOf(
             "-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi",
             "-opt-in=kotlinx.coroutines.FlowPreview"
-        )
+        ))
     }
 }
