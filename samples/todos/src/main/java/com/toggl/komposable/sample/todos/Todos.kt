@@ -1,6 +1,5 @@
 package com.toggl.komposable.sample.todos
 
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.runtime.Composable
@@ -60,7 +59,6 @@ class TodosReducer : Reducer<TodosState, TodosAction> {
         }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun TodoList(todosState: TodosState, onCheckedChange: (Int, Boolean) -> Unit, onDescriptionChanged: (Int, String) -> Unit) {
     LazyColumn(modifier = Modifier.padding(start = 6.dp)) {
@@ -68,7 +66,7 @@ fun TodoList(todosState: TodosState, onCheckedChange: (Int, Boolean) -> Unit, on
             item(key = todo.id) {
                 Todo(
                     todo = todo,
-                    modifier = Modifier.animateItemPlacement(),
+                    modifier = Modifier.animateItem(),
                     onCheckedChange = { onCheckedChange(index, it) },
                     onDescriptionChanged = { onDescriptionChanged(index, it) },
                 )
