@@ -1,7 +1,9 @@
+package sources
+
 import com.tschuchort.compiletesting.SourceFile
 import org.intellij.lang.annotations.Language
 
-object SourceFiles {
+object ActionSources {
 
     val settingsAction = SourceFile.kotlin(
         "SettingsAction.kt",
