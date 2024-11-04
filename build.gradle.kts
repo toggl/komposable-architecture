@@ -1,5 +1,6 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import com.diffplug.gradle.spotless.SpotlessExtension
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     alias(libs.plugins.android.application) apply false
@@ -9,6 +10,7 @@ plugins {
     alias(libs.plugins.hilt) apply false
     alias(libs.plugins.junit5) apply false
     alias(libs.plugins.ksp) apply false
+    alias(libs.plugins.kotlin.compose.compiler) apply false
     alias(libs.plugins.spotless)
     alias(libs.plugins.nexus)
 }
@@ -42,9 +44,9 @@ subprojects {
     }
 
     tasks.withType<KotlinCompile>().configureEach {
-        kotlinOptions {
+        compilerOptions {
             allWarningsAsErrors = true
-            jvmTarget = JavaVersion.VERSION_11.toString()
+            jvmTarget = JvmTarget.JVM_11
         }
     }
 }

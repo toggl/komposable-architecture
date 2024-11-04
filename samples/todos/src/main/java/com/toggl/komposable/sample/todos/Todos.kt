@@ -1,6 +1,5 @@
 package com.toggl.komposable.sample.todos
 
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.runtime.Composable
@@ -8,9 +7,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.toggl.komposable.architecture.ReduceResult
 import com.toggl.komposable.architecture.Reducer
-import com.toggl.komposable.extensions.withSuspendEffect
+import com.toggl.komposable.extensions.debounce
+import com.toggl.komposable.extensions.named
+import com.toggl.komposable.extensions.withEffect
 import com.toggl.komposable.extensions.withoutEffect
-import kotlinx.coroutines.delay
 import java.util.UUID
 
 sealed class TodosAction {
@@ -52,17 +52,13 @@ class TodosReducer : Reducer<TodosState, TodosAction> {
             TodosAction.SortCompletedTodos ->
                 state.copy(todos = state.todos.sortedBy { it.isComplete }).withoutEffect()
             is TodosAction.Todo -> if (action.action is TodoAction.IsCompleteChanged) {
-                state.withSuspendEffect(id = "sort", cancelInFlight = true) {
-                    delay(1000)
-                    TodosAction.SortCompletedTodos
-                }
+                state.withEffect { of(TodosAction.SortCompletedTodos).debounce("sort", 1000).named("sort") }
             } else {
                 state.withoutEffect()
             }
         }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun TodoList(todosState: TodosState, onCheckedChange: (Int, Boolean) -> Unit, onDescriptionChanged: (Int, String) -> Unit) {
     LazyColumn(modifier = Modifier.padding(start = 6.dp)) {
@@ -70,7 +66,7 @@ fun TodoList(todosState: TodosState, onCheckedChange: (Int, Boolean) -> Unit, on
             item(key = todo.id) {
                 Todo(
                     todo = todo,
-                    modifier = Modifier.animateItemPlacement(),
+                    modifier = Modifier.animateItem(),
                     onCheckedChange = { onCheckedChange(index, it) },
                     onDescriptionChanged = { onDescriptionChanged(index, it) },
                 )
