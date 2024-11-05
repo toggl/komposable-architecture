@@ -2,6 +2,7 @@ import com.toggl.komposable.processors.ActionMappingSymbolProcessorProvider
 import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.symbolProcessorProviders
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
 import sources.ActionSources
 import kotlin.test.Test
 
@@ -64,7 +65,7 @@ class ActionMappingSymbolProcessorTests {
         // Assert
         result.exitCode shouldBe KotlinCompilation.ExitCode.COMPILATION_ERROR
 
-        result.messages.contains("AppAction.Settings needs to have exactly one property to be annotated with @WrapperAction")
+        result.messages shouldContain "AppAction.Settings needs to have exactly one property to be annotated with @WrapperAction"
 
         val sources = result.kspGeneratedSources()
         sources.size.shouldBe(0)
