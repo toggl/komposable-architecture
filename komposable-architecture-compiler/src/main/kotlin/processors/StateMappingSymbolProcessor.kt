@@ -113,14 +113,18 @@ ${buildParentStateConstructorParameterList(childState, parentStateArgumentName, 
                 ): ParentStateCopyParameterNode {
                     // The current path we are creating/editing is the full path - the depth we currently are at.
                     val currentFullPathInParent = fullParentPath.drop(depth)
+                    // if this is the end of the path, there is nothing else to add so we'll just return the node as it was passed in
                     if (currentFullPathInParent.isEmpty()) {
                         return node
                     }
 
                     val currentPathInParent = currentFullPathInParent.first()
+                    // check if there is already a node that we should alter instead of creating a new one
+                    // this is the case when we're altering a nested property for which the previous part of the path already exists
                     val existingNode = node.children.firstOrNull { it.pathInParent == currentPathInParent }
                     val nodeToEditNext =
                         existingNode
+                            // If it doesn't exist, we create a new node.
                             ?: ParentStateCopyParameterNode(
                                 currentPathInParent,
                                 pathInChild,
@@ -128,13 +132,18 @@ ${buildParentStateConstructorParameterList(childState, parentStateArgumentName, 
                                 currentFullPathInParent.dropLast(1).joinToString("."),
                                 emptyList(),
                             )
+                    // in case this property is a nested property, we need to recursively create/edit the next node
+                    // if it's not, the same unedited node will be returned
                     val newNode = createOrEditNode(nodeToEditNext, fullParentPath, depth + 1)
-                    val newChildren = node.children.filter { it.pathInParent == currentPathInParent } + listOf(newNode)
-                    return node.copy(children = newChildren)
+                    // remove any existing node with the same path, as we're replacing it with the newNode
+                    val filteredExistingChildren = node.children.filterNot { it.pathInParent == currentPathInParent }
+                    val updatedChildren = filteredExistingChildren + listOf(newNode)
+                    return node.copy(children = updatedChildren)
                 }
 
                 var nodeToReturn = node
                 val rawPathComponents = pathInParent.split(".")
+
                 val pathComponents = List(rawPathComponents.size) { i -> rawPathComponents.take(i + 1) }
                 for (component in pathComponents) {
                     nodeToReturn = createOrEditNode(node, component, 0)
