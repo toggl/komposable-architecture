@@ -1,126 +1,107 @@
 import com.toggl.komposable.processors.StateMappingSymbolProcessorProvider
 import com.tschuchort.compiletesting.KotlinCompilation
-import com.tschuchort.compiletesting.symbolProcessorProviders
+import com.tschuchort.compiletesting.SourceFile
+import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
 import sources.StateSources
 import kotlin.test.Test
 
 class StateMappingSymbolProcessorTests {
     @Test
     fun `State mapping methods are generated`() {
-        // Arrange
-        val compilation = KotlinCompilation().apply {
-            sources = listOf(StateSources.settingsState, StateSources.appState)
-            symbolProcessorProviders = listOf(StateMappingSymbolProcessorProvider())
-            inheritClassPath = true
-            messageOutputStream = System.out
-        }
-
-        // Act
-        val result = compilation.compile()
-
-        // Assert
-        result.exitCode shouldBe KotlinCompilation.ExitCode.OK
-
-        val sources = result.kspGeneratedSources()
-        sources.size.shouldBe(1)
-        sources.single().readText().shouldBe(StateSources.generatedStateExtensionsFile)
+        stateMappingShouldSucceed(
+            sourceFiles = listOf(StateSources.appState, StateSources.settingsState),
+            expectedResult = StateSources.generatedStateExtensionsFile,
+        )
     }
 
     @Test
     fun `State mapping methods are generated even when there are @ParentPath annotated props`() {
-        // Arrange
-        val compilation = KotlinCompilation().apply {
-            sources = listOf(StateSources.settingsStateWithMapping, StateSources.appState)
-            symbolProcessorProviders = listOf(StateMappingSymbolProcessorProvider())
-            inheritClassPath = true
-            messageOutputStream = System.out
-        }
-
-        // Act
-        val result = compilation.compile()
-
-        // Assert
-        result.exitCode shouldBe KotlinCompilation.ExitCode.OK
-
-        val sources = result.kspGeneratedSources()
-        sources.size.shouldBe(1)
-        sources.single().readText().shouldBe(StateSources.generatedStateExtensionsFileWithPathMapping)
+        stateMappingShouldSucceed(
+            sourceFiles = listOf(StateSources.appState, StateSources.settingsStateWithMapping),
+            expectedResult = StateSources.generatedStateExtensionsFileWithPathMapping,
+        )
     }
 
     @Test
     fun `State mapping methods are generated even when there are nested @ParentPath annotated props`() {
-        // Arrange
-        val compilation = KotlinCompilation().apply {
-            sources = listOf(StateSources.settingsStateWithNestedMapping, StateSources.appStateWithNestedValue)
-            symbolProcessorProviders = listOf(StateMappingSymbolProcessorProvider())
-            inheritClassPath = true
-            messageOutputStream = System.out
-        }
+        stateMappingShouldSucceed(
+            sourceFiles = listOf(StateSources.appStateWithNestedValue, StateSources.settingsStateWithNestedMapping),
+            expectedResult = StateSources.generatedStateExtensionsFileWithPathNestedMapping,
+        )
+    }
 
-        // Act
-        val result = compilation.compile()
-
-        // Assert
-        result.exitCode shouldBe KotlinCompilation.ExitCode.OK
-
-        val sources = result.kspGeneratedSources()
-        sources.size.shouldBe(1)
-        sources.single().readText().shouldBe(StateSources.generatedStateExtensionsFileWithPathNestedMapping)
+    @Test
+    fun `State mapping methods are generated even when there are nested @ParentPath annotated props and the nested class is in a separate file`() {
+        stateMappingShouldSucceed(
+            sourceFiles = listOf(StateSources.appStateWithNestedValueInSeparateFile, StateSources.standaloneNestedValue, StateSources.settingsStateWithNestedMapping),
+            expectedResult = StateSources.generatedStateExtensionsFileWithPathNestedMapping,
+        )
     }
 
     @Test
     fun `State mapping methods are generated even when there are multiple values`() {
-        // Arrange
-        val compilation = KotlinCompilation().apply {
-            sources = listOf(StateSources.settingsStateWithTwoValues, StateSources.appStateWithTwoValues)
-            symbolProcessorProviders = listOf(StateMappingSymbolProcessorProvider())
-            inheritClassPath = true
-            messageOutputStream = System.out
-        }
+        stateMappingShouldSucceed(
+            sourceFiles = listOf(StateSources.appStateWithTwoValues, StateSources.settingsStateWithTwoValues),
+            expectedResult = StateSources.generatedStateExtensionsFileWithTwoValues,
+        )
+    }
 
-        // Act
-        val result = compilation.compile()
+    @Test
+    fun `State mapping methods are generated even when there are multiple nested @ParentPath annotated props`() {
+        stateMappingShouldSucceed(
+            sourceFiles = listOf(StateSources.appStateWithTwoNestedValues, StateSources.settingsStateWithTwoNestedMapping),
+            expectedResult = StateSources.generatedStateExtensionsFileWithTwoPathNestedMapping,
+        )
+    }
 
-        // Assert
-        result.exitCode shouldBe KotlinCompilation.ExitCode.OK
-
-        val sources = result.kspGeneratedSources()
-        sources.size.shouldBe(1)
-        sources.single().readText().shouldBe(StateSources.generatedStateExtensionsFileWithTwoValues)
+    @Test
+    fun `State mapping methods are generated for multiple child states`() {
+        stateMappingShouldSucceed(
+            sourceFiles = listOf(StateSources.appStateMultipleChildStates, StateSources.settingsState, StateSources.authState),
+            expectedResult = StateSources.generatedStateExtensionsFileForMultipleChildStates,
+        )
     }
 
     @Test
     fun `State mapping methods generation fails when parent class is not data class`() {
-        // Arrange
-        val compilation = KotlinCompilation().apply {
-            sources = listOf(StateSources.settingsState, StateSources.appStateNonDataClass)
-            symbolProcessorProviders = listOf(StateMappingSymbolProcessorProvider())
-            inheritClassPath = true
-            messageOutputStream = System.out
-        }
-
-        // Act
-        val result = compilation.compile()
-
-        // Assert
-        result.exitCode shouldBe KotlinCompilation.ExitCode.COMPILATION_ERROR
+        stateMappingShouldFail(
+            sourceFiles = listOf(StateSources.appStateNonDataClass, StateSources.settingsState),
+            errorMessage = "AppState must be a data class to create state mappings.",
+        )
     }
 
     @Test
     fun `State mapping methods generation fails when parent class's nested class is not data class`() {
-        // Arrange
-        val compilation = KotlinCompilation().apply {
-            sources = listOf(StateSources.settingsStateWithNestedMapping, StateSources.appStateWithNestedNonDataClassValue)
-            symbolProcessorProviders = listOf(StateMappingSymbolProcessorProvider())
-            inheritClassPath = true
-            messageOutputStream = System.out
+        stateMappingShouldFail(
+            sourceFiles = listOf(StateSources.appStateWithNestedNonDataClassValue, StateSources.settingsStateWithNestedMapping),
+            errorMessage = "TODO",
+        )
+    }
+
+    @Test
+    fun `State mapping methods generation fails when there are invalid @ParentPath properties`() {
+        stateMappingShouldFail(
+            sourceFiles = listOf(StateSources.appState, StateSources.settingsStateWithInvalidMapping),
+            errorMessage = "TODO",
+        )
+    }
+
+    private fun stateMappingShouldSucceed(sourceFiles: List<SourceFile>, expectedResult: String) {
+        StateMappingSymbolProcessorProvider().testCompilation(sourceFiles) {
+            exitCode shouldBe KotlinCompilation.ExitCode.OK
+            val sources = kspGeneratedSources()
+            sources shouldHaveSize 1
+            val fileText = sources.single().readText()
+            fileText shouldBe expectedResult
         }
+    }
 
-        // Act
-        val result = compilation.compile()
-
-        // Assert
-        result.exitCode shouldBe KotlinCompilation.ExitCode.COMPILATION_ERROR
+    private fun stateMappingShouldFail(sourceFiles: List<SourceFile>, errorMessage: String) {
+        StateMappingSymbolProcessorProvider().testCompilation(sourceFiles) {
+            exitCode shouldBe KotlinCompilation.ExitCode.COMPILATION_ERROR
+            messages shouldContain errorMessage
+        }
     }
 }
