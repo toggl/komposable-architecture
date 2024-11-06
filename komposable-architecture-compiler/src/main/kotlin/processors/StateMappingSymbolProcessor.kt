@@ -12,6 +12,7 @@ import com.google.devtools.ksp.symbol.KSAnnotated
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSType
 import com.google.devtools.ksp.symbol.KSValueParameter
+import com.google.devtools.ksp.symbol.Modifier
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.ksp.toClassName
@@ -30,6 +31,11 @@ class StateMappingSymbolProcessor(
         resolver
             .getSymbolsAnnotatedWith(ChildStates::class)
             .map { parentState ->
+                val isDataClass = parentState.modifiers.contains(Modifier.DATA)
+                if (!isDataClass) {
+                    val errorMessage = "${parentState.toClassName().canonicalName} must be a data class to create state mappings."
+                    return@map FileGenerationResult.Failure(errorMessage, parentState)
+                }
                 val parentStateClassName = parentState.toClassName()
                 val parentStateTypeName = parentStateClassName.simpleName
                 val parentStateArgumentName = parentStateTypeName.toCamelCase()
@@ -103,24 +109,25 @@ ${buildParentStateConstructorParameterList(childState, parentStateArgumentName, 
                 fun createOrEditNode(
                     node: ParentStateCopyParameterNode,
                     fullParentPath: List<String>,
-                    depth: Int
+                    depth: Int,
                 ): ParentStateCopyParameterNode {
                     // The current path we are creating/editing is the full path - the depth we currently are at.
                     val currentFullPathInParent = fullParentPath.drop(depth)
-                    if (currentFullPathInParent.isEmpty())
+                    if (currentFullPathInParent.isEmpty()) {
                         return node
+                    }
 
                     val currentPathInParent = currentFullPathInParent.first()
                     val existingNode = node.children.firstOrNull { it.pathInParent == currentPathInParent }
                     val nodeToEditNext =
-                        existingNode ?:
-                        ParentStateCopyParameterNode(
-                            currentPathInParent,
-                            pathInChild,
-                            // dropLast(1) removes the name of the property we are copying.
-                            currentFullPathInParent.dropLast(1).joinToString("."),
-                            emptyList()
-                        )
+                        existingNode
+                            ?: ParentStateCopyParameterNode(
+                                currentPathInParent,
+                                pathInChild,
+                                // dropLast(1) removes the name of the property we are copying.
+                                currentFullPathInParent.dropLast(1).joinToString("."),
+                                emptyList(),
+                            )
                     val newNode = createOrEditNode(nodeToEditNext, fullParentPath, depth + 1)
                     val newChildren = node.children.filter { it.pathInParent == currentPathInParent } + listOf(newNode)
                     return node.copy(children = newChildren)
@@ -134,7 +141,6 @@ ${buildParentStateConstructorParameterList(childState, parentStateArgumentName, 
                 }
 
                 nodeToReturn
-
             }.run {
                 fun traverseDepthFirst(node: ParentStateCopyParameterNode, stringBuilder: StringBuilder, depth: Int) {
                     val tabulation = "    ".repeat(depth + 1)
@@ -144,7 +150,7 @@ ${buildParentStateConstructorParameterList(childState, parentStateArgumentName, 
                     if (node.children.isEmpty()) {
                         stringBuilder.appendLine("$tabulation${node.pathInParent} = $childStateArgumentName.${node.pathInChild},")
                     } else {
-                        val includeCopyLine = depth > 0;
+                        val includeCopyLine = depth > 0
 
                         // Skip the copy line for the first depth.
                         if (includeCopyLine) {
@@ -197,7 +203,7 @@ ${buildParentStateConstructorParameterList(childState, parentStateArgumentName, 
         val pathInParent: String,
         val pathInChild: String,
         val fullPathInParent: String,
-        val children: List<ParentStateCopyParameterNode>
+        val children: List<ParentStateCopyParameterNode>,
     )
 }
 
