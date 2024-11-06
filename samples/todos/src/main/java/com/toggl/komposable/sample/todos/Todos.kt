@@ -5,12 +5,19 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.toggl.komposable.architecture.ChildStates
 import com.toggl.komposable.architecture.ReduceResult
 import com.toggl.komposable.architecture.Reducer
+import com.toggl.komposable.architecture.WrapperAction
 import com.toggl.komposable.extensions.debounce
 import com.toggl.komposable.extensions.named
 import com.toggl.komposable.extensions.withEffect
 import com.toggl.komposable.extensions.withoutEffect
+import com.toggl.komposable.sample.todos.title.TitleAction
+import com.toggl.komposable.sample.todos.title.TitleState
+import com.toggl.komposable.sample.todos.todo.Todo
+import com.toggl.komposable.sample.todos.todo.TodoAction
+import com.toggl.komposable.sample.todos.todo.TodoState
 import java.util.UUID
 
 sealed class TodosAction {
@@ -20,6 +27,9 @@ sealed class TodosAction {
     data object SortCompletedTodos : TodosAction()
     data class Delete(val ids: Set<UUID>) : TodosAction()
     data class Todo(val index: Int, val action: TodoAction) : TodosAction()
+
+    @WrapperAction
+    data class Title(val action: TitleAction) : TodosAction()
 }
 
 enum class Filter {
@@ -27,7 +37,11 @@ enum class Filter {
     Active,
     Completed,
 }
+
+@ChildStates(TitleState::class)
 data class TodosState(
+    val title: String = "Todos",
+    val isTitleEdited: Boolean = false,
     val todos: List<TodoState> = emptyList(),
     val filter: Filter = Filter.All,
 ) {
@@ -56,6 +70,7 @@ class TodosReducer : Reducer<TodosState, TodosAction> {
             } else {
                 state.withoutEffect()
             }
+            is TodosAction.Title -> state.withEffect()
         }
 }
 
