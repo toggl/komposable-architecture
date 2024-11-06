@@ -41,6 +41,40 @@ object ActionSources {
         """.trimIndent(),
     )
 
+    val appActionNonSealedParent = SourceFile.kotlin(
+        "AppAction.kt",
+        """
+    package com.toggl.komposable.compiler
+    
+    import com.toggl.komposable.architecture.WrapperAction
+    
+    interface AppAction {
+        data object ClearList : AppAction
+    
+        @WrapperAction
+        data class Settings(val settingsAction: SettingsAction) : AppAction
+    }
+        """.trimIndent(),
+    )
+
+    val appActionWithExtraInterface = SourceFile.kotlin(
+        "AppAction.kt",
+        """
+    package com.toggl.komposable.compiler
+    
+    import com.toggl.komposable.architecture.WrapperAction
+    
+    interface ExtraInterface
+
+    sealed interface AppAction {
+        data object ClearList : AppAction
+    
+        @WrapperAction
+        data class Settings(val settingsAction: SettingsAction) : AppAction, ExtraInterface
+    }
+        """.trimIndent(),
+    )
+
     val appActionWithoutPackage = SourceFile.kotlin(
         "AppAction.kt",
         """    
