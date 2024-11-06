@@ -7,6 +7,8 @@ import com.google.devtools.ksp.processing.SymbolProcessor
 import com.google.devtools.ksp.processing.SymbolProcessorEnvironment
 import com.google.devtools.ksp.processing.SymbolProcessorProvider
 import com.google.devtools.ksp.symbol.KSClassDeclaration
+import com.google.devtools.ksp.symbol.KSTypeReference
+import com.google.devtools.ksp.symbol.Modifier
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.ksp.toClassName
@@ -29,8 +31,12 @@ class ActionMappingSymbolProcessor(
                 val parentActionProperties = parentAction.getAllProperties().toList()
                 when (parentActionProperties.size) {
                     1 -> {
-                        // TODO: Figure out what to do when wrapper actions have interfaces
-                        val parentActionSealedType = parentAction.superTypes.single().resolve()
+                        val parentActionSealedType = parentAction.superTypes.firstOrNull { superType: KSTypeReference ->
+                            superType.resolve().declaration.modifiers.contains(Modifier.SEALED)
+                        }?.resolve() ?: return@map FileGenerationResult.Failure(
+                            "Parent action $parentActionClassName does not have a sealed super type",
+                            parentAction,
+                        )
                         val childActionPropertyInParentAction = parentActionProperties.single()
                         val childAction = childActionPropertyInParentAction.type.resolve()
                         val childActionClassName = childAction.toClassName()
