@@ -31,8 +31,7 @@ class StateMappingSymbolProcessor(
         resolver
             .getSymbolsAnnotatedWith(ChildStates::class)
             .map { parentState ->
-                val isDataClass = parentState.modifiers.contains(Modifier.DATA)
-                if (!isDataClass) {
+                if (!parentState.isDataClass) {
                     val errorMessage = "${parentState.toClassName().canonicalName} must be a data class to create state mappings."
                     return@map FileGenerationResult.Failure(errorMessage, parentState)
                 }
@@ -197,6 +196,9 @@ ${buildParentStateConstructorParameterList(childState, parentStateArgumentName, 
             .flatMap { it.arguments.toList().single().value as ArrayList<*> }
             .mapNotNull { it as? KSType }
             .mapNotNull { resolver.getClassDeclarationByName(it.toClassName().canonicalName) }
+
+    private val KSClassDeclaration.isDataClass: Boolean
+        get() = modifiers.contains(Modifier.DATA)
 
     private fun KSValueParameter.getParentPath(): String? =
         annotationsWithType(ParentPath::class)
