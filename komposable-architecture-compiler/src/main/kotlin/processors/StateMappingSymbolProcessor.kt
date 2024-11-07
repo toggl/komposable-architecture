@@ -162,7 +162,10 @@ ${buildParentStateConstructorParameterList(childState, parentStateArgumentName, 
 
                         // Skip the copy line for the first depth.
                         if (includeCopyLine) {
-                            stringBuilder.appendLine("$tabulation${node.pathInParent} = $parentStateArgumentName.${node.fullPathInParent}.copy(")
+                            val fullPathParts = node.fullPathInParent.split(".")
+                            // the deeper we are, the longer the path we need to copy
+                            val currentDepthPath = fullPathParts.take(depth).joinToString(".")
+                            stringBuilder.appendLine("$tabulation${node.pathInParent} = $parentStateArgumentName.$currentDepthPath.copy(")
                         }
                         for (child in node.children) {
                             traverseDepthFirst(child, stringBuilder, depth + 1)
