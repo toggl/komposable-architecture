@@ -125,11 +125,11 @@ ${buildParentStateConstructorParameterList(childState, parentStateArgumentName, 
                         existingNode
                             // If it doesn't exist, we create a new node.
                             ?: ParentStateCopyParameterNode(
-                                currentPathInParent,
-                                pathInChild,
+                                pathInParent = currentPathInParent,
+                                pathInChild = pathInChild,
                                 // dropLast(1) removes the name of the property we are copying.
-                                currentFullPathInParent.dropLast(1).joinToString("."),
-                                emptyList(),
+                                fullPathInParent = fullParentPath.dropLast(1).joinToString("."),
+                                children = emptyList(),
                             )
                     // in case this property is a nested property, we need to recursively create/edit the next node
                     // if it's not, the same unedited node will be returned
