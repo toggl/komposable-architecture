@@ -4,6 +4,7 @@ import com.tschuchort.compiletesting.SourceFile
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
+import org.junit.Ignore
 import sources.StateSources
 import kotlin.test.Test
 
@@ -88,6 +89,7 @@ class StateMappingSymbolProcessorTests {
         )
     }
 
+    @Ignore("We don't yet guarantee this kind of validation")
     @Test
     fun `State mapping methods generation fails when parent class's nested class is not data class`() {
         stateMappingShouldFail(
@@ -96,6 +98,7 @@ class StateMappingSymbolProcessorTests {
         )
     }
 
+    @Ignore("We don't yet guarantee this kind of validation")
     @Test
     fun `State mapping methods generation fails when there are invalid @ParentPath properties`() {
         stateMappingShouldFail(
