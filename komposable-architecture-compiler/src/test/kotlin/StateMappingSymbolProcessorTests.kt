@@ -57,10 +57,26 @@ class StateMappingSymbolProcessorTests {
     }
 
     @Test
+    fun `State mapping methods are generated even when there are deeper nested @ParentPath annotated props`() {
+        stateMappingShouldSucceed(
+            sourceFiles = listOf(StateSources.appStateWithDeeperNestedValue, StateSources.settingsStateWithDeeperNestedMapping),
+            expectedResult = StateSources.generatedStateExtensionsFileWithDeeperPathNestedMapping,
+        )
+    }
+
+    @Test
     fun `State mapping methods are generated for multiple child states`() {
         stateMappingShouldSucceed(
             sourceFiles = listOf(StateSources.appStateMultipleChildStates, StateSources.settingsState, StateSources.authState),
             expectedResult = StateSources.generatedStateExtensionsFileForMultipleChildStates,
+        )
+    }
+
+    @Test
+    fun `State mapping methods are generated multilevel complex cases`() {
+        stateMappingShouldSucceed(
+            sourceFiles = listOf(StateSources.complexAppState, StateSources.complexSettingsState, StateSources.authState),
+            expectedResult = StateSources.generatedStateExtensionsFileForComplexState,
         )
     }
 

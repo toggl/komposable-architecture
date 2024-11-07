@@ -65,6 +65,20 @@ object StateSources {
         """.trimIndent(),
     )
 
+    val settingsStateWithDeeperNestedMapping = SourceFile.kotlin(
+        "SettingsState.kt",
+        """
+        package com.toggl.komposable.compiler
+        
+        import com.toggl.komposable.architecture.ParentPath
+        
+        data class SettingsState(
+            @ParentPath("nestedLevel1.nestedLevel2.booleanValue")
+            val value: Boolean
+        )
+        """.trimIndent(),
+    )
+
     val settingsStateWithTwoNestedMapping = SourceFile.kotlin(
         "SettingsState.kt",
         """
@@ -89,6 +103,27 @@ object StateSources {
         data class SettingsState(
             val booleanValue1: Boolean,
             val booleanValue2: Boolean
+        )
+        """.trimIndent(),
+    )
+
+    val complexSettingsState = SourceFile.kotlin(
+        "SettingsState.kt",
+        """
+        package com.toggl.komposable.compiler
+
+        import com.toggl.komposable.architecture.ParentPath
+        
+        data class SettingsState(
+            val simpleValue: Boolean,
+            @ParentPath("nestedLevel1.value1Level1")
+            val settingsValue1Level1: Boolean,
+            @ParentPath("nestedLevel1.value2Level1")
+            val settingsValue2Level1: Boolean,
+            @ParentPath("nestedLevel1.nestedLevel2.value1Level2")
+            val settingsValue1Level2: String,
+            @ParentPath("nestedLevel1.nestedLevel2.value2Level2")
+            val settingsValue2Level2: String,
         )
         """.trimIndent(),
     )
@@ -194,6 +229,30 @@ object StateSources {
         """.trimIndent(),
     )
 
+    val appStateWithDeeperNestedValue = SourceFile.kotlin(
+        "AppState.kt",
+        """
+        package com.toggl.komposable.compiler
+        
+        import com.toggl.komposable.architecture.ChildStates
+        import com.toggl.komposable.compiler.SettingsState
+    
+        data class NestedValue2(
+            val booleanValue: Boolean
+        )
+
+        data class NestedValue1(
+            val nestedLevel2: NestedValue2
+        )
+        
+        @ChildStates(SettingsState::class)
+        data class AppState(
+            val someList: List<String>,
+            val nestedLevel1: NestedValue1
+        )
+        """.trimIndent(),
+    )
+
     val appStateWithTwoValues = SourceFile.kotlin(
         "AppState.kt",
         """
@@ -247,6 +306,35 @@ object StateSources {
         """.trimIndent(),
     )
 
+    val complexAppState = SourceFile.kotlin(
+        "AppState.kt",
+        """
+        package com.toggl.komposable.compiler
+        
+        import com.toggl.komposable.architecture.ChildStates
+        import com.toggl.komposable.compiler.SettingsState
+        
+        data class NestedValueLevel2(
+            val value1Level2: String,
+            val value2Level2: String
+        )
+
+        data class NestedValueLevel1(
+            val value1Level1: Boolean,
+            val value2Level1: Boolean,
+            val nestedLevel2: NestedValueLevel2
+        )
+
+        @ChildStates(SettingsState::class, AuthState::class)
+        data class AppState(
+            val someList: List<String>,
+            val simpleValue: Boolean,
+            val nestedLevel1: NestedValueLevel1,
+            val email: String
+        )
+        """.trimIndent(),
+    )
+
     @Language("kotlin")
     val generatedStateExtensionsFile = """package com.toggl.komposable.compiler
 
@@ -284,6 +372,23 @@ public fun mapSettingsStateToAppState(appState: AppState, settingsState: Setting
     appState.copy(
         nested = appState.nested.copy(
             booleanValue = settingsState.value,
+        )
+    )
+"""
+
+    @Language("kotlin")
+    val generatedStateExtensionsFileWithDeeperPathNestedMapping = """package com.toggl.komposable.compiler
+
+public fun mapAppStateToSettingsState(appState: AppState): SettingsState = SettingsState(
+    value = appState.nestedLevel1.nestedLevel2.booleanValue,
+)
+
+public fun mapSettingsStateToAppState(appState: AppState, settingsState: SettingsState): AppState =
+    appState.copy(
+        nestedLevel1 = appState.nestedLevel1.copy(
+            nestedLevel2 = appState.nestedLevel1.nestedLevel2.copy(
+                booleanValue = settingsState.value,
+            )
         )
     )
 """
@@ -330,6 +435,40 @@ public fun mapAppStateToSettingsState(appState: AppState): SettingsState = Setti
 public fun mapSettingsStateToAppState(appState: AppState, settingsState: SettingsState): AppState =
     appState.copy(
         booleanValue = settingsState.booleanValue,
+    )
+
+public fun mapAppStateToAuthState(appState: AppState): AuthState = AuthState(
+    email = appState.email,
+)
+
+public fun mapAuthStateToAppState(appState: AppState, authState: AuthState): AppState =
+    appState.copy(
+        email = authState.email,
+    )
+"""
+
+    @Language("kotlin")
+    val generatedStateExtensionsFileForComplexState = """package com.toggl.komposable.compiler
+
+public fun mapAppStateToSettingsState(appState: AppState): SettingsState = SettingsState(
+    simpleValue = appState.simpleValue,
+    settingsValue1Level1 = appState.nestedLevel1.value1Level1,
+    settingsValue2Level1 = appState.nestedLevel1.value2Level1,
+    settingsValue1Level2 = appState.nestedLevel1.nestedLevel2.value1Level2,
+    settingsValue2Level2 = appState.nestedLevel1.nestedLevel2.value2Level2,
+)
+
+public fun mapSettingsStateToAppState(appState: AppState, settingsState: SettingsState): AppState =
+    appState.copy(
+        simpleValue = settingsState.simpleValue,
+        nestedLevel1 = appState.nestedLevel1.copy(
+            value1Level1 = settingsState.settingsValue1Level1,
+            value2Level1 = settingsState.settingsValue2Level1,
+            nestedLevel2 = appState.nestedLevel1.nestedLevel2.copy(
+                value1Level2 = settingsState.settingsValue1Level2,
+                value2Level2 = settingsState.settingsValue2Level2,
+            )
+        )
     )
 
 public fun mapAppStateToAuthState(appState: AppState): AuthState = AuthState(
