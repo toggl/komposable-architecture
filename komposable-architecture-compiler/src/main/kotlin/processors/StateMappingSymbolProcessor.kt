@@ -10,6 +10,7 @@ import com.google.devtools.ksp.processing.SymbolProcessorEnvironment
 import com.google.devtools.ksp.processing.SymbolProcessorProvider
 import com.google.devtools.ksp.symbol.KSAnnotated
 import com.google.devtools.ksp.symbol.KSClassDeclaration
+import com.google.devtools.ksp.symbol.KSPropertyDeclaration
 import com.google.devtools.ksp.symbol.KSType
 import com.google.devtools.ksp.symbol.KSValueParameter
 import com.google.devtools.ksp.symbol.Modifier
@@ -84,9 +85,10 @@ ${buildParentStateConstructorParameterList(childState, parentStateArgumentName, 
             .getConstructors()
             .first()
             .parameters
-            .fold(StringBuilder()) { builder, parameter ->
-                val name = parameter.name?.getShortName().orEmpty()
-                val path = parameter.getParentPath() ?: name
+            .toProperties(childState.getAllProperties()) // convert to properties because https://github.com/google/ksp/issues/1562
+            .fold(StringBuilder()) { builder, parameterProperty ->
+                val name = parameterProperty.simpleName.getShortName()
+                val path = parameterProperty.getParentPath() ?: name
 
                 builder.appendLine("    $name = $parentStateArgumentName.$path,")
             }.toString()
@@ -100,9 +102,10 @@ ${buildParentStateConstructorParameterList(childState, parentStateArgumentName, 
             .getConstructors()
             .first()
             .parameters
-            .fold(ParentStateCopyParameterNode("", "", "", emptyList())) { node, parameter ->
-                val pathInChild = parameter.name?.getShortName().orEmpty()
-                val pathInParent = parameter.getParentPath() ?: pathInChild
+            .toProperties(childState.getAllProperties()) // convert to properties because https://github.com/google/ksp/issues/1562
+            .fold(ParentStateCopyParameterNode("", "", "", emptyList())) { node, parameterProperty ->
+                val pathInChild = parameterProperty.simpleName.getShortName()
+                val pathInParent = parameterProperty.getParentPath() ?: pathInChild
 
                 // Function to edit the node in place.
                 fun createOrEditNode(
@@ -120,7 +123,8 @@ ${buildParentStateConstructorParameterList(childState, parentStateArgumentName, 
                     val currentPathInParent = currentFullPathInParent.first()
                     // check if there is already a node that we should alter instead of creating a new one
                     // this is the case when we're altering a nested property for which the previous part of the path already exists
-                    val existingNode = node.children.firstOrNull { it.pathInParent == currentPathInParent }
+                    val existingNode =
+                        node.children.firstOrNull { it.pathInParent == currentPathInParent }
                     val nodeToEditNext =
                         existingNode
                             // If it doesn't exist, we create a new node.
@@ -135,7 +139,8 @@ ${buildParentStateConstructorParameterList(childState, parentStateArgumentName, 
                     // if it's not, the same unedited node will be returned
                     val newNode = createOrEditNode(nodeToEditNext, fullParentPath, depth + 1)
                     // remove any existing node with the same path, as we're replacing it with the newNode
-                    val filteredExistingChildren = node.children.filterNot { it.pathInParent == currentPathInParent }
+                    val filteredExistingChildren =
+                        node.children.filterNot { it.pathInParent == currentPathInParent }
                     val updatedChildren = filteredExistingChildren + listOf(newNode)
                     return node.copy(children = updatedChildren)
                 }
@@ -143,14 +148,19 @@ ${buildParentStateConstructorParameterList(childState, parentStateArgumentName, 
                 var nodeToReturn = node
                 val rawPathComponents = pathInParent.split(".")
 
-                val pathComponents = List(rawPathComponents.size) { i -> rawPathComponents.take(i + 1) }
+                val pathComponents =
+                    List(rawPathComponents.size) { i -> rawPathComponents.take(i + 1) }
                 for (component in pathComponents) {
                     nodeToReturn = createOrEditNode(node, component, 0)
                 }
 
                 nodeToReturn
             }.run {
-                fun traverseDepthFirst(node: ParentStateCopyParameterNode, stringBuilder: StringBuilder, depth: Int) {
+                fun traverseDepthFirst(
+                    node: ParentStateCopyParameterNode,
+                    stringBuilder: StringBuilder,
+                    depth: Int,
+                ) {
                     val tabulation = "    ".repeat(depth + 1)
 
                     // If there are no children, we are simply assigning the property.
@@ -203,10 +213,18 @@ ${buildParentStateConstructorParameterList(childState, parentStateArgumentName, 
     private val KSClassDeclaration.isDataClass: Boolean
         get() = modifiers.contains(Modifier.DATA)
 
-    private fun KSValueParameter.getParentPath(): String? =
+    private fun List<KSValueParameter>.toProperties(properties: Sequence<KSPropertyDeclaration>) =
+        mapNotNull { parameter ->
+            properties.find { it.simpleName.getShortName() == parameter.name?.getShortName() }
+        }
+
+    private fun KSPropertyDeclaration.getParentPath(): String? =
         annotationsWithType(ParentPath::class)
             .firstOrNull()
-            ?.arguments?.first()?.value as? String
+            ?.arguments
+            ?.firstOrNull()
+            ?.value
+            ?.toString()
 
     private fun KSAnnotated.annotationsWithType(kClass: KClass<*>) =
         annotations.toList().filter {
