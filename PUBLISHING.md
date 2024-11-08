@@ -43,7 +43,7 @@ ossrhPassword=<SONATYPE TOKEN PASSWORD>
 sonatypeStagingProfileId=<PROFILE ID>
 ```
 
-SONATYPE TOKEN and TOKEN PASSWORD>:
+SONATYPE TOKEN and TOKEN PASSWORD:
 1. Go to https://s01.oss.sonatype.org/
 2. Go to profile
 3. Change the pulldown from “Summary” to “User Token”
