@@ -38,10 +38,17 @@ Open your `komposable-architecture/local.properties` file and fill in the values
 signing.keyId=<KEY ID> // 8 chars
 signing.password=<PASSWORD YOU CHOSE>
 signing.secretKeyRingFile=<PATH TO YOUR GPG FILE> // ../keyname.gpg
-ossrhUsername=<SONATYPE USERNAME>
-ossrhPassword=<SONATYPE PASSWORD>
+ossrhUsername=<SONATYPE TOKEN>
+ossrhPassword=<SONATYPE TOKEN PASSWORD>
 sonatypeStagingProfileId=<PROFILE ID>
 ```
+
+SONATYPE TOKEN and TOKEN PASSWORD:
+1. Go to https://s01.oss.sonatype.org/
+2. Go to profile
+3. Change the pulldown from “Summary” to “User Token”
+4. Click on “Access User Token”
+5. The first part is the username, the second part is the password
 
 PROFILE ID: This value is an ID that Sonatype assigns to you, which the plugin uses to make sure all the artifacts end up in the right place during the upload.
 
