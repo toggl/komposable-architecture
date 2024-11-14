@@ -1,71 +1,68 @@
 import com.toggl.komposable.processors.ActionMappingSymbolProcessorProvider
 import com.tschuchort.compiletesting.KotlinCompilation
-import com.tschuchort.compiletesting.symbolProcessorProviders
+import com.tschuchort.compiletesting.SourceFile
+import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
+import sources.ActionSources
 import kotlin.test.Test
 
 class ActionMappingSymbolProcessorTests {
+
     @Test
     fun `Action mapping methods are generated`() {
-        // Arrange
-        val compilation = KotlinCompilation().apply {
-            sources = listOf(SourceFiles.appAction, SourceFiles.settingsAction)
-            symbolProcessorProviders = listOf(ActionMappingSymbolProcessorProvider())
-            inheritClassPath = true
-            messageOutputStream = System.out
-        }
+        actionMappingShouldSucceed(
+            sourceFiles = listOf(ActionSources.appAction, ActionSources.settingsAction),
+            expectedResult = ActionSources.generatedActionExtensionsFile,
+        )
+    }
 
-        // Act
-        val result = compilation.compile()
+    @Test
+    fun `Action mapping methods are generated even when the wrapper action has an extra interface`() {
+        actionMappingShouldSucceed(
+            sourceFiles = listOf(ActionSources.appActionWithExtraInterface, ActionSources.settingsAction),
+            expectedResult = ActionSources.generatedActionExtensionsFile,
+        )
+    }
 
-        // Assert
-        result.exitCode shouldBe KotlinCompilation.ExitCode.OK
-
-        val sources = result.kspGeneratedSources()
-        sources.size.shouldBe(1)
-        sources.single().readText().shouldBe(SourceFiles.generatedActionExtensionsFile)
+    @Test
+    fun `Action mapping fails when parent class is not sealed`() {
+        actionMappingShouldFail(
+            sourceFiles = listOf(ActionSources.appActionNonSealedParent, ActionSources.settingsAction),
+            errorMessage = "Parent action com.toggl.komposable.compiler.AppAction.Settings does not have a sealed super type",
+        )
     }
 
     @Test
     fun `Action mapping methods are generated on files without a package`() {
-        // Arrange
-        val compilation = KotlinCompilation().apply {
-            sources = listOf(SourceFiles.appActionWithoutPackage, SourceFiles.settingsActionWithoutPackage)
-            symbolProcessorProviders = listOf(ActionMappingSymbolProcessorProvider())
-            inheritClassPath = true
-            messageOutputStream = System.out
-        }
-
-        // Act
-        val result = compilation.compile()
-
-        // Assert
-        result.exitCode shouldBe KotlinCompilation.ExitCode.OK
-
-        val sources = result.kspGeneratedSources()
-        sources.size.shouldBe(1)
-        sources.single().readText().shouldBe(SourceFiles.generatedActionExtensionsFileWithoutPackage)
+        actionMappingShouldSucceed(
+            sourceFiles = listOf(ActionSources.appActionWithoutPackage, ActionSources.settingsActionWithoutPackage),
+            expectedResult = ActionSources.generatedActionExtensionsFileWithoutPackage,
+        )
     }
 
     @Test
     fun `If a class annotated with @WrapperAction has multiple properties then the compilation fails`() {
-        // Arrange
-        val compilation = KotlinCompilation().apply {
-            sources = listOf(SourceFiles.appActionWithMultipleProperties, SourceFiles.settingsAction)
-            symbolProcessorProviders = listOf(ActionMappingSymbolProcessorProvider())
-            inheritClassPath = true
-            messageOutputStream = System.out
+        actionMappingShouldFail(
+            sourceFiles = listOf(ActionSources.appActionWithMultipleProperties, ActionSources.settingsAction),
+            errorMessage = "AppAction.Settings needs to have exactly one property to be annotated with @WrapperAction",
+        )
+    }
+
+    private fun actionMappingShouldSucceed(sourceFiles: List<SourceFile>, expectedResult: String) {
+        ActionMappingSymbolProcessorProvider().testCompilation(sourceFiles) {
+            exitCode shouldBe KotlinCompilation.ExitCode.OK
+            val sources = kspGeneratedSources()
+            sources shouldHaveSize 1
+            val fileText = sources.single().readText()
+            fileText shouldBe expectedResult
         }
+    }
 
-        // Act
-        val result = compilation.compile()
-
-        // Assert
-        result.exitCode shouldBe KotlinCompilation.ExitCode.COMPILATION_ERROR
-
-        result.messages.contains("AppAction.Settings needs to have exactly one property to be annotated with @WrapperAction")
-
-        val sources = result.kspGeneratedSources()
-        sources.size.shouldBe(0)
+    private fun actionMappingShouldFail(sourceFiles: List<SourceFile>, errorMessage: String) {
+        ActionMappingSymbolProcessorProvider().testCompilation(sourceFiles) {
+            exitCode shouldBe KotlinCompilation.ExitCode.COMPILATION_ERROR
+            messages shouldContain errorMessage
+        }
     }
 }

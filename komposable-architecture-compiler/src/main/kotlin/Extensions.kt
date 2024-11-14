@@ -12,4 +12,4 @@ fun Resolver.getSymbolsAnnotatedWith(kClass: KClass<*>) =
         .filter(KSNode::validate)
 
 fun String.toCamelCase() =
-    first().lowercaseChar() + this.substring(1..length - 1)
+    first().lowercaseChar() + this.substring(1..< length)
