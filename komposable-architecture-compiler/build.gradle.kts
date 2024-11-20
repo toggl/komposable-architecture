@@ -8,6 +8,9 @@ extra.apply {
     set("PUBLISH_ARTIFACT_ID", "komposable-architecture-compiler")
 }
 
+apply(from = "${rootProject.projectDir}/scripts/publish-module.gradle")
+
+
 java {
     withJavadocJar()
     withSourcesJar()
