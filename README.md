@@ -41,7 +41,7 @@ Next, open Android Studio and open the newly created project folder. You'll want
 For more examples take a look at [Point-Free's swift samples](https://github.com/pointfreeco/swift-composable-architecture#examples)
 
 ## 🚀 Installation
-The latest release is available on [Maven Central](https://search.maven.org/artifact/com.toggl/komposable-architecture/1.0.0-preview03/jar).
+The latest release is available on [Maven Central](https://search.maven.org/artifact/com.toggl/komposable-architecture/1.0.0-preview04/jar).
 
 ```kotlin
 implementation("com.toggl:komposable-architecture:1.0.0-preview04")
@@ -70,7 +70,7 @@ limitations under the License.
 ## 🧭 High-level View
 
 > [!WARNING]  
-> This documentation applies to versions before 1.0.0. Version 1.0.0 (currently in preview) introduces breaking changes.
+> This documentation applies to version 1.0, currently in preview.
 
 This is a high level overview of the different parts of the architecture. 
 
@@ -145,9 +145,9 @@ Actions are sealed classes, which makes it easier to discover which actions are 
 sealed class EditAction {
     data class TitleChanged(val title: String) : EditAction()
     data class DescriptionChanged(val description: String) : EditAction()
-    object CloseTapped : EditAction()
-    object SaveTapped : EditAction()
-    object Saved : EditAction()
+    data object CloseTapped : EditAction()
+    data object SaveTapped : EditAction()
+    data object Saved : EditAction()
 }
 ```
 
@@ -157,7 +157,7 @@ These sealed actions are embedded into each other starting with the "root" `AppA
 sealed class AppAction {
     class List(override val action: ListAction) : AppAction(), ActionWrapper<ListAction>
     class Edit(override val action: EditAction) : AppAction(), ActionWrapper<EditAction>
-    object BackPressed : AppAction()
+    data object BackPressed : AppAction()
 }
 ```
 
@@ -181,17 +181,23 @@ Reducers are classes that implement the following interface:
 fun interface Reducer<State, Action> {
     fun reduce(state: State, action: Action): ReduceResult<State, Action>
 }
+
+data class ReduceResult<out State, Action>(
+    val state: State,
+    val effect: Effect<Action>,
+)
 ```
 
-The idea is they take the state and an action and modify the state depending on the action and its payload.
+The idea is they take the previous state and an action and return the newly modified state as the first part of `ReduceResult<State, Action>`
 
-In order to send actions asynchronously we use `Effect`s. Reducers return an array of `Effect`s. The store waits for those effects and sends whatever action they emit, if any.
+In order to send actions asynchronously we use `Effect`s which are merged and sent as the second part of the `ReduceResult<State, Action>`. The store waits for those effects and sends whatever action they emit, if any.
 
 An effect interface is also straightforward:
 
 ```kotlin
-interface Effect<out Action> {
-    suspend fun execute(): Action?
+fun interface Effect<out Action> {
+    fun run(): Flow<Action>
+    // more code
 }
 ```
 
@@ -249,13 +255,13 @@ internal class PullbackReducer<LocalState, GlobalState, LocalAction, GlobalActio
         action: GlobalAction,
     ): ReduceResult<GlobalState, GlobalAction> {
         val localAction = mapToLocalAction(action)
-            ?: return ReduceResult(state, noEffect())
+            ?: return ReduceResult(state, NoEffect)
 
-        val newLocalState = innerReducer.reduce(mapToLocalState(state), localAction)
+        val localResult = innerReducer.reduce(mapToLocalState(state), localAction)
 
         return ReduceResult(
-            mapToGlobalState(state, newLocalState.state),
-            newLocalState.effects.map { effects -> effects.map { e -> e?.run(mapToGlobalAction) } },
+            mapToGlobalState(state, localResult.state),
+            localResult.effect.map(mapToGlobalAction),
         )
     }
 }
@@ -359,9 +365,9 @@ fun `ListUpdated action should update the list of todos and return no effects`()
      reducer.testReduce(
          initialState,
          ListAction.ListUpdated(listOf(testTodoItem))
-     ) { state, effects ->
+     ) { state, effect ->
          assertEquals(initialState.copy(todoList = listOf(testTodoItem)), state)
-         assertEquals(noEffect(), effects)
+         assertEquals(NoEffect, effect)
      }
 }
 ```
