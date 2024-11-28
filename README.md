@@ -78,9 +78,9 @@ This is a high level overview of the different parts of the architecture.
 - **Action** Simple structs that describe an event, normally originated by the user, but also from other sources or in response to other actions (from Effects). The only way to change the state is through actions. Views send actions to the store which handles them in the main thread as they come.
 - **Store** The central hub of the application. Contains the whole state of the app, handles the actions, passing them to the reducers and fires Effects.
 - **State** The single source of truth for the whole app. This data class will be probably empty when the application start and will be filled after every action. 
-- **Reducers** Reducers are pure functions that take the state and an action and produce a new state. Simple as that. They optionally result in an array of Effects that will asynchronously send further actions. All business logic should reside in them.
+- **Reducers** Reducers are pure functions that take the state and an action and produce [`ReduceResult`](https://github.com/toggl/komposable-architecture/blob/main/komposable-architecture/src/main/java/com/toggl/komposable/architecture/ReduceResult.kt) which contains a new state and an optional effect.
 - **Effects** As mentioned, Reducers optionally produce these after handling an action. They are classes that return an optional action. All the effects emitted from a reducer will be batched, meaning the state change will only be emitted once all actions are handled.
-- **Subscriptions** Subscriptions are emitting actions based on some underling observable API and/or state changes.   
+- **Subscriptions** Subscriptions emit actions based on some underlying observable API and/or state changes.   
 
 There's one global `Store` and one `AppState`. But we can *view* into the store to get sub-stores that only work on one part of the state. More on that later.
 
