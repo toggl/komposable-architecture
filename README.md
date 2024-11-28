@@ -27,7 +27,7 @@ There's no way to simply mutate the state in Kotlin like the Composable architec
 Additionally we decided to extend Point-Free architecture with something called subscriptions. This concept is taken from the [Elm Architecture](https://guide.elm-lang.org/architecture/). It's basically a way for us to leverage observable capabilities of different APIs, in our case it's mostly for observing data stored in [Room Database](https://developer.android.com/training/data-storage/room).
 
 ## 📲 Sample App
-- [Todo Sample](https://github.com/toggl/komposable-architecture/tree/main/todo-sample)
+- [Todo Sample](https://github.com/toggl/komposable-architecture/tree/main/samples/todos)
 - More samples soon!
 
 To run the sample app, start by cloning this repo:
