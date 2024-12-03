@@ -188,7 +188,7 @@ data class ReduceResult<out State, Action>(
 )
 ```
 
-The idea is they take the previous state and an action and return the newly modified state as the first part of `ReduceResult<State, Action>`
+The idea is they take the previous state and an action and return the newly computed state as the first part of `ReduceResult<State, Action>`
 
 In order to send actions asynchronously we use `Effect`s which are merged and sent as the second part of the `ReduceResult<State, Action>`. The store waits for those effects and sends whatever action they emit, if any.
 
