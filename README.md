@@ -27,7 +27,7 @@ There's no way to simply mutate the state in Kotlin like the Composable architec
 Additionally we decided to extend Point-Free architecture with something called subscriptions. This concept is taken from the [Elm Architecture](https://guide.elm-lang.org/architecture/). It's basically a way for us to leverage observable capabilities of different APIs, in our case it's mostly for observing data stored in [Room Database](https://developer.android.com/training/data-storage/room).
 
 ## 📲 Sample App
-- [Todo Sample](https://github.com/toggl/komposable-architecture/tree/main/todo-sample)
+- [Todo Sample](https://github.com/toggl/komposable-architecture/tree/main/samples/todos)
 - More samples soon!
 
 To run the sample app, start by cloning this repo:
@@ -41,7 +41,7 @@ Next, open Android Studio and open the newly created project folder. You'll want
 For more examples take a look at [Point-Free's swift samples](https://github.com/pointfreeco/swift-composable-architecture#examples)
 
 ## 🚀 Installation
-The latest release is available on [Maven Central](https://search.maven.org/artifact/com.toggl/komposable-architecture/1.0.0-preview03/jar).
+The latest release is available on [Maven Central](https://search.maven.org/artifact/com.toggl/komposable-architecture/1.0.0-preview04/jar).
 
 ```kotlin
 implementation("com.toggl:komposable-architecture:1.0.0-preview04")
@@ -70,7 +70,7 @@ limitations under the License.
 ## 🧭 High-level View
 
 > [!WARNING]  
-> This documentation applies to versions before 1.0.0. Version 1.0.0 (currently in preview) introduces breaking changes.
+> This documentation applies to version 1.0, currently in preview.
 
 This is a high level overview of the different parts of the architecture. 
 
@@ -78,9 +78,9 @@ This is a high level overview of the different parts of the architecture.
 - **Action** Simple structs that describe an event, normally originated by the user, but also from other sources or in response to other actions (from Effects). The only way to change the state is through actions. Views send actions to the store which handles them in the main thread as they come.
 - **Store** The central hub of the application. Contains the whole state of the app, handles the actions, passing them to the reducers and fires Effects.
 - **State** The single source of truth for the whole app. This data class will be probably empty when the application start and will be filled after every action. 
-- **Reducers** Reducers are pure functions that take the state and an action and produce a new state. Simple as that. They optionally result in an array of Effects that will asynchronously send further actions. All business logic should reside in them.
+- **Reducers** Reducers are pure functions that take the state and an action and produce [`ReduceResult`](https://github.com/toggl/komposable-architecture/blob/main/komposable-architecture/src/main/java/com/toggl/komposable/architecture/ReduceResult.kt) which contains a new state and an optional effect.
 - **Effects** As mentioned, Reducers optionally produce these after handling an action. They are classes that return an optional action. All the effects emitted from a reducer will be batched, meaning the state change will only be emitted once all actions are handled.
-- **Subscriptions** Subscriptions are emitting actions based on some underling observable API and/or state changes.   
+- **Subscriptions** Subscriptions emit actions based on some underlying observable API and/or state changes.   
 
 There's one global `Store` and one `AppState`. But we can *view* into the store to get sub-stores that only work on one part of the state. More on that later.
 
@@ -145,9 +145,9 @@ Actions are sealed classes, which makes it easier to discover which actions are 
 sealed class EditAction {
     data class TitleChanged(val title: String) : EditAction()
     data class DescriptionChanged(val description: String) : EditAction()
-    object CloseTapped : EditAction()
-    object SaveTapped : EditAction()
-    object Saved : EditAction()
+    data object CloseTapped : EditAction()
+    data object SaveTapped : EditAction()
+    data object Saved : EditAction()
 }
 ```
 
@@ -157,7 +157,7 @@ These sealed actions are embedded into each other starting with the "root" `AppA
 sealed class AppAction {
     class List(override val action: ListAction) : AppAction(), ActionWrapper<ListAction>
     class Edit(override val action: EditAction) : AppAction(), ActionWrapper<EditAction>
-    object BackPressed : AppAction()
+    data object BackPressed : AppAction()
 }
 ```
 
@@ -181,17 +181,23 @@ Reducers are classes that implement the following interface:
 fun interface Reducer<State, Action> {
     fun reduce(state: State, action: Action): ReduceResult<State, Action>
 }
+
+data class ReduceResult<out State, Action>(
+    val state: State,
+    val effect: Effect<Action>,
+)
 ```
 
-The idea is they take the state and an action and modify the state depending on the action and its payload.
+The idea is they take the previous state and an action and return the newly computed state as the first part of `ReduceResult<State, Action>`
 
-In order to send actions asynchronously we use `Effect`s. Reducers return an array of `Effect`s. The store waits for those effects and sends whatever action they emit, if any.
+In order to send actions asynchronously we use `Effect`s which are merged and sent as the second part of the `ReduceResult<State, Action>`. The store waits for those effects and sends whatever action they emit, if any.
 
 An effect interface is also straightforward:
 
 ```kotlin
-interface Effect<out Action> {
-    suspend fun execute(): Action?
+fun interface Effect<out Action> {
+    fun run(): Flow<Action>
+    // more code
 }
 ```
 
@@ -249,13 +255,13 @@ internal class PullbackReducer<LocalState, GlobalState, LocalAction, GlobalActio
         action: GlobalAction,
     ): ReduceResult<GlobalState, GlobalAction> {
         val localAction = mapToLocalAction(action)
-            ?: return ReduceResult(state, noEffect())
+            ?: return ReduceResult(state, NoEffect)
 
-        val newLocalState = innerReducer.reduce(mapToLocalState(state), localAction)
+        val localResult = innerReducer.reduce(mapToLocalState(state), localAction)
 
         return ReduceResult(
-            mapToGlobalState(state, newLocalState.state),
-            newLocalState.effects.map { effects -> effects.map { e -> e?.run(mapToGlobalAction) } },
+            mapToGlobalState(state, localResult.state),
+            localResult.effect.map(mapToGlobalAction),
         )
     }
 }
@@ -359,9 +365,9 @@ fun `ListUpdated action should update the list of todos and return no effects`()
      reducer.testReduce(
          initialState,
          ListAction.ListUpdated(listOf(testTodoItem))
-     ) { state, effects ->
+     ) { state, effect ->
          assertEquals(initialState.copy(todoList = listOf(testTodoItem)), state)
-         assertEquals(noEffect(), effects)
+         assertEquals(NoEffect, effect)
      }
 }
 ```
