@@ -32,10 +32,15 @@ apply(from = "${rootDir}/scripts/publish-root.gradle")
 
 subprojects {
     apply(plugin = rootProject.libs.plugins.spotless.get().pluginId)
+    val ktlintVersion = rootProject.libs.versions.ktlint.get()
     configure<SpotlessExtension> {
         kotlin {
             target("**/*.kt")
-            ktlint(libs.versions.ktlint.get())
+            ktlint(ktlintVersion).editorConfigOverride(
+                mapOf(
+                    "android" to "true",
+                ),
+            )
         }
     }
 
