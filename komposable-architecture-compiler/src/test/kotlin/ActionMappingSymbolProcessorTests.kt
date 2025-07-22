@@ -11,7 +11,6 @@ import sources.ActionSources
 import kotlin.test.Test
 
 class ActionMappingSymbolProcessorTests {
-
     @Test
     fun `Action mapping methods are generated`() {
         actionMappingShouldSucceed(
@@ -52,7 +51,10 @@ class ActionMappingSymbolProcessorTests {
         )
     }
 
-    private fun actionMappingShouldSucceed(sourceFiles: List<SourceFile>, expectedResult: String) {
+    private fun actionMappingShouldSucceed(
+        sourceFiles: List<SourceFile>,
+        expectedResult: String,
+    ) {
         ActionMappingSymbolProcessorProvider().testCompilation(sourceFiles) {
             exitCode shouldBe KotlinCompilation.ExitCode.OK
             val sources = kspGeneratedSources()
@@ -62,7 +64,10 @@ class ActionMappingSymbolProcessorTests {
         }
     }
 
-    private fun actionMappingShouldFail(sourceFiles: List<SourceFile>, errorMessage: String) {
+    private fun actionMappingShouldFail(
+        sourceFiles: List<SourceFile>,
+        errorMessage: String,
+    ) {
         ActionMappingSymbolProcessorProvider().testCompilation(sourceFiles) {
             exitCode shouldBe KotlinCompilation.ExitCode.COMPILATION_ERROR
             messages shouldContain errorMessage

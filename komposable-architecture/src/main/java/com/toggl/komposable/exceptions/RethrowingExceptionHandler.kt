@@ -5,6 +5,5 @@ package com.toggl.komposable.exceptions
  * @see ExceptionHandler
  */
 class RethrowingExceptionHandler : ExceptionHandler {
-    override suspend fun handleException(exception: Throwable): Boolean =
-        throw exception
+    override suspend fun handleException(exception: Throwable): Boolean = throw exception
 }

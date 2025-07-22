@@ -23,6 +23,7 @@ internal class ExhaustiveAssertionRunner<State : Any, Action>(
 ) : TestStore.AssertionRunner<State, Action> {
     private val reducer = store.reducer
     private val timeout = store.timeout
+
     override fun assertStateChange(
         previousState: State,
         currentState: State,
@@ -35,8 +36,7 @@ internal class ExhaustiveAssertionRunner<State : Any, Action>(
         }
     }
 
-    override fun hasReceivedActionToHandle(match: (Action) -> Boolean): Boolean =
-        reducer.receivedActions.isNotEmpty()
+    override fun hasReceivedActionToHandle(match: (Action) -> Boolean): Boolean = reducer.receivedActions.isNotEmpty()
 
     override fun skipNotMatchingActions(match: (Action) -> Boolean) {
         // no-op: exhaustive assertion runner doesn't skip ignored received actions
@@ -44,26 +44,30 @@ internal class ExhaustiveAssertionRunner<State : Any, Action>(
 
     override fun assertEffectsAreDone() {
         if (reducer.inFlightEffects.isNotEmpty()) {
-            val error = StringBuilder().apply {
-                appendLine("🚨")
-                appendLine("There are still ${reducer.inFlightEffects.size} effects in flight that didn't finish under the ${timeout}ms timeout:")
-                reducer.inFlightEffects.forEach {
-                    appendLine("-$it")
+            val error =
+                StringBuilder().apply {
+                    appendLine("🚨")
+                    appendLine(
+                        "There are still ${reducer.inFlightEffects.size} effects in flight that didn't finish under the ${timeout}ms timeout:",
+                    )
+                    reducer.inFlightEffects.forEach {
+                        appendLine("-$it")
+                    }
                 }
-            }
             throw AssertionError(error.toString())
         }
     }
 
     override suspend fun assertActionsWereReceived() {
         if (reducer.receivedActions.isNotEmpty()) {
-            val error = StringBuilder().apply {
-                appendLine("🚨")
-                appendLine("There are still ${reducer.receivedActions.size} actions in the queue:")
-                reducer.receivedActions.forEach {
-                    appendLine("-$it")
+            val error =
+                StringBuilder().apply {
+                    appendLine("🚨")
+                    appendLine("There are still ${reducer.receivedActions.size} actions in the queue:")
+                    reducer.receivedActions.forEach {
+                        appendLine("-$it")
+                    }
                 }
-            }
             throw AssertionError(error.toString())
         }
     }
@@ -87,25 +91,29 @@ internal class NonExhaustiveAssertionRunner<State : Any, Action>(
     ) {
         if (assert == null) {
             if (logIgnoredStateChanges) {
-                logger.info("No assertion was provided, skipping state assertion (state did ${if (previousState == currentState) "not " else ""}change)")
+                logger.info(
+                    "No assertion was provided, skipping state assertion (state did ${if (previousState == currentState) "not " else ""}change)",
+                )
             }
         } else {
             val fields = previousState::class.memberProperties.toMutableSet()
             val previousStateModified = assert(previousState)
             val currentStateModified = assert(currentState)
-            val assertedFieldChanges = reflectionHandler.filterAccessibleProperty(fields) {
-                it.getter.call(previousState) != it.getter.call(previousStateModified) ||
-                    it.getter.call(currentState) != it.getter.call(currentStateModified)
-            }
+            val assertedFieldChanges =
+                reflectionHandler.filterAccessibleProperty(fields) {
+                    it.getter.call(previousState) != it.getter.call(previousStateModified) ||
+                        it.getter.call(currentState) != it.getter.call(currentStateModified)
+                }
             assertedFieldChanges.forEach {
                 it.getter.call(currentState) shouldBe it.getter.call(previousStateModified)
             }
             if (logIgnoredStateChanges) {
                 var changesHappened = false
-                val log = StringBuilder().apply {
-                    appendLine("⚠️")
-                    appendLine("The following state changes were not asserted:")
-                }
+                val log =
+                    StringBuilder().apply {
+                        appendLine("⚠️")
+                        appendLine("The following state changes were not asserted:")
+                    }
                 reflectionHandler.forEachAccessibleProperty(fields) {
                     if (it.getter.call(previousStateModified) != it.getter.call(currentState)) {
                         changesHappened = true
@@ -121,8 +129,7 @@ internal class NonExhaustiveAssertionRunner<State : Any, Action>(
         }
     }
 
-    override fun hasReceivedActionToHandle(match: (Action) -> Boolean): Boolean =
-        reducer.receivedActions.any { match(it.first) }
+    override fun hasReceivedActionToHandle(match: (Action) -> Boolean): Boolean = reducer.receivedActions.any { match(it.first) }
 
     override fun skipNotMatchingActions(match: (Action) -> Boolean) {
         if (reducer.receivedActions.none { match(it.first) }) {
@@ -143,14 +150,15 @@ internal class NonExhaustiveAssertionRunner<State : Any, Action>(
 
         if (logIgnoredReceivedActions) {
             if (skippedActions.isNotEmpty()) {
-                val log = StringBuilder().apply {
-                    appendLine("⚠️")
-                    appendLine("The following received actions were skipped:")
-                    skippedActions.forEach {
-                        appendLine("-$it")
+                val log =
+                    StringBuilder().apply {
+                        appendLine("⚠️")
+                        appendLine("The following received actions were skipped:")
+                        skippedActions.forEach {
+                            appendLine("-$it")
+                        }
+                        appendLine("Total: ${skippedActions.size}")
                     }
-                    appendLine("Total: ${skippedActions.size}")
-                }
                 logger.info(log.toString())
             }
         }
@@ -162,13 +170,16 @@ internal class NonExhaustiveAssertionRunner<State : Any, Action>(
 
     override fun assertEffectsAreDone() {
         if (reducer.inFlightEffects.isNotEmpty()) {
-            val warning = StringBuilder().apply {
-                appendLine("⚠️")
-                appendLine("There are still ${reducer.inFlightEffects.size} effects in flight that didn't finish under the ${timeout}ms timeout:")
-                reducer.inFlightEffects.forEach {
-                    appendLine("-$it")
+            val warning =
+                StringBuilder().apply {
+                    appendLine("⚠️")
+                    appendLine(
+                        "There are still ${reducer.inFlightEffects.size} effects in flight that didn't finish under the ${timeout}ms timeout:",
+                    )
+                    reducer.inFlightEffects.forEach {
+                        appendLine("-$it")
+                    }
                 }
-            }
             if (logIgnoredEffects) {
                 logger.info(warning.toString())
             }
@@ -178,13 +189,14 @@ internal class NonExhaustiveAssertionRunner<State : Any, Action>(
     override suspend fun assertActionsWereReceived() {
         val hasReceivedActions = reducer.receivedActions.isNotEmpty()
         if (hasReceivedActions && logIgnoredReceivedActions) {
-            val warning = StringBuilder().apply {
-                appendLine("⚠️")
-                appendLine("There are still ${reducer.receivedActions.size} actions in the queue:")
-                reducer.receivedActions.forEach {
-                    appendLine("-$it")
+            val warning =
+                StringBuilder().apply {
+                    appendLine("⚠️")
+                    appendLine("There are still ${reducer.receivedActions.size} actions in the queue:")
+                    reducer.receivedActions.forEach {
+                        appendLine("-$it")
+                    }
                 }
-            }
             logger.info(warning.toString())
         }
         store.skipReceivedActions(reducer.receivedActions.size)

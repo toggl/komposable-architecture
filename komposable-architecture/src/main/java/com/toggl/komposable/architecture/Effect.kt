@@ -13,7 +13,6 @@ import kotlin.experimental.ExperimentalTypeInference
  * @see Reducer.reduce
  */
 fun interface Effect<out Action> {
-
     /**
      * Executes the effect. This operation can produce side effects, and it's the
      * responsibility of the class implementing this interface to change threads
@@ -25,18 +24,17 @@ fun interface Effect<out Action> {
 
     companion object {
         fun none(): Effect<Nothing> = NoEffect
-        fun <Action> of(vararg actions: Action): Effect<Action> =
-            Effect { flowOf(*actions) }
 
-        fun <Action> fromFlow(flow: Flow<Action>): Effect<Action> =
-            Effect { flow }
+        fun <Action> of(vararg actions: Action): Effect<Action> = Effect { flowOf(*actions) }
 
-        fun <Action> fromSuspend(func: suspend () -> Action): Effect<Action> =
-            Effect { func.asFlow() }
+        fun <Action> fromFlow(flow: Flow<Action>): Effect<Action> = Effect { flow }
+
+        fun <Action> fromSuspend(func: suspend () -> Action): Effect<Action> = Effect { func.asFlow() }
 
         @OptIn(ExperimentalTypeInference::class)
-        fun <Action> fromProducer(@BuilderInference block: suspend ProducerScope<Action>.() -> Unit): Effect<Action> =
-            Effect { kotlinx.coroutines.flow.callbackFlow(block) }
+        fun <Action> fromProducer(
+            @BuilderInference block: suspend ProducerScope<Action>.() -> Unit,
+        ): Effect<Action> = Effect { kotlinx.coroutines.flow.callbackFlow(block) }
     }
 }
 

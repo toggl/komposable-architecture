@@ -12,12 +12,11 @@ class JvmReflectionHandler : ReflectionHandler {
     override fun filterAccessibleProperty(
         properties: Collection<KProperty<*>>,
         predicate: (KProperty<*>) -> Boolean,
-    ): List<KProperty<*>> {
-        return properties.filter { property ->
+    ): List<KProperty<*>> =
+        properties.filter { property ->
             property.isAccessible = true
             predicate(property)
         }
-    }
 
     override fun forEachAccessibleProperty(
         properties: Collection<KProperty<*>>,

@@ -14,36 +14,39 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 
 class StoreExceptionHandlingTests : StoreCoroutineTest() {
-
     @Test
-    fun `reduce exception should be handled`() = runTest {
-        testStore.send(TestAction.ThrowExceptionAction)
-        runCurrent()
-        coVerify(exactly = 1) { testExceptionHandler.handleException(TestException) }
-    }
-
-    @Test
-    fun `effect exception should be handled`() = runTest {
-        testStore.send(TestAction.StartExceptionThrowingEffectAction)
-        runCurrent()
-        coVerify(exactly = 1) { testExceptionHandler.handleException(TestException) }
-    }
-
-    @Test
-    fun `subscription exception should be handled`() = runTest {
-        val subscription = mockk<TestSubscription> {
-            coEvery { subscribe(any()) } throws TestException
+    fun `reduce exception should be handled`() =
+        runTest {
+            testStore.send(TestAction.ThrowExceptionAction)
+            runCurrent()
+            coVerify(exactly = 1) { testExceptionHandler.handleException(TestException) }
         }
 
-        runCurrent()
-
-        assertThrows<Throwable> {
-            createTestStore(
-                subscription = subscription,
-                defaultExceptionHandler = testExceptionHandler,
-            )
+    @Test
+    fun `effect exception should be handled`() =
+        runTest {
+            testStore.send(TestAction.StartExceptionThrowingEffectAction)
+            runCurrent()
+            coVerify(exactly = 1) { testExceptionHandler.handleException(TestException) }
         }
 
-        coVerify(exactly = 1) { testExceptionHandler.handleException(TestException) }
-    }
+    @Test
+    fun `subscription exception should be handled`() =
+        runTest {
+            val subscription =
+                mockk<TestSubscription> {
+                    coEvery { subscribe(any()) } throws TestException
+                }
+
+            runCurrent()
+
+            assertThrows<Throwable> {
+                createTestStore(
+                    subscription = subscription,
+                    defaultExceptionHandler = testExceptionHandler,
+                )
+            }
+
+            coVerify(exactly = 1) { testExceptionHandler.handleException(TestException) }
+        }
 }

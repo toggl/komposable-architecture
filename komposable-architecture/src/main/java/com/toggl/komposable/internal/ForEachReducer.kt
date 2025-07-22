@@ -19,7 +19,10 @@ internal class ForEachReducer<ElementState, ParentState, ElementAction, ParentAc
     ): ReduceResult<ParentState, ParentAction> {
         val (id: ID, elementAction: ElementAction) = mapToElementAction(action) ?: return parentReducer.reduce(state, action)
         val mapToLocalState: (ParentState) -> ElementState = { parentState: ParentState -> mapToElementState(parentState, id) }
-        val mapToGlobalState: (ParentState, ElementState) -> ParentState = { parentState: ParentState, elementState: ElementState -> mapToParentState(parentState, elementState!!, id) }
+        val mapToGlobalState: (
+            ParentState,
+            ElementState,
+        ) -> ParentState = { parentState: ParentState, elementState: ElementState -> mapToParentState(parentState, elementState!!, id) }
 
         val (elementState, elementEffect) = elementReducer.reduce(mapToLocalState(state), elementAction)
         val (parentState, parentEffect) = parentReducer.reduce(mapToGlobalState(state, elementState), action)

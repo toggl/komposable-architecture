@@ -5,7 +5,9 @@ package com.toggl.komposable.exceptions
  * The exception is no longer forwarded as soon as any handler returns true.
  * @see ExceptionHandler
  */
-class CompositeExceptionHandler(private val innerHandlers: List<ExceptionHandler>) : ExceptionHandler {
+class CompositeExceptionHandler(
+    private val innerHandlers: List<ExceptionHandler>,
+) : ExceptionHandler {
     override suspend fun handleException(exception: Throwable): Boolean {
         for (handler in innerHandlers) {
             val handled = handler.handleException(exception)

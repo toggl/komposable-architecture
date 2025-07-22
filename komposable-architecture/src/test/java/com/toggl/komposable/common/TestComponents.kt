@@ -32,21 +32,42 @@ fun StoreCoroutineTest.createTestStore(
     dispatcherProvider,
 )
 
-data class TestState(val testProperty: String = "", val testIntProperty: Int = 0)
+data class TestState(
+    val testProperty: String = "",
+    val testIntProperty: Int = 0,
+)
 
 sealed class TestAction {
-    data class LocalActionWrapper(val action: LocalTestAction) : TestAction()
-    data class ChangeTestProperty(val testProperty: String) : TestAction()
-    data class AddToTestProperty(val testPropertySuffix: String) : TestAction()
-    data class StartEffectAction(val effect: Effect<TestAction>) : TestAction()
+    data class LocalActionWrapper(
+        val action: LocalTestAction,
+    ) : TestAction()
+
+    data class ChangeTestProperty(
+        val testProperty: String,
+    ) : TestAction()
+
+    data class AddToTestProperty(
+        val testPropertySuffix: String,
+    ) : TestAction()
+
+    data class StartEffectAction(
+        val effect: Effect<TestAction>,
+    ) : TestAction()
+
     data object ClearTestPropertyFromEffect : TestAction()
+
     data object DoNothingAction : TestAction()
+
     data object StartExceptionThrowingEffectAction : TestAction()
+
     data object DoNothingFromEffectAction : TestAction()
+
     data object ThrowExceptionAction : TestAction()
 }
 
-class TestEffect(private vararg val actions: TestAction = arrayOf(TestAction.DoNothingFromEffectAction)) : Effect<TestAction> {
+class TestEffect(
+    private vararg val actions: TestAction = arrayOf(TestAction.DoNothingFromEffectAction),
+) : Effect<TestAction> {
     override fun run(): Flow<TestAction> = flowOf(*actions)
 }
 
@@ -56,18 +77,19 @@ class TestExceptionEffect : Effect<TestAction> {
 
 class TestSubscription : Subscription<TestState, TestAction> {
     val stateFlow = MutableStateFlow<TestAction?>(null)
-    override fun subscribe(state: Flow<TestState>): Flow<TestAction> =
-        stateFlow.asStateFlow().filterNotNull()
+
+    override fun subscribe(state: Flow<TestState>): Flow<TestAction> = stateFlow.asStateFlow().filterNotNull()
 }
 
 class TestStoreExceptionHandler : ExceptionHandler {
-    override suspend fun handleException(exception: Throwable): Boolean {
-        return false
-    }
+    override suspend fun handleException(exception: Throwable): Boolean = false
 }
 
 class TestReducer : Reducer<TestState, TestAction> {
-    override fun reduce(state: TestState, action: TestAction): ReduceResult<TestState, TestAction> =
+    override fun reduce(
+        state: TestState,
+        action: TestAction,
+    ): ReduceResult<TestState, TestAction> =
         when (action) {
             is TestAction.LocalActionWrapper -> ReduceResult(state, NoEffect)
             is TestAction.ChangeTestProperty ->
@@ -87,11 +109,21 @@ class TestReducer : Reducer<TestState, TestAction> {
 
 object TestException : Exception()
 
-data class LocalTestState(val testIntProperty: Int = 0)
+data class LocalTestState(
+    val testIntProperty: Int = 0,
+)
+
 sealed class LocalTestAction {
-    data class ChangeTestIntProperty(val testIntProperty: Int) : LocalTestAction()
-    data class StartEffectAction(val effect: Effect<LocalTestAction>) : LocalTestAction()
+    data class ChangeTestIntProperty(
+        val testIntProperty: Int,
+    ) : LocalTestAction()
+
+    data class StartEffectAction(
+        val effect: Effect<LocalTestAction>,
+    ) : LocalTestAction()
+
     data object DoNothingLocalAction : LocalTestAction()
+
     data object DoNothingFromEffectAction : LocalTestAction()
 }
 

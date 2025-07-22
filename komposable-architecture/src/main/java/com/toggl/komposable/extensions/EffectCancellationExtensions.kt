@@ -21,20 +21,25 @@ private val cancellationJobs: MutableMap<Any, MutableSet<Job>> = mutableMapOf()
  * @param cancelInFlight If true, cancels any ongoing effects with the same ID.
  * @return A new Effect instance that is cancellable.
  */
-fun <Action> Effect<Action>.cancellable(id: Any, cancelInFlight: Boolean = false): Effect<Action> =
+fun <Action> Effect<Action>.cancellable(
+    id: Any,
+    cancelInFlight: Boolean = false,
+): Effect<Action> =
     Effect {
-        this.run().onStart {
-            mutex.withLock {
-                if (cancelInFlight) {
-                    cancellationJobs[id]?.forEach {
-                        it.cancel(EffectCancellationException.InFlightEffectsCancelled(id))
+        this
+            .run()
+            .onStart {
+                mutex.withLock {
+                    if (cancelInFlight) {
+                        cancellationJobs[id]?.forEach {
+                            it.cancel(EffectCancellationException.InFlightEffectsCancelled(id))
+                        }
+                        cancellationJobs.remove(id)
                     }
-                    cancellationJobs.remove(id)
+                    val job = currentCoroutineContext()[Job]
+                    job?.let { cancellationJobs.getOrPut(id) { mutableSetOf() }.add(it) }
                 }
-                val job = currentCoroutineContext()[Job]
-                job?.let { cancellationJobs.getOrPut(id) { mutableSetOf() }.add(it) }
-            }
-        }.cancellable()
+            }.cancellable()
     }
 
 /**
@@ -71,8 +76,16 @@ fun Effect.Companion.cancelAll(): Effect<Nothing> =
         }
     }
 
-sealed class EffectCancellationException(message: String) : CancellationException(message) {
-    data class InFlightEffectsCancelled(val id: Any) : EffectCancellationException("Reason:cancelInFlight Id:$id")
-    data class EffectsCancelledManually(val id: Any) : EffectCancellationException("Reason:cancel Id:$id")
+sealed class EffectCancellationException(
+    message: String,
+) : CancellationException(message) {
+    data class InFlightEffectsCancelled(
+        val id: Any,
+    ) : EffectCancellationException("Reason:cancelInFlight Id:$id")
+
+    data class EffectsCancelledManually(
+        val id: Any,
+    ) : EffectCancellationException("Reason:cancel Id:$id")
+
     data object AllEffectsCancelledManually : EffectCancellationException("Reason:cancelAll")
 }

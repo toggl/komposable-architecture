@@ -7,9 +7,9 @@ import com.google.devtools.ksp.validate
 import kotlin.reflect.KClass
 
 fun Resolver.getSymbolsAnnotatedWith(kClass: KClass<*>) =
-    this.getSymbolsWithAnnotation(kClass.qualifiedName.orEmpty())
+    this
+        .getSymbolsWithAnnotation(kClass.qualifiedName.orEmpty())
         .filterIsInstance<KSClassDeclaration>()
         .filter(KSNode::validate)
 
-fun String.toCamelCase() =
-    first().lowercaseChar() + this.substring(1..< length)
+fun String.toCamelCase() = first().lowercaseChar() + this.substring(1..<length)

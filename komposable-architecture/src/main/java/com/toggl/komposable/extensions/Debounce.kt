@@ -19,8 +19,9 @@ import kotlinx.coroutines.flow.onStart
 fun <Action> Effect<Action>.debounce(
     id: Any,
     delayMillis: Long,
-): Effect<Action> = Effect {
-    this.run().onStart {
-        delay(delayMillis)
-    }
-}.cancellable(id, true)
+): Effect<Action> =
+    Effect {
+        this.run().onStart {
+            delay(delayMillis)
+        }
+    }.cancellable(id, true)

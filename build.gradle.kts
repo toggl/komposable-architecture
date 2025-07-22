@@ -36,11 +36,7 @@ subprojects {
     configure<SpotlessExtension> {
         kotlin {
             target("**/*.kt")
-            ktlint(ktlintVersion).editorConfigOverride(
-                mapOf(
-                    "android" to "true",
-                ),
-            )
+            ktlint(ktlintVersion)
         }
     }
 

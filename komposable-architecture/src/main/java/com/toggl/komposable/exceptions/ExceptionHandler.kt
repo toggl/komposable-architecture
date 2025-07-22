@@ -5,7 +5,6 @@ package com.toggl.komposable.exceptions
  * @see com.toggl.komposable.architecture.Store
  */
 interface ExceptionHandler {
-
     /**
      * Called whenever an exception is thrown during the reduce process.
      * @return true if the exception was handled, false if it should be propagated.

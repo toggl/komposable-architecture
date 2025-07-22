@@ -18,26 +18,29 @@ import org.junit.jupiter.api.Test
 class CompositeReducerTests {
     private val originalState = TestState("original")
     private val stateFromFirst = TestState("first")
-    private val firstReducer: Reducer<TestState, TestAction> = mockk<Reducer<TestState, TestAction>> {
-        every { reduce(originalState, any()) } returns ReduceResult(stateFromFirst, NoEffect)
-    }
+    private val firstReducer: Reducer<TestState, TestAction> =
+        mockk<Reducer<TestState, TestAction>> {
+            every { reduce(originalState, any()) } returns ReduceResult(stateFromFirst, NoEffect)
+        }
 
     private val stateFromSecond = TestState("second")
-    private val secondReducer: Reducer<TestState, TestAction> = mockk<Reducer<TestState, TestAction>> {
-        every { reduce(stateFromFirst, any()) } returns ReduceResult(stateFromSecond, NoEffect)
-    }
+    private val secondReducer: Reducer<TestState, TestAction> =
+        mockk<Reducer<TestState, TestAction>> {
+            every { reduce(stateFromFirst, any()) } returns ReduceResult(stateFromSecond, NoEffect)
+        }
 
     private val combinedReducer = combine(firstReducer, secondReducer)
 
     @Test
-    fun `reducers should be called sequentially`() = runTest {
-        combinedReducer.testReduceState(originalState, TestAction.DoNothingAction) { state ->
-            state shouldBe stateFromSecond
-        }
+    fun `reducers should be called sequentially`() =
+        runTest {
+            combinedReducer.testReduceState(originalState, TestAction.DoNothingAction) { state ->
+                state shouldBe stateFromSecond
+            }
 
-        verify(ordering = Ordering.SEQUENCE) {
-            firstReducer.reduce(originalState, TestAction.DoNothingAction)
-            secondReducer.reduce(stateFromFirst, TestAction.DoNothingAction)
+            verify(ordering = Ordering.SEQUENCE) {
+                firstReducer.reduce(originalState, TestAction.DoNothingAction)
+                secondReducer.reduce(stateFromFirst, TestAction.DoNothingAction)
+            }
         }
-    }
 }

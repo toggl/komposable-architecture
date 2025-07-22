@@ -10,10 +10,11 @@ import io.mockk.spyk
 
 class PullbackTests : BasePullbackTests() {
     override val localReducer = spyk(LocalTestReducer())
-    override val pulledBackReducer: Reducer<TestState, TestAction> = localReducer.pullback(
-        mapToLocalState = { LocalTestState(it.testIntProperty) },
-        mapToLocalAction = { if (it is TestAction.LocalActionWrapper) it.action else null },
-        mapToGlobalState = { globalState, localState -> globalState.copy(testIntProperty = localState.testIntProperty) },
-        mapToGlobalAction = { TestAction.LocalActionWrapper(it) },
-    )
+    override val pulledBackReducer: Reducer<TestState, TestAction> =
+        localReducer.pullback(
+            mapToLocalState = { LocalTestState(it.testIntProperty) },
+            mapToLocalAction = { if (it is TestAction.LocalActionWrapper) it.action else null },
+            mapToGlobalState = { globalState, localState -> globalState.copy(testIntProperty = localState.testIntProperty) },
+            mapToGlobalAction = { TestAction.LocalActionWrapper(it) },
+        )
 }

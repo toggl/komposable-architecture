@@ -17,27 +17,29 @@ import org.junit.jupiter.api.Test
 
 class OptionalPullbackTests : BasePullbackTests() {
     override val localReducer = spyk(LocalTestReducer())
-    override val pulledBackReducer: Reducer<TestState, TestAction> = localReducer.optionalPullback(
-        mapToLocalState = { if (it.testIntProperty != 0) LocalTestState(it.testIntProperty) else null },
-        mapToLocalAction = { if (it is TestAction.LocalActionWrapper) it.action else null },
-        mapToGlobalState = { globalState, localState -> globalState.copy(testIntProperty = localState?.testIntProperty ?: 0) },
-        mapToGlobalAction = { TestAction.LocalActionWrapper(it) },
-    )
+    override val pulledBackReducer: Reducer<TestState, TestAction> =
+        localReducer.optionalPullback(
+            mapToLocalState = { if (it.testIntProperty != 0) LocalTestState(it.testIntProperty) else null },
+            mapToLocalAction = { if (it is TestAction.LocalActionWrapper) it.action else null },
+            mapToGlobalState = { globalState, localState -> globalState.copy(testIntProperty = localState?.testIntProperty ?: 0) },
+            mapToGlobalAction = { TestAction.LocalActionWrapper(it) },
+        )
 
     @Test
-    fun `local reducer should not be called when mapToLocalState returns null`() = runTest {
-        val globalState = TestState("", 0) // 0 will cause the mapToLocalState to return null
-        val action = TestAction.ChangeTestProperty("")
+    fun `local reducer should not be called when mapToLocalState returns null`() =
+        runTest {
+            val globalState = TestState("", 0) // 0 will cause the mapToLocalState to return null
+            val action = TestAction.ChangeTestProperty("")
 
-        pulledBackReducer.testReduce(
-            globalState,
-            action,
-        ) { state, effect ->
-            state shouldBe globalState
-            effect shouldBe NoEffect
+            pulledBackReducer.testReduce(
+                globalState,
+                action,
+            ) { state, effect ->
+                state shouldBe globalState
+                effect shouldBe NoEffect
+            }
+            verify {
+                localReducer wasNot Called
+            }
         }
-        verify {
-            localReducer wasNot Called
-        }
-    }
 }

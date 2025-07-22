@@ -39,7 +39,11 @@ class StateMappingSymbolProcessorTests {
     @Test
     fun `State mapping methods are generated even when there are nested @ParentPath annotated props and the nested class is in a separate file`() {
         stateMappingShouldSucceed(
-            sourceFiles = listOf(StateSources.appStateWithNestedValueInSeparateFile, StateSources.standaloneNestedValue, StateSources.settingsStateWithNestedMapping),
+            sourceFiles = listOf(
+                StateSources.appStateWithNestedValueInSeparateFile,
+                StateSources.standaloneNestedValue,
+                StateSources.settingsStateWithNestedMapping,
+            ),
             expectedResult = StateSources.generatedStateExtensionsFileWithPathNestedMapping,
         )
     }

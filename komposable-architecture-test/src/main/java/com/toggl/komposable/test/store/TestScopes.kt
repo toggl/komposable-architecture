@@ -4,7 +4,6 @@ import kotlinx.coroutines.test.advanceTimeBy
 import kotlin.time.Duration
 
 interface ExhaustiveTestStoreScope<State : Any, Action : Any?> {
-
     /**
      * The current state of the store.
      */
@@ -17,7 +16,10 @@ interface ExhaustiveTestStoreScope<State : Any, Action : Any?> {
      * @param action The action to be sent to the store.
      * @param assert A lambda function for asserting the resulting state.
      */
-    suspend fun send(action: Action, assert: ((state: State) -> State)? = null)
+    suspend fun send(
+        action: Action,
+        assert: ((state: State) -> State)? = null,
+    )
 
     /**
      * Receives an action that has been fired by some Effect running in the store and
@@ -27,7 +29,10 @@ interface ExhaustiveTestStoreScope<State : Any, Action : Any?> {
      * @param action The action expected to be received.
      * @param assert A lambda function for asserting the resulting state.
      */
-    suspend fun receive(action: Action, assert: ((state: State) -> State)? = null)
+    suspend fun receive(
+        action: Action,
+        assert: ((state: State) -> State)? = null,
+    )
 
     /**
      * Receives an action that has been fired by some Effect running in the store
@@ -50,9 +55,7 @@ interface ExhaustiveTestStoreScope<State : Any, Action : Any?> {
     fun advanceTestStoreTimeBy(duration: Duration)
 }
 
-interface NonExhaustiveTestStoreScope<State : Any, Action : Any?> :
-    ExhaustiveTestStoreScope<State, Action> {
-
+interface NonExhaustiveTestStoreScope<State : Any, Action : Any?> : ExhaustiveTestStoreScope<State, Action> {
     val defaultDuration: Duration
 
     /**
@@ -77,15 +80,21 @@ interface NonExhaustiveTestStoreScope<State : Any, Action : Any?> :
     fun assert(assert: (state: State) -> State)
 }
 
-internal open class BaseTestStoreScopeImpl<State : Any, Action : Any?>(private val store: TestStore<State, Action>) : ExhaustiveTestStoreScope<State, Action> {
+internal open class BaseTestStoreScopeImpl<State : Any, Action : Any?>(
+    private val store: TestStore<State, Action>,
+) : ExhaustiveTestStoreScope<State, Action> {
     override val state: State
         get() = store.state
 
-    override suspend fun send(action: Action, assert: ((state: State) -> State)?) =
-        store.send(action, assert)
+    override suspend fun send(
+        action: Action,
+        assert: ((state: State) -> State)?,
+    ) = store.send(action, assert)
 
-    override suspend fun receive(action: Action, assert: ((state: State) -> State)?) =
-        store.receive(action, assert)
+    override suspend fun receive(
+        action: Action,
+        assert: ((state: State) -> State)?,
+    ) = store.receive(action, assert)
 
     override suspend fun receive(
         actionPredicate: (Action) -> Boolean,
@@ -97,12 +106,15 @@ internal open class BaseTestStoreScopeImpl<State : Any, Action : Any?>(private v
     }
 }
 
-internal class ExhaustiveTestStoreScopeImpl<State : Any, Action : Any?>(store: TestStore<State, Action>) :
-    ExhaustiveTestStoreScope<State, Action>, BaseTestStoreScopeImpl<State, Action>(store)
+internal class ExhaustiveTestStoreScopeImpl<State : Any, Action : Any?>(
+    store: TestStore<State, Action>,
+) : BaseTestStoreScopeImpl<State, Action>(store),
+    ExhaustiveTestStoreScope<State, Action>
 
-internal class NonExhaustiveTestStoreScopeImpl<State : Any, Action : Any?>(private val store: TestStore<State, Action>) :
-    NonExhaustiveTestStoreScope<State, Action>, BaseTestStoreScopeImpl<State, Action>(store) {
-
+internal class NonExhaustiveTestStoreScopeImpl<State : Any, Action : Any?>(
+    private val store: TestStore<State, Action>,
+) : BaseTestStoreScopeImpl<State, Action>(store),
+    NonExhaustiveTestStoreScope<State, Action> {
     override val defaultDuration: Duration
         get() = store.timeout
 
