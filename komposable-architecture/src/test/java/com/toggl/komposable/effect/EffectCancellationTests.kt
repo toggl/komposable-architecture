@@ -45,7 +45,7 @@ class EffectCancellationTests {
                 effect2Flow.value = 1
                 effect2Turbine.awaitItem() shouldBe 1
 
-                cancelEffect1.run().testIn(backgroundScope)
+                cancelEffect1.run().testIn(backgroundScope).awaitComplete()
                 effect1Turbine.awaitError().apply {
                     shouldBeInstanceOf<EffectsCancelledManually>()
                     id shouldBe "cancelId01"
@@ -86,7 +86,7 @@ class EffectCancellationTests {
                 effect2Flow.value = 1
                 effect2Turbine.awaitItem() shouldBe 1
 
-                cancelEffect.run().testIn(backgroundScope)
+                cancelEffect.run().testIn(backgroundScope).awaitComplete()
                 effect1Turbine.awaitError().apply {
                     shouldBeInstanceOf<EffectsCancelledManually>()
                     id shouldBe "cancelId03"
@@ -135,7 +135,7 @@ class EffectCancellationTests {
                 effect2Flow.value = 4
                 mergedEffectTurbine.awaitItem() shouldBe 4
 
-                cancelEffect2.run().testIn(backgroundScope)
+                cancelEffect2.run().testIn(backgroundScope).awaitComplete()
 
                 // now it should be dead too
                 effect2Flow.value = 5
@@ -246,7 +246,7 @@ class EffectCancellationTests {
                 effect3Flow.value = 1
                 effect3Turbine.awaitItem() shouldBe 1
 
-                cancelAllEffect.run().testIn(backgroundScope)
+                cancelAllEffect.run().testIn(backgroundScope).awaitComplete()
 
                 effect1Turbine.awaitError().shouldBeInstanceOf<AllEffectsCancelledManually>()
                 effect2Turbine.awaitError().shouldBeInstanceOf<AllEffectsCancelledManually>()
