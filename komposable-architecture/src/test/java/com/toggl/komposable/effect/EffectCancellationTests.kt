@@ -129,7 +129,7 @@ class EffectCancellationTests {
                 effect2Flow.value = 2
                 mergedEffectTurbine.awaitItem() shouldBe 2
 
-                cancelEffect1.run().testIn(backgroundScope)
+                cancelEffect1.run().testIn(backgroundScope).awaitComplete()
 
                 // mergedEffect should not be canceled because effect2Flow is still alive
                 effect2Flow.value = 4
