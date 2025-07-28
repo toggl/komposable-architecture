@@ -4,106 +4,112 @@ import com.tschuchort.compiletesting.SourceFile
 import org.intellij.lang.annotations.Language
 
 object ActionSources {
+    val settingsAction =
+        SourceFile.kotlin(
+            "SettingsAction.kt",
+            """
+            package com.toggl.komposable.compiler
+            
+            sealed interface SettingsAction {
+                data class ChangeSomeSetting(val newValue: Boolean) : SettingsAction
+            }
+            """.trimIndent(),
+        )
 
-    val settingsAction = SourceFile.kotlin(
-        "SettingsAction.kt",
-        """
-    package com.toggl.komposable.compiler
-    
-    sealed interface SettingsAction {
-        data class ChangeSomeSetting(val newValue: Boolean) : SettingsAction
-    }
-        """.trimIndent(),
-    )
+    val settingsActionWithoutPackage =
+        SourceFile.kotlin(
+            "SettingsAction.kt",
+            """
+            sealed interface SettingsAction {
+                data class ChangeSomeSetting(val newValue: Boolean) : SettingsAction
+            }
+            """.trimIndent(),
+        )
 
-    val settingsActionWithoutPackage = SourceFile.kotlin(
-        "SettingsAction.kt",
-        """
-    sealed interface SettingsAction {
-        data class ChangeSomeSetting(val newValue: Boolean) : SettingsAction
-    }
-        """.trimIndent(),
-    )
+    val appAction =
+        SourceFile.kotlin(
+            "AppAction.kt",
+            """
+            package com.toggl.komposable.compiler
+            
+            import com.toggl.komposable.architecture.WrapperAction
+            
+            sealed interface AppAction {
+                data object ClearList : AppAction
+            
+                @WrapperAction
+                data class Settings(val settingsAction: SettingsAction) : AppAction
+            }
+            """.trimIndent(),
+        )
 
-    val appAction = SourceFile.kotlin(
-        "AppAction.kt",
-        """
-    package com.toggl.komposable.compiler
-    
-    import com.toggl.komposable.architecture.WrapperAction
-    
-    sealed interface AppAction {
-        data object ClearList : AppAction
-    
-        @WrapperAction
-        data class Settings(val settingsAction: SettingsAction) : AppAction
-    }
-        """.trimIndent(),
-    )
+    val appActionNonSealedParent =
+        SourceFile.kotlin(
+            "AppAction.kt",
+            """
+            package com.toggl.komposable.compiler
+            
+            import com.toggl.komposable.architecture.WrapperAction
+            
+            interface AppAction {
+                data object ClearList : AppAction
+            
+                @WrapperAction
+                data class Settings(val settingsAction: SettingsAction) : AppAction
+            }
+            """.trimIndent(),
+        )
 
-    val appActionNonSealedParent = SourceFile.kotlin(
-        "AppAction.kt",
-        """
-    package com.toggl.komposable.compiler
-    
-    import com.toggl.komposable.architecture.WrapperAction
-    
-    interface AppAction {
-        data object ClearList : AppAction
-    
-        @WrapperAction
-        data class Settings(val settingsAction: SettingsAction) : AppAction
-    }
-        """.trimIndent(),
-    )
+    val appActionWithExtraInterface =
+        SourceFile.kotlin(
+            "AppAction.kt",
+            """
+            package com.toggl.komposable.compiler
+            
+            import com.toggl.komposable.architecture.WrapperAction
+            
+            interface ExtraInterface
 
-    val appActionWithExtraInterface = SourceFile.kotlin(
-        "AppAction.kt",
-        """
-    package com.toggl.komposable.compiler
-    
-    import com.toggl.komposable.architecture.WrapperAction
-    
-    interface ExtraInterface
+            sealed interface AppAction {
+                data object ClearList : AppAction
+            
+                @WrapperAction
+                data class Settings(val settingsAction: SettingsAction) : AppAction, ExtraInterface
+            }
+            """.trimIndent(),
+        )
 
-    sealed interface AppAction {
-        data object ClearList : AppAction
-    
-        @WrapperAction
-        data class Settings(val settingsAction: SettingsAction) : AppAction, ExtraInterface
-    }
-        """.trimIndent(),
-    )
+    val appActionWithoutPackage =
+        SourceFile.kotlin(
+            "AppAction.kt",
+            """    
+            import com.toggl.komposable.architecture.WrapperAction
+            
+            sealed interface AppAction {
+                data object ClearList : AppAction
+            
+                @WrapperAction
+                data class Settings(val settingsAction: SettingsAction) : AppAction
+            }
+            """.trimIndent(),
+        )
 
-    val appActionWithoutPackage = SourceFile.kotlin(
-        "AppAction.kt",
-        """    
-    import com.toggl.komposable.architecture.WrapperAction
-    
-    sealed interface AppAction {
-        data object ClearList : AppAction
-    
-        @WrapperAction
-        data class Settings(val settingsAction: SettingsAction) : AppAction
-    }
-        """.trimIndent(),
-    )
-
-    val appActionWithMultipleProperties = SourceFile.kotlin(
-        "AppAction.kt",
-        """
-    package com.toggl.komposable.compiler
-    
-    import com.toggl.komposable.architecture.WrapperAction
-    
-    sealed interface AppAction {
-        data object ClearList : AppAction
-    
-        @WrapperAction
-        data class Settings(val settingsAction: SettingsAction, val foo: String) : AppAction
-    }
-        """.trimIndent(),
-    )
+    val appActionWithMultipleProperties =
+        SourceFile.kotlin(
+            "AppAction.kt",
+            """
+            package com.toggl.komposable.compiler
+            
+            import com.toggl.komposable.architecture.WrapperAction
+            
+            sealed interface AppAction {
+                data object ClearList : AppAction
+            
+                @WrapperAction
+                data class Settings(val settingsAction: SettingsAction, val foo: String) : AppAction
+            }
+            """.trimIndent(),
+        )
 
     @Language("kotlin")
     val generatedActionExtensionsFile = """package com.toggl.komposable.compiler

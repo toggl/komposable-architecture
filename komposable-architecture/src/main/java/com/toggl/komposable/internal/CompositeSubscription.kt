@@ -9,9 +9,10 @@ internal class CompositeSubscription<State, Action : Any>(
     private val subscriptions: Collection<Subscription<State, Action>>,
 ) : Subscription<State, Action> {
     override fun subscribe(state: Flow<State>): Flow<Action> {
-        val subscriptionFlows: List<Flow<Action>> = subscriptions.map { sub ->
-            sub.subscribe(state.distinctUntilChanged())
-        }
+        val subscriptionFlows: List<Flow<Action>> =
+            subscriptions.map { sub ->
+                sub.subscribe(state.distinctUntilChanged())
+            }
         return subscriptionFlows.merge()
     }
 }

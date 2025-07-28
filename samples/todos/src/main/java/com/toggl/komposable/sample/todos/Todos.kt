@@ -53,20 +53,39 @@ data class TodosState(
 }
 
 class TodosReducer : Reducer<TodosState, TodosAction> {
-    override fun reduce(state: TodosState, action: TodosAction): ReduceResult<TodosState, TodosAction> =
+    override fun reduce(
+        state: TodosState,
+        action: TodosAction,
+    ): ReduceResult<TodosState, TodosAction> =
         when (action) {
             TodosAction.AddTodoButtonTapped ->
-                state.copy(todos = state.todos + TodoState(UUID.randomUUID(), "", false)).withoutEffect()
+                state.copy(
+                    todos = state.todos + TodoState(
+                        id = UUID.randomUUID(),
+                        description = "",
+                        isComplete = false,
+                    ),
+                ).withoutEffect()
             is TodosAction.FilterChanged ->
                 state.copy(filter = action.filter).withoutEffect()
             TodosAction.ClearCompletedButtonTapped ->
-                state.copy(todos = state.todos.filter { !it.isComplete }).withoutEffect()
+                state.copy(
+                    todos = state.todos.filter { !it.isComplete },
+                ).withoutEffect()
             is TodosAction.Delete ->
-                state.copy(todos = state.todos.filterNot { action.ids.contains(it.id) }).withoutEffect()
+                state.copy(
+                    todos = state.todos.filterNot { action.ids.contains(it.id) },
+                ).withoutEffect()
             TodosAction.SortCompletedTodos ->
-                state.copy(todos = state.todos.sortedBy { it.isComplete }).withoutEffect()
+                state.copy(
+                    todos = state.todos.sortedBy { it.isComplete },
+                ).withoutEffect()
             is TodosAction.Todo -> if (action.action is TodoAction.IsCompleteChanged) {
-                state.withEffect { of(TodosAction.SortCompletedTodos).debounce("sort", 1000).named("sort") }
+                state.withEffect {
+                    of(TodosAction.SortCompletedTodos)
+                        .debounce("sort", 1000)
+                        .named("sort")
+                }
             } else {
                 state.withoutEffect()
             }
@@ -75,7 +94,11 @@ class TodosReducer : Reducer<TodosState, TodosAction> {
 }
 
 @Composable
-fun TodoList(todosState: TodosState, onCheckedChange: (Int, Boolean) -> Unit, onDescriptionChanged: (Int, String) -> Unit) {
+fun TodoList(
+    todosState: TodosState,
+    onCheckedChange: (Int, Boolean) -> Unit,
+    onDescriptionChanged: (Int, String) -> Unit,
+) {
     LazyColumn(modifier = Modifier.padding(start = 6.dp)) {
         for ((index, todo) in todosState.filteredTodos.withIndex()) {
             item(key = todo.id) {

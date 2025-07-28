@@ -1,9 +1,12 @@
+@file:OptIn(ExperimentalCompilerApi::class)
+
 import com.toggl.komposable.processors.StateMappingSymbolProcessorProvider
 import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.SourceFile
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
+import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
 import org.junit.Ignore
 import sources.StateSources
 import kotlin.test.Test
@@ -36,7 +39,11 @@ class StateMappingSymbolProcessorTests {
     @Test
     fun `State mapping methods are generated even when there are nested @ParentPath annotated props and the nested class is in a separate file`() {
         stateMappingShouldSucceed(
-            sourceFiles = listOf(StateSources.appStateWithNestedValueInSeparateFile, StateSources.standaloneNestedValue, StateSources.settingsStateWithNestedMapping),
+            sourceFiles = listOf(
+                StateSources.appStateWithNestedValueInSeparateFile,
+                StateSources.standaloneNestedValue,
+                StateSources.settingsStateWithNestedMapping,
+            ),
             expectedResult = StateSources.generatedStateExtensionsFileWithPathNestedMapping,
         )
     }

@@ -1,7 +1,10 @@
+@file:OptIn(ExperimentalCompilerApi::class)
+
 import com.google.devtools.ksp.processing.SymbolProcessorProvider
 import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.SourceFile
 import com.tschuchort.compiletesting.symbolProcessorProviders
+import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
 import java.io.File
 
 private val KotlinCompilation.Result.workingDir: File get() = outputDirectory.parentFile!!
@@ -20,12 +23,13 @@ fun SymbolProcessorProvider.testCompilation(
     assert: KotlinCompilation.Result.() -> Unit,
 ) {
     // Arrange
-    val compilation = KotlinCompilation().apply {
-        sources = sourceFiles
-        symbolProcessorProviders = listOf(this@testCompilation)
-        inheritClassPath = true
-        messageOutputStream = System.out
-    }
+    val compilation =
+        KotlinCompilation().apply {
+            sources = sourceFiles
+            symbolProcessorProviders = listOf(this@testCompilation)
+            inheritClassPath = true
+            messageOutputStream = System.out
+        }
 
     // Act
     val result: KotlinCompilation.Result = compilation.compile()

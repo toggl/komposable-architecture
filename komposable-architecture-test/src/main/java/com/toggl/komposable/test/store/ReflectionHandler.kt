@@ -12,7 +12,10 @@ interface ReflectionHandler {
         predicate: (KProperty<*>) -> Boolean,
     ): List<KProperty<*>>
 
-    fun forEachAccessibleProperty(properties: Collection<KProperty<*>>, predicate: (KProperty<*>) -> Unit)
+    fun forEachAccessibleProperty(
+        properties: Collection<KProperty<*>>,
+        predicate: (KProperty<*>) -> Unit,
+    )
 }
 
 /**
@@ -22,9 +25,10 @@ class PublicPropertiesReflectionHandler : ReflectionHandler {
     override fun filterAccessibleProperty(
         properties: Collection<KProperty<*>>,
         predicate: (KProperty<*>) -> Boolean,
-    ): List<KProperty<*>> = properties.filter { property ->
-        property.visibility == KVisibility.PUBLIC && predicate(property)
-    }
+    ): List<KProperty<*>> =
+        properties.filter { property ->
+            property.visibility == KVisibility.PUBLIC && predicate(property)
+        }
 
     override fun forEachAccessibleProperty(
         properties: Collection<KProperty<*>>,

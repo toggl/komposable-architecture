@@ -1,0 +1,19 @@
+# https://editorconfig.org/
+# This configuration is used by ktlint when spotless invokes it
+
+[*.{kt,kts}]
+ktlint_code_style = android_studio
+ij_kotlin_allow_trailing_comma=true
+ij_kotlin_allow_trailing_comma_on_call_site=true
+ktlint_standard_backing-property-naming = disabled
+ktlint_function_naming_ignore_when_annotated_with=Composable, Test
+ij_kotlin_imports_layout=*,java.**,javax.**,kotlin.**,^
+max_line_length = 140
+ktlint_standard_function-signature = disabled
+ktlint_standard_class-signature = disabled
+ktlint_standard_multiline-if-else = disabled
+ktlint_standard_property-naming = disabled
+ktlint_standard_annotation = disabled
+ktlint_standard_value-parameter-comment = disabled
+ktlint_standard_multiline-loop = disabled
+ktlint_ignore_back_ticked_identifier = true

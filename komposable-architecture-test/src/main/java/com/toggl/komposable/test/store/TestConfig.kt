@@ -54,9 +54,10 @@ data class NonExhaustiveTestConfig(
     val logIgnoredEffects: Boolean = true,
 ) : TestConfig() {
     override val exhaustivity: TestExhaustivity
-        get() = TestExhaustivity.NonExhaustive(
-            logIgnoredReceivedActions = logIgnoredReceivedActions,
-            logIgnoredStateChanges = logIgnoredStateChanges,
-            logIgnoredEffects = logIgnoredEffects,
-        )
+        get() =
+            TestExhaustivity.NonExhaustive(
+                logIgnoredReceivedActions = logIgnoredReceivedActions,
+                logIgnoredStateChanges = logIgnoredStateChanges,
+                logIgnoredEffects = logIgnoredEffects,
+            )
 }

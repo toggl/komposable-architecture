@@ -8,8 +8,12 @@ annotation class WrapperAction
 
 @Target(AnnotationTarget.CLASS)
 @Retention(AnnotationRetention.SOURCE)
-annotation class ChildStates(vararg val childStates: KClass<*>)
+annotation class ChildStates(
+    vararg val childStates: KClass<*>,
+)
 
 @Target(AnnotationTarget.PROPERTY)
 @Retention(AnnotationRetention.SOURCE)
-annotation class ParentPath(val path: String)
+annotation class ParentPath(
+    val path: String,
+)

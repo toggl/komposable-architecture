@@ -5,15 +5,25 @@ import com.toggl.komposable.architecture.ReduceResult
 import com.toggl.komposable.architecture.Reducer
 
 sealed class ParentAction {
-    data class EditText(val text: String) : ParentAction()
-    data class ElementActionWrapper(val id: Int, val elementAction: ElementAction) : ParentAction()
+    data class EditText(
+        val text: String,
+    ) : ParentAction()
+
+    data class ElementActionWrapper(
+        val id: Int,
+        val elementAction: ElementAction,
+    ) : ParentAction()
 }
 
 sealed class ElementAction {
-    data class EditText(val text: String) : ElementAction()
+    data class EditText(
+        val text: String,
+    ) : ElementAction()
 }
 
-data class ElementState(val elementText: String)
+data class ElementState(
+    val elementText: String,
+)
 
 internal val elementReducer =
     Reducer<ElementState, ElementAction> { state, action ->
@@ -23,8 +33,9 @@ internal val elementReducer =
         }
     }
 
-internal val initialElements = mapOf(
-    0 to ElementState("element1"),
-    1 to ElementState("element2"),
-    2 to ElementState("element3"),
-)
+internal val initialElements =
+    mapOf(
+        0 to ElementState("element1"),
+        1 to ElementState("element2"),
+        2 to ElementState("element3"),
+    )

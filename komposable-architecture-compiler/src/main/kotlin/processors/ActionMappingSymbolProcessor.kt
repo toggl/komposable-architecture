@@ -23,61 +23,63 @@ class ActionMappingSymbolProcessor(
     logger: KSPLogger,
 ) : KotlinPoetSymbolProcessor(codeGenerator, logger) {
 
-    override fun generateFiles(resolver: Resolver): Sequence<FileGenerationResult> =
-        resolver
-            .getSymbolsAnnotatedWith(WrapperAction::class)
-            .map { parentAction ->
-                val parentActionClassName = parentAction.toClassName()
-                val parentActionProperties = parentAction.getAllProperties().toList()
-                when (parentActionProperties.size) {
-                    1 -> {
-                        val parentActionSealedType = parentAction.superTypes.firstOrNull { superType: KSTypeReference ->
-                            superType.resolve().declaration.modifiers.contains(Modifier.SEALED)
-                        }?.resolve() ?: return@map FileGenerationResult.Failure(
-                            "Parent action $parentActionClassName does not have a sealed super type",
-                            parentAction,
+    override fun generateFiles(resolver: Resolver): Sequence<FileGenerationResult> = resolver
+        .getSymbolsAnnotatedWith(WrapperAction::class)
+        .map { parentAction ->
+            val parentActionClassName = parentAction.toClassName()
+            val parentActionProperties = parentAction.getAllProperties().toList()
+            when (parentActionProperties.size) {
+                1 -> {
+                    val parentActionSealedType = parentAction.superTypes.firstOrNull { superType: KSTypeReference ->
+                        superType.resolve().declaration.modifiers.contains(Modifier.SEALED)
+                    }?.resolve() ?: return@map FileGenerationResult.Failure(
+                        "Parent action $parentActionClassName does not have a sealed super type",
+                        parentAction,
+                    )
+                    val childActionPropertyInParentAction = parentActionProperties.single()
+                    val childAction = childActionPropertyInParentAction.type.resolve()
+                    val childActionClassName = childAction.toClassName()
+
+                    val sealedParentActionTypeName = parentActionSealedType.toClassName().simpleName
+                    val parentActionTypeName = parentActionClassName.canonicalName
+                        .substring(parentActionClassName.packageName.length, parentActionClassName.canonicalName.length)
+                        .trim('.')
+                    val childActionTypeName = childActionClassName.simpleName
+
+                    val childActionArgumentName = childActionTypeName.toCamelCase()
+                    val sealedParentActionArgumentName = sealedParentActionTypeName.toCamelCase()
+
+                    parentAction
+                        .actionMappingFileBuilder()
+                        .addImport(parentActionClassName.canonicalName, names = arrayOf(""))
+                        .addFunction(
+                            FunSpec
+                                .builder("map${sealedParentActionTypeName}To$childActionTypeName")
+                                .addParameter(sealedParentActionArgumentName, parentActionSealedType.toTypeName())
+                                .returns(childAction.makeNullable().toTypeName())
+                                .addCode(
+                                    "return if($sealedParentActionArgumentName is $parentActionTypeName) $sealedParentActionArgumentName.$childActionPropertyInParentAction else null",
+                                )
+                                .build(),
                         )
-                        val childActionPropertyInParentAction = parentActionProperties.single()
-                        val childAction = childActionPropertyInParentAction.type.resolve()
-                        val childActionClassName = childAction.toClassName()
-
-                        val sealedParentActionTypeName = parentActionSealedType.toClassName().simpleName
-                        val parentActionTypeName = parentActionClassName.canonicalName
-                            .substring(parentActionClassName.packageName.length, parentActionClassName.canonicalName.length)
-                            .trim('.')
-                        val childActionTypeName = childActionClassName.simpleName
-
-                        val childActionArgumentName = childActionTypeName.toCamelCase()
-                        val sealedParentActionArgumentName = sealedParentActionTypeName.toCamelCase()
-
-                        parentAction
-                            .actionMappingFileBuilder()
-                            .addImport(parentActionClassName.canonicalName, names = arrayOf(""))
-                            .addFunction(
-                                FunSpec
-                                    .builder("map${sealedParentActionTypeName}To$childActionTypeName")
-                                    .addParameter(sealedParentActionArgumentName, parentActionSealedType.toTypeName())
-                                    .returns(childAction.makeNullable().toTypeName())
-                                    .addCode("return if($sealedParentActionArgumentName is $parentActionTypeName) $sealedParentActionArgumentName.$childActionPropertyInParentAction else null")
-                                    .build(),
-                            )
-                            .addFunction(
-                                FunSpec
-                                    .builder("map${childActionTypeName}To$sealedParentActionTypeName")
-                                    .addParameter(childActionArgumentName, childActionClassName)
-                                    .returns(parentActionClassName)
-                                    .addCode("return $parentActionTypeName($childActionArgumentName)")
-                                    .build(),
-                            )
-                            .build()
-                            .run(FileGenerationResult::Success)
-                    }
-                    else -> {
-                        val errorMessage = "${parentActionClassName.canonicalName} needs to have exactly one property to be annotated with @WrapperAction."
-                        FileGenerationResult.Failure(errorMessage, parentAction)
-                    }
+                        .addFunction(
+                            FunSpec
+                                .builder("map${childActionTypeName}To$sealedParentActionTypeName")
+                                .addParameter(childActionArgumentName, childActionClassName)
+                                .returns(parentActionClassName)
+                                .addCode("return $parentActionTypeName($childActionArgumentName)")
+                                .build(),
+                        )
+                        .build()
+                        .run(FileGenerationResult::Success)
+                }
+                else -> {
+                    val errorMessage =
+                        "${parentActionClassName.canonicalName} needs to have exactly one property to be annotated with @WrapperAction."
+                    FileGenerationResult.Failure(errorMessage, parentAction)
                 }
             }
+        }
 
     private fun KSClassDeclaration.actionMappingFileBuilder(): FileSpec.Builder {
         val className = toClassName()
@@ -91,5 +93,8 @@ class ActionMappingSymbolProcessor(
 
 class ActionMappingSymbolProcessorProvider : SymbolProcessorProvider {
     override fun create(environment: SymbolProcessorEnvironment): SymbolProcessor =
-        ActionMappingSymbolProcessor(environment.codeGenerator, environment.logger)
+        ActionMappingSymbolProcessor(
+            codeGenerator = environment.codeGenerator,
+            logger = environment.logger,
+        )
 }

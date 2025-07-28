@@ -57,10 +57,8 @@ class StateMappingSymbolProcessor(
                                     .addCode(
                                         """return $childStateTypeName(
 ${buildChildStateConstructorParameterList(childState, parentStateArgumentName)})""",
-                                    )
-                                    .build(),
-                            )
-                            .addFunction(
+                                    ).build(),
+                            ).addFunction(
                                 FunSpec
                                     .builder("map${childStateTypeName}To$parentStateTypeName")
                                     .addParameter(parentStateArgumentName, parentStateClassName)
@@ -69,12 +67,12 @@ ${buildChildStateConstructorParameterList(childState, parentStateArgumentName)})
                                     .addCode(
                                         """return $parentStateArgumentName.copy(
 ${buildParentStateConstructorParameterList(childState, parentStateArgumentName, childStateArgumentName)}    )""",
-                                    )
-                                    .build(),
+                                    ).build(),
                             )
 
                         fileBuilder
-                    }.build().run(FileGenerationResult::Success)
+                    }.build()
+                    .run(FileGenerationResult::Success)
             }
 
     private fun buildChildStateConstructorParameterList(
@@ -206,8 +204,12 @@ ${buildParentStateConstructorParameterList(childState, parentStateArgumentName, 
     // Explanation here: https://github.com/google/ksp/issues/888
     private fun KSClassDeclaration.findChildStateClasses(resolver: Resolver) =
         annotationsWithType(ChildStates::class)
-            .flatMap { it.arguments.toList().single().value as ArrayList<*> }
-            .mapNotNull { it as? KSType }
+            .flatMap {
+                it.arguments
+                    .toList()
+                    .single()
+                    .value as ArrayList<*>
+            }.mapNotNull { it as? KSType }
             .mapNotNull { resolver.getClassDeclarationByName(it.toClassName().canonicalName) }
 
     private val KSClassDeclaration.isDataClass: Boolean
@@ -228,7 +230,10 @@ ${buildParentStateConstructorParameterList(childState, parentStateArgumentName, 
 
     private fun KSAnnotated.annotationsWithType(kClass: KClass<*>) =
         annotations.toList().filter {
-            it.annotationType.resolve().toClassName().canonicalName == kClass.qualifiedName
+            it.annotationType
+                .resolve()
+                .toClassName()
+                .canonicalName == kClass.qualifiedName
         }
 
     private data class ParentStateCopyParameterNode(

@@ -16,11 +16,12 @@ suspend fun <State : Any, Action : Any?> Reducer<State, Action>.test(
     config: ExhaustiveTestConfig,
     testBody: suspend ExhaustiveTestStoreScope<State, Action>.() -> Unit,
 ) {
-    val testStore = TestStore(
-        initialState = { initialState },
-        reducer = { this },
-        config = config,
-    )
+    val testStore =
+        TestStore(
+            initialState = { initialState },
+            reducer = { this },
+            config = config,
+        )
     val scope = ExhaustiveTestStoreScopeImpl(testStore)
     testBody(scope)
     testStore.finish()
@@ -38,11 +39,12 @@ suspend fun <State : Any, Action : Any?> Reducer<State, Action>.test(
     config: NonExhaustiveTestConfig,
     testBody: suspend NonExhaustiveTestStoreScope<State, Action>.() -> Unit,
 ) {
-    val testStore = TestStore(
-        initialState = { initialState },
-        reducer = { this },
-        config = config,
-    )
+    val testStore =
+        TestStore(
+            initialState = { initialState },
+            reducer = { this },
+            config = config,
+        )
     val scope = NonExhaustiveTestStoreScopeImpl(testStore)
     testBody(scope)
 }

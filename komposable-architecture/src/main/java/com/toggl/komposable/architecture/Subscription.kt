@@ -9,7 +9,6 @@ import kotlinx.coroutines.flow.Flow
  * @see Effect
  */
 fun interface Subscription<State, Action : Any> {
-
     /**
      * Returns a Flow of actions that get handled by the store as they get emitted
      * @param state The flow of state as provided by the store

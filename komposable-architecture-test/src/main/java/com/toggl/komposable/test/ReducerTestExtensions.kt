@@ -55,6 +55,9 @@ suspend fun <State, Action> Reducer<State, Action>.testReduceNoOp(
 }
 
 @Suppress("UNUSED_PARAMETER")
-fun <State, Action> assertNoEffectWereReturned(state: State, effect: Effect<Action>) {
+fun <State, Action> assertNoEffectWereReturned(
+    state: State,
+    effect: Effect<Action>,
+) {
     assertEquals(NoEffect, effect)
 }

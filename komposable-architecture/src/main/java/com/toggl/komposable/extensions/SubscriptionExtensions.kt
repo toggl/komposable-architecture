@@ -25,5 +25,6 @@ fun <State, Action : Any> mergeSubscriptions(subscriptions: List<Subscription<St
  * @return A [CompositeSubscription] of a given subscriptions.
  * @see CompositeSubscription
  */
-infix fun <State, Action : Any> Subscription<State, Action>.mergeWith(subscription: Subscription<State, Action>): Subscription<State, Action> =
-    mergeSubscriptions(this, subscription)
+infix fun <State, Action : Any> Subscription<State, Action>.mergeWith(
+    subscription: Subscription<State, Action>,
+): Subscription<State, Action> = mergeSubscriptions(this, subscription)

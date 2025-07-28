@@ -13,5 +13,8 @@ fun interface Reducer<State, Action> {
      * @return A ReduceResult containing the new state and a list of effects that should
      * be executed immediately after reduce method finishes its job
      */
-    fun reduce(state: State, action: Action): ReduceResult<State, Action>
+    fun reduce(
+        state: State,
+        action: Action,
+    ): ReduceResult<State, Action>
 }

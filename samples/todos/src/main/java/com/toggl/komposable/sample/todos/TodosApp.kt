@@ -98,7 +98,9 @@ fun TodosApp() {
                     )
                 },
                 actions = {
-                    TextButton(onClick = { todosStore.send(TodosAction.ClearCompletedButtonTapped) }) {
+                    TextButton(onClick = {
+                        todosStore.send(TodosAction.ClearCompletedButtonTapped)
+                    }) {
                         Text(text = "Clear Completed")
                     }
                 },
@@ -111,10 +113,20 @@ fun TodosApp() {
                 TodoList(
                     todosState = todosState,
                     onCheckedChange = { id, isCompleted ->
-                        todosStore.send(TodosAction.Todo(id, TodoAction.IsCompleteChanged(isCompleted)))
+                        todosStore.send(
+                            TodosAction.Todo(
+                                index = id,
+                                action = TodoAction.IsCompleteChanged(isCompleted),
+                            ),
+                        )
                     },
                     onDescriptionChanged = { id, description ->
-                        todosStore.send(TodosAction.Todo(id, TodoAction.DescriptionChanged(description)))
+                        todosStore.send(
+                            TodosAction.Todo(
+                                index = id,
+                                action = TodoAction.DescriptionChanged(description),
+                            ),
+                        )
                     },
                 )
             }
@@ -138,7 +150,10 @@ fun TodosApp() {
 
 @Composable
 fun TodoFilterRow(selectedFilter: Filter, send: (TodosAction) -> Unit) {
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(start = 12.dp, bottom = 16.dp)) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = Modifier.padding(start = 12.dp, bottom = 16.dp),
+    ) {
         TodoFilterChip(
             text = "All",
             selected = selectedFilter == Filter.All,

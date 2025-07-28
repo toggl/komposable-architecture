@@ -9,7 +9,6 @@ import kotlinx.coroutines.flow.Flow
  * @see com.toggl.komposable.extensions.createStore
  */
 interface Store<State, Action : Any> {
-
     /**
      * A flow that emits whenever the state of the application changes.
      */
@@ -27,8 +26,7 @@ interface Store<State, Action : Any> {
      * Convenience method to send a single action to be processed by the internal reducer.
      * @see Store.send
      */
-    fun send(action: Action) =
-        send(listOf(action))
+    fun send(action: Action) = send(listOf(action))
 
     /**
      * Sends actions to be processed by the internal reducer.
@@ -44,8 +42,7 @@ interface Store<State, Action : Any> {
      * @see Store.dispatch
      */
     @Deprecated("Use send(Action)", ReplaceWith("this.send(action)"))
-    fun dispatch(action: Action) =
-        send(listOf(action))
+    fun dispatch(action: Action) = send(listOf(action))
 
     /**
      * Transforms this store in a more specific store that can only emit

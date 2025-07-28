@@ -16,8 +16,9 @@ internal class PullbackReducer<LocalState, GlobalState, LocalAction, GlobalActio
         state: GlobalState,
         action: GlobalAction,
     ): ReduceResult<GlobalState, GlobalAction> {
-        val localAction = mapToLocalAction(action)
-            ?: return ReduceResult(state, NoEffect)
+        val localAction =
+            mapToLocalAction(action)
+                ?: return ReduceResult(state, NoEffect)
 
         val localResult = innerReducer.reduce(mapToLocalState(state), localAction)
 

@@ -27,13 +27,14 @@ abstract class StoreCoroutineTest {
         testReducer = spyk(TestReducer())
         testSubscription = spyk(TestSubscription())
         testExceptionHandler = spyk(TestStoreExceptionHandler())
-        testStore = spyk(
-            createTestStore(
-                reducer = testReducer,
-                subscription = testSubscription,
-                defaultExceptionHandler = testExceptionHandler,
-            ),
-        )
+        testStore =
+            spyk(
+                createTestStore(
+                    reducer = testReducer,
+                    subscription = testSubscription,
+                    defaultExceptionHandler = testExceptionHandler,
+                ),
+            )
     }
 
     @AfterEach

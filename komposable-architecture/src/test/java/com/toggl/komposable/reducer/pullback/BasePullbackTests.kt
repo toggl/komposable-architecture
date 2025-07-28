@@ -21,61 +21,65 @@ abstract class BasePullbackTests {
     abstract val pulledBackReducer: Reducer<TestState, TestAction>
 
     @Test
-    fun `local reducer should be called when mapToLocalAction returns actions`() = runTest {
-        val globalState = TestState("", 1)
-        val action = TestAction.LocalActionWrapper(LocalTestAction.ChangeTestIntProperty(2))
+    fun `local reducer should be called when mapToLocalAction returns actions`() =
+        runTest {
+            val globalState = TestState("", 1)
+            val action = TestAction.LocalActionWrapper(LocalTestAction.ChangeTestIntProperty(2))
 
-        pulledBackReducer.testReduce(
-            globalState,
-            action,
-        ) { state, effect ->
-            state shouldBe globalState.copy(testIntProperty = 2)
-            effect shouldBe NoEffect
-        }
-        verify {
-            localReducer.reduce(
-                LocalTestState(1),
-                action.action,
-            )
-        }
-    }
-
-    @Test
-    fun `local reducer effect results should be correctly wrapped`() = runTest {
-        val globalState = TestState("", 1)
-        val action = TestAction.LocalActionWrapper(
-            LocalTestAction.StartEffectAction(Effect.of(LocalTestAction.DoNothingFromEffectAction)),
-        )
-
-        pulledBackReducer.testReduce(
-            globalState,
-            action,
-        ) { state, effect ->
-            state shouldBe globalState
-            effect.run().test {
-                awaitItem() shouldBe TestAction.LocalActionWrapper(LocalTestAction.DoNothingFromEffectAction)
-                awaitComplete()
+            pulledBackReducer.testReduce(
+                globalState,
+                action,
+            ) { state, effect ->
+                state shouldBe globalState.copy(testIntProperty = 2)
+                effect shouldBe NoEffect
+            }
+            verify {
+                localReducer.reduce(
+                    LocalTestState(1),
+                    action.action,
+                )
             }
         }
-        verify {
-            localReducer.reduce(
-                LocalTestState(1),
-                action.action,
-            )
-        }
-    }
 
     @Test
-    fun `local reducer should not be called when mapToLocalAction returns null`() = runTest {
-        val globalState = TestState("", 1)
-        val action = TestAction.ChangeTestProperty("")
+    fun `local reducer effect results should be correctly wrapped`() =
+        runTest {
+            val globalState = TestState("", 1)
+            val action =
+                TestAction.LocalActionWrapper(
+                    LocalTestAction.StartEffectAction(Effect.of(LocalTestAction.DoNothingFromEffectAction)),
+                )
 
-        pulledBackReducer.testReduceNoOp(
-            globalState,
-            action,
-        )
-        verify {
-            localReducer wasNot Called
+            pulledBackReducer.testReduce(
+                globalState,
+                action,
+            ) { state, effect ->
+                state shouldBe globalState
+                effect.run().test {
+                    awaitItem() shouldBe TestAction.LocalActionWrapper(LocalTestAction.DoNothingFromEffectAction)
+                    awaitComplete()
+                }
+            }
+            verify {
+                localReducer.reduce(
+                    LocalTestState(1),
+                    action.action,
+                )
+            }
         }
-    }
+
+    @Test
+    fun `local reducer should not be called when mapToLocalAction returns null`() =
+        runTest {
+            val globalState = TestState("", 1)
+            val action = TestAction.ChangeTestProperty("")
+
+            pulledBackReducer.testReduceNoOp(
+                globalState,
+                action,
+            )
+            verify {
+                localReducer wasNot Called
+            }
+        }
 }

@@ -24,28 +24,29 @@ internal class MutableStateFlowStore<State, Action : Any> private constructor(
     override val state: Flow<State>,
     private val sendFn: (List<Action>) -> Unit,
 ) : Store<State, Action> {
-
     override fun <ViewState, ViewAction : Any> view(
         mapToLocalState: (State) -> ViewState,
         mapToGlobalAction: (ViewAction) -> Action?,
-    ): Store<ViewState, ViewAction> = MutableStateFlowStore(
-        state = state.map { mapToLocalState(it) }.distinctUntilChanged(),
-        sendFn = { actions ->
-            val globalActions = actions.mapNotNull(mapToGlobalAction)
-            sendFn(globalActions)
-        },
-    )
+    ): Store<ViewState, ViewAction> =
+        MutableStateFlowStore(
+            state = state.map { mapToLocalState(it) }.distinctUntilChanged(),
+            sendFn = { actions ->
+                val globalActions = actions.mapNotNull(mapToGlobalAction)
+                sendFn(globalActions)
+            },
+        )
 
     override fun <ViewState : Any, ViewAction : Any> optionalView(
         mapToLocalState: (State) -> ViewState?,
         mapToGlobalAction: (ViewAction) -> Action?,
-    ): Store<ViewState, ViewAction> = MutableStateFlowStore(
-        state = state.mapNotNull { mapToLocalState(it) }.distinctUntilChanged(),
-        sendFn = { actions ->
-            val globalActions = actions.mapNotNull(mapToGlobalAction)
-            sendFn(globalActions)
-        },
-    )
+    ): Store<ViewState, ViewAction> =
+        MutableStateFlowStore(
+            state = state.mapNotNull { mapToLocalState(it) }.distinctUntilChanged(),
+            sendFn = { actions ->
+                val globalActions = actions.mapNotNull(mapToGlobalAction)
+                sendFn(globalActions)
+            },
+        )
 
     companion object {
         fun <State, Action : Any> create(
@@ -63,19 +64,21 @@ internal class MutableStateFlowStore<State, Action : Any> private constructor(
             lateinit var send: (List<Action>) -> Unit
             send = { actions ->
                 storeScope.launch(context = dispatcherProvider.main) {
-                    val result: ReduceResult<State, Action> = actions.fold(ReduceResult(state.value, noEffect)) { accResult, action ->
-                        try {
-                            val (nextState, nextEffect) = reducer.reduce(accResult.state, action)
-                            return@fold ReduceResult(nextState, accResult.effect mergeWith nextEffect)
-                        } catch (e: Throwable) {
-                            ReduceResult(accResult.state, exceptionHandler.handleReduceException(e))
+                    val result: ReduceResult<State, Action> =
+                        actions.fold(ReduceResult(state.value, noEffect)) { accResult, action ->
+                            try {
+                                val (nextState, nextEffect) = reducer.reduce(accResult.state, action)
+                                return@fold ReduceResult(nextState, accResult.effect mergeWith nextEffect)
+                            } catch (e: Throwable) {
+                                ReduceResult(accResult.state, exceptionHandler.handleReduceException(e))
+                            }
                         }
-                    }
 
                     state.value = result.state
 
                     try {
-                        result.effect.run()
+                        result.effect
+                            .run()
                             .onEach { action -> send(listOf(action)) }
                             .launchIn(storeScope)
                     } catch (e: Throwable) {

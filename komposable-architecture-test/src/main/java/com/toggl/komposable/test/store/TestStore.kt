@@ -47,18 +47,20 @@ class TestStore<State : Any, Action : Any?> internal constructor(
     private val effectSubscriptionChannel = Channel<Unit>(capacity = BUFFERED)
 
     init {
-        this.reducer = TestReducer(
-            reducer(),
-            initialState(),
-            testCoroutineScope,
-            effectSubscriptionChannel,
-        )
-        this.store = createStore(
-            initialState = this.state,
-            reducer = this.reducer,
-            dispatcherProvider = config.dispatcherProvider,
-            storeScopeProvider = { testCoroutineScope },
-        )
+        this.reducer =
+            TestReducer(
+                reducer(),
+                initialState(),
+                testCoroutineScope,
+                effectSubscriptionChannel,
+            )
+        this.store =
+            createStore(
+                initialState = this.state,
+                reducer = this.reducer,
+                dispatcherProvider = config.dispatcherProvider,
+                storeScopeProvider = { testCoroutineScope },
+            )
     }
 
     private val assertionRunner: AssertionRunner<State, Action>
@@ -81,12 +83,18 @@ class TestStore<State : Any, Action : Any?> internal constructor(
         )
 
         fun hasReceivedActionToHandle(match: (Action) -> Boolean): Boolean
+
         fun skipNotMatchingActions(match: (Action) -> Boolean)
+
         fun assertEffectsAreDone()
+
         suspend fun assertActionsWereReceived()
     }
 
-    internal suspend fun send(action: Action, assert: ((state: State) -> State)? = null) {
+    internal suspend fun send(
+        action: Action,
+        assert: ((state: State) -> State)? = null,
+    ) {
         testCoroutineScope.runCurrent()
         if (reducer.receivedActions.isNotEmpty()) {
             throw AssertionError("Cannot send actions after receiving actions")
@@ -101,7 +109,10 @@ class TestStore<State : Any, Action : Any?> internal constructor(
         assertionRunner.assertStateChange(previousState, currentState, assert)
     }
 
-    internal suspend fun receive(action: Action, assert: ((state: State) -> State)? = null) {
+    internal suspend fun receive(
+        action: Action,
+        assert: ((state: State) -> State)? = null,
+    ) {
         receive({ it == action }, assert)
     }
 
@@ -115,7 +126,10 @@ class TestStore<State : Any, Action : Any?> internal constructor(
         receiveAction({ actionPredicate(it) }, assert)
     }
 
-    private fun receiveAction(match: (Action) -> Boolean, assert: ((state: State) -> State)?) {
+    private fun receiveAction(
+        match: (Action) -> Boolean,
+        assert: ((state: State) -> State)?,
+    ) {
         testCoroutineScope.runCurrent()
         if (reducer.receivedActions.isEmpty()) {
             throw AssertionError("No action has been received")
@@ -167,10 +181,10 @@ class TestStore<State : Any, Action : Any?> internal constructor(
             } else {
                 throw AssertionError(
                     """
-                There are in-flight effects that could deliver the action but they haven't finished under the ${timeout.inWholeMilliseconds}ms timeout.
-                Try moving the scheduler forward with `testCoroutineScope.advanceTimeBy(timeoutInMillis)` or `testCoroutineScope.advanceUntilIdle()`
-                before trying to receive the action.
-                # In-flight effects: ${reducer.inFlightEffects}
+                    There are in-flight effects that could deliver the action but they haven't finished under the ${timeout.inWholeMilliseconds}ms timeout.
+                    Try moving the scheduler forward with `testCoroutineScope.advanceTimeBy(timeoutInMillis)` or `testCoroutineScope.advanceUntilIdle()`
+                    before trying to receive the action.
+                    # In-flight effects: ${reducer.inFlightEffects}
                     """.trimIndent(),
                 )
             }
@@ -235,15 +249,22 @@ class TestStore<State : Any, Action : Any?> internal constructor(
         val receivedActions: MutableList<Pair<Action, State>> = mutableListOf()
         val inFlightEffects: MutableList<LongLivingEffect<Action>> = mutableListOf()
 
-        data class TestAction<Action>(val origin: Origin<Action>) {
+        data class TestAction<Action>(
+            val origin: Origin<Action>,
+        ) {
             val action: Action
                 get() = origin.action
 
             sealed class Origin<Action> {
                 abstract val action: Action
 
-                data class Send<Action>(override val action: Action) : Origin<Action>()
-                data class Receive<Action>(override val action: Action) : Origin<Action>()
+                data class Send<Action>(
+                    override val action: Action,
+                ) : Origin<Action>()
+
+                data class Receive<Action>(
+                    override val action: Action,
+                ) : Origin<Action>()
             }
         }
 
@@ -274,21 +295,24 @@ class TestStore<State : Any, Action : Any?> internal constructor(
                 }
             }
 
-            val mappedEffect = if (effect == Effect.none()) {
-                testCoroutineScope.launch { subChannel.send(Unit) }
-                Effect.none()
-            } else {
-                val longLivingEffect = LongLivingEffect(action = action)
-                Effect.fromFlow(
-                    effect.run().onStart {
-                        subChannel.send(Unit)
-                        inFlightEffects.add(longLivingEffect)
-                    }.onCompletion {
-                        // Completion might mean completion or cancellation
-                        inFlightEffects.remove(longLivingEffect)
-                    },
-                )
-            }
+            val mappedEffect =
+                if (effect == Effect.none()) {
+                    testCoroutineScope.launch { subChannel.send(Unit) }
+                    Effect.none()
+                } else {
+                    val longLivingEffect = LongLivingEffect(action = action)
+                    Effect.fromFlow(
+                        effect
+                            .run()
+                            .onStart {
+                                subChannel.send(Unit)
+                                inFlightEffects.add(longLivingEffect)
+                            }.onCompletion {
+                                // Completion might mean completion or cancellation
+                                inFlightEffects.remove(longLivingEffect)
+                            },
+                    )
+                }
 
             return ReduceResult(
                 updatedState,
