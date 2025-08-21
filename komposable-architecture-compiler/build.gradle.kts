@@ -18,12 +18,11 @@ java {
 
 dependencies {
     implementation(project(":komposable-architecture"))
-    implementation(libs.symbol.processing.api)
+    implementation(libs.ksp.api)
     implementation(libs.kotlinpoet.ksp)
-
 
     testImplementation(libs.kotlin.stdlib)
     testImplementation(libs.kotlin.test.core)
     testImplementation(libs.kotlin.compile.testing.ksp)
-    testImplementation(libs.kotestMatchers)
+    testImplementation(libs.kotest.matchers)
 }

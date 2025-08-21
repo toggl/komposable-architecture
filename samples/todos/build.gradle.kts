@@ -8,12 +8,12 @@ plugins {
 
 android {
     namespace = "com.toggl.komposable.sample.todos"
-    compileSdk = 36
+    compileSdk = libs.versions.compileSdk.get().toInt()
 
     defaultConfig {
         applicationId = "com.toggl.komposable.sample.todos"
-        minSdk = 26
-        targetSdk = 36
+        minSdk = libs.versions.minSdk.get().toInt()
+        targetSdk = libs.versions.targetSdk.get().toInt()
         versionCode = 1
         versionName = "1.0"
 
@@ -35,17 +35,12 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.toVersion(libs.versions.javaVersion.get())
+        targetCompatibility = JavaVersion.toVersion(libs.versions.javaVersion.get())
     }
 
     kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_11.toString()
-        freeCompilerArgs = freeCompilerArgs + listOf(
-            "-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi",
-            "-opt-in=kotlinx.coroutines.FlowPreview",
-            "-opt-in=androidx.compose.animation.ExperimentalAnimationApi"
-        )
+        jvmTarget = libs.versions.javaVersion.get()
     }
 
     buildFeatures {
@@ -72,7 +67,7 @@ dependencies {
     implementation(libs.androidx.compose.foundation.layout)
 
     testImplementation(project(":komposable-architecture-test"))
-    testImplementation(libs.kotestMatchers)
+    testImplementation(libs.kotest.matchers)
     testImplementation(libs.junit.jupiter.api)
     testRuntimeOnly(libs.junit.jupiter.engine)
     testImplementation(libs.kotlin.test.core)
