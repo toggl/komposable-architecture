@@ -41,13 +41,13 @@ subprojects {
     }
 
     tasks.withType<JavaCompile> {
-        targetCompatibility = JavaVersion.VERSION_11.toString()
+        targetCompatibility = libs.versions.javaVersion.get()
     }
 
     tasks.withType<KotlinCompile>().configureEach {
         compilerOptions {
             allWarningsAsErrors = true
-            jvmTarget = JvmTarget.JVM_11
+            jvmTarget = JvmTarget.JVM_17
         }
     }
 }

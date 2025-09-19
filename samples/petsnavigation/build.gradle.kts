@@ -4,34 +4,31 @@ plugins {
     alias(libs.plugins.kotlin.compose.compiler)
     alias(libs.plugins.junit5)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.jetbrains.kotlin.serialization)
 }
 
 android {
-    namespace = "com.toggl.komposable.sample.todos"
+    namespace = "com.toggl.komposable.sample.petsnavigation"
     compileSdk = libs.versions.compileSdk.get().toInt()
 
     defaultConfig {
-        applicationId = "com.toggl.komposable.sample.todos"
+        applicationId = "com.toggl.komposable.sample.petsnavigation"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
         versionCode = 1
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        vectorDrawables {
-            useSupportLibrary = true
-        }
     }
 
     buildTypes {
-        getByName("release") {
+        release {
             isMinifyEnabled = false
-            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
         }
-    }
-
-    tasks.withType<JavaCompile> {
-        targetCompatibility = JavaVersion.VERSION_11.toString()
     }
 
     compileOptions {
@@ -56,15 +53,25 @@ dependencies {
     implementation(project(":komposable-architecture"))
     ksp(project(":komposable-architecture-compiler"))
     debugImplementation(project(":komposable-architecture-test"))
-    implementation(libs.androidx.activity)
-    implementation(libs.androidx.activity.ktx)
+
+    implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
     implementation(platform(libs.androidx.compose.bom))
-    implementation(libs.androidx.compose.runtime)
-    implementation(libs.androidx.compose.ui.tooling)
-    implementation(libs.androidx.compose.material.icons.extended)
+    implementation(libs.androidx.animation.android)
+    implementation(libs.androidx.compose.ui)
+    implementation(libs.androidx.navigation.ui)
+    implementation(libs.androidx.navigation.runtime)
+    implementation(libs.androidx.lifecycle.viewmodel.navigation3)
+    implementation(libs.androidx.compose.ui.graphics)
+    implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
-    implementation(libs.androidx.compose.foundation.layout)
+    implementation(libs.androidx.compose.material3.adaptive.navigation.suite)
+    implementation(libs.androidx.compose.adaptive)
+    implementation(libs.androidx.compose.adaptive.layout)
+    implementation(libs.androidx.compose.material.icons.extended)
+    implementation(libs.kotlinx.serialization.core)
+    implementation(libs.kotlinx.serialization.json)
 
     testImplementation(project(":komposable-architecture-test"))
     testImplementation(libs.kotest.matchers)

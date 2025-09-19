@@ -13,6 +13,7 @@ import io.kotest.assertions.throwables.shouldThrow
 import io.mockk.every
 import io.mockk.mockkStatic
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
@@ -38,6 +39,7 @@ class TodosTests {
             reflectionHandler = JvmReflectionHandler(),
         )
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     @BeforeEach
     fun setup() {
         Dispatchers.setMain(testDispatcher)

@@ -27,8 +27,8 @@ There's no way to simply mutate the state in Kotlin like the Composable architec
 Additionally we decided to extend Point-Free architecture with something called subscriptions. This concept is taken from the [Elm Architecture](https://guide.elm-lang.org/architecture/). It's basically a way for us to leverage observable capabilities of different APIs, in our case it's mostly for observing data stored in [Room Database](https://developer.android.com/training/data-storage/room).
 
 ## 📲 Sample App
-- [Todo Sample](https://github.com/toggl/komposable-architecture/tree/main/samples/todos)
-- More samples soon!
+- [Todo Sample](https://github.com/toggl/komposable-architecture/tree/main/samples/todos): This is a single-screen app that demonstrates all the basics, including state management, reducer composition, and effects. It's a great starting point for understanding the core concepts.
+- [Pets Navigation](https://github.com/toggl/komposable-architecture/tree/main/samples/petsnavigation): : This is a multi-screen app that serves as an early exploration of how Komposable Architecture could work with [Navigation 3](https://developer.android.com/guide/navigation/navigation-3) library.
 
 To run the sample app, start by cloning this repo:
 

@@ -20,14 +20,14 @@ java {
 
 dependencies {
     implementation(libs.kotlin.stdlib)
-    implementation(libs.kotlin.coroutines.core)
+    implementation(libs.kotlinx.coroutines.core)
 
     testImplementation(project(":komposable-architecture-test"))
     testImplementation(libs.junit.jupiter.api)
     testRuntimeOnly(libs.junit.jupiter.engine)
     testImplementation(libs.mockK)
     testImplementation(libs.turbine)
-    testImplementation(libs.kotestMatchers)
+    testImplementation(libs.kotest.matchers)
 
     testImplementation(project(":komposable-architecture-test"))
     testImplementation(libs.kotlin.stdlib)
