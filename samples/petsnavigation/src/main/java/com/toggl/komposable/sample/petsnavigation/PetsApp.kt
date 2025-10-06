@@ -26,12 +26,13 @@ import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffo
 import androidx.compose.material3.adaptive.navigationsuite.rememberNavigationSuiteScaffoldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entry
 import androidx.navigation3.runtime.entryProvider
@@ -105,7 +106,10 @@ val petsStore = createStore(
 @Composable
 fun PetsNavigationApp() {
     val navigationSuiteScaffoldState = rememberNavigationSuiteScaffoldState()
-    val petsState by petsStore.state.collectAsState(initial = PetsState())
+    val petsState by petsStore.state.collectAsStateWithLifecycle(
+        PetsState(),
+        LocalLifecycleOwner.current,
+    )
 
     LaunchedEffect(petsState.currentRoute) {
         if (petsState.currentRoute is TopLevelRoute) {
