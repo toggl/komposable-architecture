@@ -26,12 +26,15 @@ import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffo
 import androidx.compose.material3.adaptive.navigationsuite.rememberNavigationSuiteScaffoldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entry
 import androidx.navigation3.runtime.entryProvider
@@ -101,11 +104,23 @@ val petsStore = createStore(
     dispatcherProvider = dispatcherProvider,
 )
 
+/**
+ * New composable using PetsViewModel StateFlow adapter to ensure configuration change survival.
+ * Leaves original PetsNavigationApp untouched.
+ */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun PetsNavigationApp() {
+    val owner = LocalViewModelStoreOwner.current
+
+    // ViewModel with no DI
+    val petsViewModel = remember(owner) {
+        requireNotNull(owner)
+        ViewModelProvider(owner)[PetsViewModel::class.java]
+    }
+
     val navigationSuiteScaffoldState = rememberNavigationSuiteScaffoldState()
-    val petsState by petsStore.state.collectAsState(initial = PetsState())
+    val petsState by petsViewModel.state.collectAsStateWithLifecycle()
 
     LaunchedEffect(petsState.currentRoute) {
         if (petsState.currentRoute is TopLevelRoute) {
