@@ -33,7 +33,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation3.runtime.NavKey
-import androidx.navigation3.runtime.entry
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.ui.NavDisplay
 import com.toggl.komposable.architecture.Reducer
@@ -154,7 +153,7 @@ fun PetsNavigationApp() {
                     backStack = petsState.backStack,
                     onBack = { petsStore.send(PetsAction.BackEvent) },
                     entryProvider = entryProvider {
-                        entry<AnimalListRoute> { entry: AnimalListRoute ->
+                        entry<AnimalListRoute> {
                             AnimalListPage(
                                 animals = petsState.animals,
                                 onAnimalClick = { animalId ->
@@ -162,10 +161,10 @@ fun PetsNavigationApp() {
                                 },
                             )
                         }
-                        entry<AnimalDetailRoute> { entry: AnimalDetailRoute ->
+                        entry<AnimalDetailRoute> {
                             AnimalDetailPage(petsState.selectedAnimal)
                         }
-                        entry<SettingsRoute> { entry: SettingsRoute ->
+                        entry<SettingsRoute> {
                             SettingsPage(onAboutClick = {
                                 petsStore.send(PetsAction.AboutClicked)
                             })
