@@ -6,7 +6,6 @@ import com.toggl.komposable.architecture.ReduceResult
 import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-import kotlin.experimental.ExperimentalTypeInference
 
 /**
  * @param effects A vararg of Effect instances to be merged.
@@ -173,9 +172,8 @@ fun <State, Action : Any> State.withSuspendEffect(
  * @return ReduceResult containing the current state and the defined effect.
  * @see kotlinx.coroutines.flow.callbackFlow
  */
-@OptIn(ExperimentalTypeInference::class)
 fun <State, Action> State.withProducerEffect(
-    @BuilderInference block: suspend ProducerScope<Action>.() -> Unit,
+    block: suspend ProducerScope<Action>.() -> Unit,
 ): ReduceResult<State, Action> = ReduceResult(this, Effect.fromProducer(block))
 
 /**
@@ -188,9 +186,8 @@ fun <State, Action> State.withProducerEffect(
  * @return ReduceResult containing the current state and the defined effect.
  * @see kotlinx.coroutines.flow.callbackFlow
  */
-@OptIn(ExperimentalTypeInference::class)
 fun <State, Action> State.withProducerEffect(
     id: Any,
     cancelInFlight: Boolean = false,
-    @BuilderInference block: suspend ProducerScope<Action>.() -> Unit,
+    block: suspend ProducerScope<Action>.() -> Unit,
 ): ReduceResult<State, Action> = ReduceResult(this, Effect.fromProducer(block).cancellable(id, cancelInFlight))
